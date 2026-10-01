@@ -313,30 +313,79 @@ class GamesPage extends StatefulWidget {
 class _GamesState extends State<GamesPage>{
   String filter='All';
   final categories=const ['All','Arcade','Puzzle','Racing','Runner'];
+  final games=const [
+    ['Tap Rush','Arcade','PLAYABLE',Icons.touch_app_rounded,Color(0xFF7C3AED)],
+    ['Memory Grid','Puzzle','PLAYABLE',Icons.grid_view_rounded,Color(0xFF0891B2)],
+    ['Nexora Runner','Runner','PLAYABLE',Icons.directions_run_rounded,Color(0xFF16A34A)],
+    ['Neon Circuit','Racing','PLAYABLE',Icons.directions_car_rounded,Color(0xFFF97316)],
+    ['Block Forge','Puzzle','PLAYABLE',Icons.extension_rounded,Color(0xFF2563EB)],
+    ['Sky Dash','Arcade','PLAYABLE',Icons.flight_rounded,Color(0xFF0D9488)],
+    ['Color Clash','Arcade','PLAYABLE',Icons.palette_rounded,Color(0xFFDB2777)],
+    ['Reaction Rush','Arcade','PLAYABLE',Icons.flash_on_rounded,Color(0xFFF59E0B)],
+    ['Number Sprint','Puzzle','PLAYABLE',Icons.calculate_rounded,Color(0xFF059669)],
+    ['Dodge Zone','Runner','PLAYABLE',Icons.shield_rounded,Color(0xFF8B5CF6)],
+  ];
+  void openGame(String title){
+    final Widget game=switch(title){
+      'Memory Grid'=>const MemoryGridPage(),
+      'Reaction Rush'=>const ReactionRushPage(),
+      'Color Clash'=>const ColorClashPage(),
+      'Number Sprint'=>const NumberSprintPage(),
+      'Dodge Zone'=>const DodgeZonePage(),
+      'Nexora Runner'=>const NexoraRunnerPage(),
+      'Neon Circuit'=>const NexoraRunnerPage(mode:'Neon Circuit'),
+      'Sky Dash'=>const NexoraRunnerPage(mode:'Sky Dash'),
+      'Block Forge'=>const BlockForgePage(),
+      _=>const TapRushPage(),
+    };
+    Navigator.push(context,MaterialPageRoute(builder:(_)=>game));
+  }
   @override Widget build(BuildContext context){
-    final games=[
-      ['Tap Rush','Arcade','PLAYABLE',Icons.touch_app_rounded,Color(0xFF6D28D9)],
-      ['Memory Grid','Puzzle','PLAYABLE',Icons.grid_view_rounded,Color(0xFF155E75)],
-      ['Nexora Runner','Runner','PLAYABLE',Icons.directions_run_rounded,Color(0xFF166534)],
-      ['Neon Circuit','Racing','PLAYABLE',Icons.directions_car_rounded,Color(0xFF9A3412)],
-      ['Block Forge','Puzzle','PLAYABLE',Icons.extension_rounded,Color(0xFF1D4ED8)],
-      ['Sky Dash','Arcade','PLAYABLE',Icons.flight_rounded,Color(0xFF0F766E)],
-      ['Color Clash','Arcade','PLAYABLE',Icons.palette_rounded,Color(0xFFBE185D)],
-      ['Reaction Rush','Arcade','PLAYABLE',Icons.flash_on_rounded,Color(0xFFB45309)],
-      ['Number Sprint','Puzzle','PLAYABLE',Icons.calculate_rounded,Color(0xFF047857)],
-      ['Dodge Zone','Runner','PLAYABLE',Icons.shield_rounded,Color(0xFF7C3AED)],
-    ].where((g)=>filter=='All'||g[1]==filter).toList();
-    return ListView(padding:const EdgeInsets.all(16),children:[
-      const Text('Game Hub',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
-      const SizedBox(height:5),const Text('Katalog game original Nexora. Offline dan online akan ditambahkan bertahap.'),
-      const SizedBox(height:16),
+    final visible=games.where((g)=>filter=='All'||g[1]==filter).toList();
+    return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,110),children:[
+      Container(
+        padding:const EdgeInsets.all(22),
+        decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF4C1D95),Color(0xFF111827),Color(0xFF0F172A)])),
+        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Row(children:[Container(width:52,height:52,decoration:BoxDecoration(color:Colors.white12,borderRadius:BorderRadius.circular(17)),child:const Icon(Icons.sports_esports_rounded,size:28)),const Spacer(),const _Badge('10 GAMES')]),
+          const SizedBox(height:20),
+          const Text('Nexora Arcade',style:TextStyle(fontSize:29,fontWeight:FontWeight.w900)),
+          const SizedBox(height:6),
+          const Text('Mini-game original dengan kontrol cepat, skor, combo, dan gameplay yang bisa langsung dimainkan.'),
+          const SizedBox(height:16),
+          FilledButton.icon(onPressed:()=>openGame('Tap Rush'),icon:const Icon(Icons.play_arrow_rounded),label:const Text('Main sekarang')),
+        ]),
+      ),
+      const SizedBox(height:20),
       SizedBox(height:42,child:ListView.separated(scrollDirection:Axis.horizontal,itemCount:categories.length,itemBuilder:(c,i)=>ChoiceChip(label:Text(categories[i]),selected:filter==categories[i],onSelected:(_)=>setState(()=>filter=categories[i])),separatorBuilder:(context,index)=>const SizedBox(width:8))),
-      const SizedBox(height:16),
-      Card(child:ListTile(leading:const CircleAvatar(child:Icon(Icons.emoji_events_rounded)),title:const Text('Leaderboard',style:TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Skor terbaik dan ranking pemain Nexora.'),trailing:const Icon(Icons.chevron_right_rounded))),
+      const SizedBox(height:18),
+      Row(children:[const Expanded(child:Text('All Games',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900))),Text('${visible.length} game',style:Theme.of(context).textTheme.bodySmall)]),
       const SizedBox(height:10),
-      for(final g in games) _Game(g[0] as String,'${g[1]} • game original Nexora',g[3] as IconData,g[2] as String,g[4] as Color),
+      GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:visible.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:.9),itemBuilder:(context,i){
+        final g=visible[i];
+        return _ArcadeTile(title:g[0] as String,category:g[1] as String,icon:g[3] as IconData,color:g[4] as Color,onTap:()=>openGame(g[0] as String));
+      }),
+      const SizedBox(height:14),
+      Card(child:ListTile(leading:const CircleAvatar(child:Icon(Icons.emoji_events_rounded)),title:const Text('Leaderboard',style:TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Skor terbaik Nexora akan ditampilkan di sini.'),trailing:const Icon(Icons.chevron_right_rounded))),
     ]);
   }
+}
+class _ArcadeTile extends StatelessWidget{
+  final String title,category; final IconData icon; final Color color; final VoidCallback onTap;
+  const _ArcadeTile({required this.title,required this.category,required this.icon,required this.color,required this.onTap});
+  @override Widget build(BuildContext context)=>Material(
+    color:const Color(0xFF111522),borderRadius:BorderRadius.circular(22),
+    child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(22),child:Container(
+      padding:const EdgeInsets.all(15),
+      decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[color.withValues(alpha:.55),const Color(0xFF111522)])),
+      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Row(children:[Container(width:52,height:52,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(17)),child:Icon(icon,size:27)),const Spacer(),const Icon(Icons.play_circle_fill_rounded,size:28)]),
+        const Spacer(),
+        Text(category.toUpperCase(),style:const TextStyle(fontSize:10,fontWeight:FontWeight.w900,letterSpacing:1.1)),
+        const SizedBox(height:4),Text(title,style:const TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
+      ]),
+    )),
+  );
 }
 class _Game extends StatelessWidget {
   final String title,desc,badge; final IconData icon; final Color color;
@@ -552,13 +601,32 @@ class _MusicState extends State<MusicPage>{
     player.onDurationChanged.listen((d){if(mounted)setState(()=>duration=d);});
   }
   Uint8List _wav(double base){
-    const sr=16000, seconds=7; final count=sr*seconds; final data=ByteData(44+count*2);
-    void w32(int o,int v){data.setUint32(o,v,Endian.little);} void w16(int o,int v){data.setUint16(o,v,Endian.little);}
-    final hdr='RIFFWAVEfmt data'.codeUnits; for(int i=0;i<hdr.length&&i<16;i++){data.setUint8(i,hdr[i]);}
-    w32(4,36+count*2); w32(16,16); w16(20,1); w16(22,1); w32(24,sr); w32(28,sr*2); w16(32,2); w16(34,16); w32(40,count*2);
-    for(int i=0;i<count;i++){final t=i/sr; final beat=(t*1.7)%1; final env=min(1.0,min(t*8,(seconds-t)*4)); final freq=base*(1+0.08*sin(2*pi*0.45*t));
-      var s=0.34*sin(2*pi*freq*t)+0.16*sin(2*pi*freq*2*t)+0.08*sin(2*pi*freq*3*t); if(beat<0.06)s+=0.18*sin(2*pi*70*t)*(1-beat/0.06);
-      data.setInt16(44+i*2,(s*env*28000).clamp(-32768,32767).toInt(),Endian.little);}
+    const sr=22050, seconds=8, channels=1, bits=16;
+    final count=sr*seconds;
+    final dataBytes=count*2;
+    final data=ByteData(44+dataBytes);
+    void w32(int o,int v)=>data.setUint32(o,v,Endian.little);
+    void w16(int o,int v)=>data.setUint16(o,v,Endian.little);
+    void ascii(int o,String s){for(int i=0;i<s.length;i++)data.setUint8(o+i,s.codeUnitAt(i));}
+    ascii(0,'RIFF'); w32(4,36+dataBytes); ascii(8,'WAVE');
+    ascii(12,'fmt '); w32(16,16); w16(20,1); w16(22,channels);
+    w32(24,sr); w32(28,sr*channels*bits~/8); w16(32,channels*bits~/8); w16(34,bits);
+    ascii(36,'data'); w32(40,dataBytes);
+    for(int i=0;i<count;i++){
+      final t=i/sr;
+      final fadeIn=min(1.0,t*12);
+      final fadeOut=min(1.0,(seconds-t)*5);
+      final env=fadeIn*fadeOut;
+      final pulse=(sin(2*pi*1.25*t)>0.72)?1.0:0.0;
+      final melody=base*(1+0.06*sin(2*pi*0.33*t));
+      var s=0.24*sin(2*pi*melody*t);
+      s+=0.12*sin(2*pi*melody*1.5*t);
+      s+=0.07*sin(2*pi*melody*2*t);
+      s+=0.045*sin(2*pi*(base/2)*t);
+      s+=pulse*0.08*sin(2*pi*55*t);
+      final sample=(s*env*26000).clamp(-32768,32767).toInt();
+      data.setInt16(44+i*2,sample,Endian.little);
+    }
     return data.buffer.asUint8List();
   }
   Future<void> playSelected() async{await player.play(BytesSource(_wav(tracks[selected].$3),mimeType:'audio/wav'));}
@@ -569,7 +637,7 @@ class _MusicState extends State<MusicPage>{
     final t=tracks[selected]; final maxMs=max(1,duration.inMilliseconds); final value=min(position.inMilliseconds.toDouble(),maxMs.toDouble());
     return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,110),children:[
       Row(children:[const Expanded(child:Text('Nexora Music',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900))),Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),decoration:BoxDecoration(color:Theme.of(context).colorScheme.primary.withValues(alpha:.15),borderRadius:BorderRadius.circular(20)),child:const Text('ORIGINAL',style:TextStyle(fontSize:10,fontWeight:FontWeight.w900)))]),
-      const SizedBox(height:4),const Text('Player nyata • Library • Playlist • Made for you'),const SizedBox(height:14),
+      const SizedBox(height:4),const Text('Player audio aktif • Library • Playlist • Made for you'),const SizedBox(height:14),
       TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari lagu atau artis...',filled:true,border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),
       const SizedBox(height:18),
       Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:LinearGradient(colors:[t.$4,const Color(0xFF111522)])),child:Column(children:[
