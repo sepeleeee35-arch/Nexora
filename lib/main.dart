@@ -533,7 +533,37 @@ class _MusicState extends State<MusicPage>{
       const Text('Home • Explore • Library • Playlists • Player'),
       const SizedBox(height:12),
       TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari lagu, album, atau artis...',filled:true,border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),
+      const SizedBox(height:12),
+      SizedBox(height:42,child:ListView(scrollDirection:Axis.horizontal,children:[
+        _MusicFilter('Home',true),_MusicFilter('Explore',false),_MusicFilter('Library',false),_MusicFilter('Playlists',false),
+      ])),
       const SizedBox(height:16),
+      const _Title('Recently played'),
+      const SizedBox(height:8),
+      SizedBox(height:118,child:ListView(scrollDirection:Axis.horizontal,children:[
+        _MusicTile('Night Drive','Nexora Studio',Icons.nightlight_rounded),
+        _MusicTile('Afterlight','Nexora Studio',Icons.wb_twilight_rounded),
+        _MusicTile('Pixel Rain','Nexora Studio',Icons.water_drop_rounded),
+        _MusicTile('Safe Horizon','Nexora Studio',Icons.explore_rounded),
+      ])),
+      const SizedBox(height:18),
+      const _Title('Made for you'),
+      const SizedBox(height:8),
+      SizedBox(height:105,child:ListView(scrollDirection:Axis.horizontal,children:[
+        _MusicCard('Daily Mix','Campuran harian',Icons.auto_awesome_rounded),
+        _MusicCard('Game Focus','Musik untuk bermain',Icons.sports_esports_rounded),
+        _MusicCard('Late Night','Chill malam',Icons.nightlight_rounded),
+      ])),
+      const SizedBox(height:18),
+      Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(borderRadius:BorderRadius.circular(20),color:const Color(0xFF121827)),child:Row(children:[
+        const CircleAvatar(radius:27,child:Icon(Icons.queue_music_rounded)),const SizedBox(width:12),
+        const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Text('Your playlists',style:TextStyle(fontWeight:FontWeight.w900,fontSize:17)),
+          SizedBox(height:3),Text('Buat playlist dan simpan lagu favoritmu.'),
+        ])),
+        IconButton(onPressed:(){},icon:const Icon(Icons.add_rounded)),
+      ])),
+      const SizedBox(height:18),
       Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF312E81),Color(0xFF111827)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
         const Text('NEXORA MUSIC',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.4)),const SizedBox(height:5),const Text('Your soundtrack',style:TextStyle(fontSize:23,fontWeight:FontWeight.w900)),const SizedBox(height:12),
         Row(children:[const CircleAvatar(radius:38,child:Icon(Icons.album_rounded,size:38)),const SizedBox(width:14),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(t.$1,style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(t.$2),const SizedBox(height:8),const LinearProgressIndicator(value:.34)]))]),
@@ -546,6 +576,17 @@ class _MusicState extends State<MusicPage>{
       const SizedBox(height:10),
       Card(child:ListTile(leading:const Icon(Icons.workspace_premium_rounded),title:Text(premium?'Nexora Premium aktif':'Nexora Premium'),subtitle:Text(premium?'Mode premium demo aktif.':'Premium akan punya fitur tambahan yang kamu tentukan.'),trailing:FilledButton(onPressed:()=>setState(()=>premium=!premium),child:Text(premium?'ON':'VIEW')))),
     ]);}
+}
+class _MusicFilter extends StatelessWidget{
+  final String text;final bool active;const _MusicFilter(this.text,this.active);
+  @override Widget build(BuildContext context)=>Padding(padding:const EdgeInsets.only(right:8),child:ChoiceChip(label:Text(text),selected:active,onSelected:(_){},));
+}
+class _MusicTile extends StatelessWidget{
+  final String title,artist;final IconData icon;const _MusicTile(this.title,this.artist,this.icon);
+  @override Widget build(BuildContext context)=>Container(width:125,margin:const EdgeInsets.only(right:10),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Expanded(child:Container(decoration:BoxDecoration(borderRadius:BorderRadius.circular(16),gradient:LinearGradient(colors:[Theme.of(context).colorScheme.primary,Colors.black87])),child:Center(child:Icon(icon,size:34)))),
+    const SizedBox(height:6),Text(title,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w800)),Text(artist,overflow:TextOverflow.ellipsis,style:Theme.of(context).textTheme.bodySmall),
+  ]));
 }
 class _MusicCard extends StatelessWidget{
   final String title,sub;final IconData icon;const _MusicCard(this.title,this.sub,this.icon);
