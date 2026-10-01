@@ -104,6 +104,14 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
 
   String _fmt(Duration d) => '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
 
+  void _showQueue() {
+    showModalBottomSheet<void>(context: context, showDragHandle: true, builder: (_) => SafeArea(child: ListView(shrinkWrap: true, children: [
+      const ListTile(leading: Icon(Icons.queue_music_rounded), title: Text('Antrean', style: TextStyle(fontWeight: FontWeight.w900))),
+      if (_player.queue.isEmpty) const ListTile(title: Text('Antrean kosong')),
+      ..._player.queue.map((track) => ListTile(leading: const Icon(Icons.music_note_rounded), title: Text(track.title), subtitle: Text(track.artistName), onTap: () { Navigator.pop(context); _player.play(track); })),
+    ])));
+  }
+
   @override
   void dispose() {
     _positionSub?.cancel();
@@ -161,7 +169,8 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
             subtitle: Text(_error),
             trailing: IconButton(onPressed: _loadTrending, icon: const Icon(Icons.refresh_rounded)),
           )),
-        if (current != null)
+        if (current != null) ...[
+          Align(alignment: Alignment.centerRight, child: TextButton.icon(onPressed: _showQueue, icon: const Icon(Icons.queue_music_rounded), label: const Text('Lihat antrean'))),
           _NowPlayingCard(
             track: current,
             playing: _playing,
@@ -240,6 +249,10 @@ class _NowPlayingCard extends StatelessWidget {
             IconButton(onPressed: onPrevious, icon: const Icon(Icons.skip_previous_rounded, size: 32)),
             FilledButton(onPressed: onPlayPause, style: FilledButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(18)), child: Icon(playing ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 30)),
             IconButton(onPressed: onNext, icon: const Icon(Icons.skip_next_rounded, size: 32)),
+          ]),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            IconButton(tooltip: 'Shuffle', onPressed: () { _player.shuffle = !_player.shuffle; setState(() {}); }, color: _player.shuffle ? Theme.of(context).colorScheme.primary : null, icon: const Icon(Icons.shuffle_rounded)),
+            IconButton(tooltip: 'Repeat', onPressed: () { _player.repeat = !_player.repeat; setState(() {}); }, color: _player.repeat ? Theme.of(context).colorScheme.primary : null, icon: const Icon(Icons.repeat_rounded)),
           ]),
         ]),
       ),
