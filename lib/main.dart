@@ -319,7 +319,7 @@ class _GamesState extends State<GamesPage>{
       const Text('Game Hub',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
       const SizedBox(height:5),const Text('Katalog game original Nexora. Offline dan online akan ditambahkan bertahap.'),
       const SizedBox(height:16),
-      SizedBox(height:42,child:ListView.separated(scrollDirection:Axis.horizontal,itemCount:categories.length,itemBuilder:(c,i)=>ChoiceChip(label:Text(categories[i]),selected:filter==categories[i],onSelected:(_)=>setState(()=>filter=categories[i])),separatorBuilder:(_,_)=>const SizedBox(width:8))),
+      SizedBox(height:42,child:ListView.separated(scrollDirection:Axis.horizontal,itemCount:categories.length,itemBuilder:(c,i)=>ChoiceChip(label:Text(categories[i]),selected:filter==categories[i],onSelected:(_)=>setState(()=>filter=categories[i])),separatorBuilder:(context,index)=>const SizedBox(width:8))),
       const SizedBox(height:16),
       Card(child:ListTile(leading:const CircleAvatar(child:Icon(Icons.emoji_events_rounded)),title:const Text('Leaderboard',style:TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Skor terbaik dan ranking pemain Nexora.'),trailing:const Icon(Icons.chevron_right_rounded))),
       const SizedBox(height:10),
@@ -541,7 +541,7 @@ class _MusicState extends State<MusicPage>{
 }
 class _MusicCard extends StatelessWidget{
   final String title,sub;final IconData icon;const _MusicCard(this.title,this.sub,this.icon);
-  @override Widget build(BuildContext context)=>Container(width:170,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]);
+  @override Widget build(BuildContext context)=>Container(width:170,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]));
 }
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
