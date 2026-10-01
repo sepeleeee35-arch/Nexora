@@ -312,149 +312,57 @@ class GamesPage extends StatefulWidget {
 }
 class _GamesState extends State<GamesPage>{
   String filter='All';
-  final categories=const ['All','Arcade','Puzzle','Racing','Runner'];
+  final categories=const ['All','Arcade','Puzzle','Action','Racing'];
   final games=const [
-    ['Tap Rush','Arcade','PLAYABLE',Icons.touch_app_rounded,Color(0xFF7C3AED)],
-    ['Memory Grid','Puzzle','PLAYABLE',Icons.grid_view_rounded,Color(0xFF0891B2)],
-    ['Nexora Runner','Runner','PLAYABLE',Icons.directions_run_rounded,Color(0xFF16A34A)],
-    ['Neon Circuit','Racing','PLAYABLE',Icons.directions_car_rounded,Color(0xFFF97316)],
-    ['Block Forge','Puzzle','PLAYABLE',Icons.extension_rounded,Color(0xFF2563EB)],
-    ['Sky Dash','Arcade','PLAYABLE',Icons.flight_rounded,Color(0xFF0D9488)],
-    ['Color Clash','Arcade','PLAYABLE',Icons.palette_rounded,Color(0xFFDB2777)],
-    ['Reaction Rush','Arcade','PLAYABLE',Icons.flash_on_rounded,Color(0xFFF59E0B)],
-    ['Number Sprint','Puzzle','PLAYABLE',Icons.calculate_rounded,Color(0xFF059669)],
-    ['Dodge Zone','Runner','PLAYABLE',Icons.shield_rounded,Color(0xFF8B5CF6)],
+    ['Tap Rush','Arcade','Fast tap challenge',Icons.touch_app_rounded,Color(0xFF7C3AED)],
+    ['Memory Grid','Puzzle','Match the hidden pairs',Icons.grid_view_rounded,Color(0xFF0891B2)],
+    ['Neon Circuit','Racing','Switch lanes, beat traffic',Icons.directions_car_rounded,Color(0xFFF97316)],
+    ['Block Forge','Puzzle','Build and break combos',Icons.extension_rounded,Color(0xFF2563EB)],
+    ['Sky Dash','Action','Dodge the incoming storm',Icons.flight_rounded,Color(0xFF0D9488)],
+    ['Color Clash','Arcade','Hit the correct color',Icons.palette_rounded,Color(0xFFDB2777)],
+    ['Reaction Rush','Arcade','React before the timer',Icons.flash_on_rounded,Color(0xFFF59E0B)],
+    ['Number Sprint','Puzzle','Solve before time runs out',Icons.calculate_rounded,Color(0xFF059669)],
+    ['Dodge Zone','Action','Survive the danger zone',Icons.shield_rounded,Color(0xFF8B5CF6)],
+    ['Nexora Runner','Racing','Endless lane survival',Icons.directions_run_rounded,Color(0xFF16A34A)],
   ];
   void openGame(String title){
     final Widget game=switch(title){
-      'Memory Grid'=>const MemoryGridPage(),
-      'Reaction Rush'=>const ReactionRushPage(),
-      'Color Clash'=>const ColorClashPage(),
-      'Number Sprint'=>const NumberSprintPage(),
-      'Dodge Zone'=>const DodgeZonePage(),
-      'Nexora Runner'=>const NexoraRunnerPage(),
-      'Neon Circuit'=>const NexoraRunnerPage(mode:'Neon Circuit'),
-      'Sky Dash'=>const NexoraRunnerPage(mode:'Sky Dash'),
-      'Block Forge'=>const BlockForgePage(),
-      _=>const TapRushPage(),
+      'Memory Grid'=>const MemoryGridPage(),'Reaction Rush'=>const ReactionRushPage(),'Color Clash'=>const ColorClashPage(),
+      'Number Sprint'=>const NumberSprintPage(),'Dodge Zone'=>const DodgeZonePage(),'Nexora Runner'=>const NexoraRunnerPage(),
+      'Neon Circuit'=>const NexoraRunnerPage(mode:'Neon Circuit'),'Sky Dash'=>const NexoraRunnerPage(mode:'Sky Dash'),
+      'Block Forge'=>const BlockForgePage(),_=>const TapRushPage(),
     };
     Navigator.push(context,MaterialPageRoute(builder:(_)=>game));
   }
   @override Widget build(BuildContext context){
     final visible=games.where((g)=>filter=='All'||g[1]==filter).toList();
     return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,110),children:[
-      Container(
-        padding:const EdgeInsets.all(22),
-        decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF4C1D95),Color(0xFF111827),Color(0xFF0F172A)])),
-        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Row(children:[Container(width:52,height:52,decoration:BoxDecoration(color:Colors.white12,borderRadius:BorderRadius.circular(17)),child:const Icon(Icons.sports_esports_rounded,size:28)),const Spacer(),const _Badge('10 GAMES')]),
-          const SizedBox(height:20),
-          const Text('Nexora Arcade',style:TextStyle(fontSize:29,fontWeight:FontWeight.w900)),
-          const SizedBox(height:6),
-          const Text('Mini-game original dengan kontrol cepat, skor, combo, dan gameplay yang bisa langsung dimainkan.'),
-          const SizedBox(height:16),
-          FilledButton.icon(onPressed:()=>openGame('Tap Rush'),icon:const Icon(Icons.play_arrow_rounded),label:const Text('Main sekarang')),
-        ]),
-      ),
-      const SizedBox(height:20),
+      Container(padding:const EdgeInsets.all(22),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF5B21B6),Color(0xFF172554),Color(0xFF0B1020)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Row(children:[Container(width:56,height:56,decoration:BoxDecoration(color:Colors.white12,borderRadius:BorderRadius.circular(18)),child:const Icon(Icons.sports_esports_rounded,size:30)),const Spacer(),const _Pill('10 PLAYABLE')]),
+        const SizedBox(height:20),const Text('Nexora Arcade',style:TextStyle(fontSize:31,fontWeight:FontWeight.w900)),
+        const SizedBox(height:6),const Text('Game original Nexora dengan sesi singkat, kontrol mobile, skor, combo, dan replay cepat.'),
+        const SizedBox(height:18),Row(children:[FilledButton.icon(onPressed:()=>openGame('Tap Rush'),icon:const Icon(Icons.play_arrow_rounded),label:const Text('Main cepat')),const SizedBox(width:10),OutlinedButton.icon(onPressed:()=>setState(()=>filter='All'),icon:const Icon(Icons.explore_rounded),label:const Text('Jelajahi'))]),
+      ])),
+      const SizedBox(height:20),const Text('Categories',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:10),
       SizedBox(height:42,child:ListView.separated(scrollDirection:Axis.horizontal,itemCount:categories.length,itemBuilder:(c,i)=>ChoiceChip(label:Text(categories[i]),selected:filter==categories[i],onSelected:(_)=>setState(()=>filter=categories[i])),separatorBuilder:(context,index)=>const SizedBox(width:8))),
-      const SizedBox(height:18),
-      Row(children:[const Expanded(child:Text('All Games',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900))),Text('${visible.length} game',style:Theme.of(context).textTheme.bodySmall)]),
-      const SizedBox(height:10),
-      GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:visible.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:.9),itemBuilder:(context,i){
-        final g=visible[i];
-        return _ArcadeTile(title:g[0] as String,category:g[1] as String,icon:g[3] as IconData,color:g[4] as Color,onTap:()=>openGame(g[0] as String));
+      const SizedBox(height:20),Row(children:[const Expanded(child:Text('Play & Discover',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900))),Text(visible.length.toString()+' games',style:Theme.of(context).textTheme.bodySmall)]),const SizedBox(height:11),
+      GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:visible.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:11,mainAxisSpacing:11,childAspectRatio:.78),itemBuilder:(context,i){
+        final g=visible[i]; return _GameCard(title:g[0] as String,category:g[1] as String,description:g[2] as String,icon:g[3] as IconData,color:g[4] as Color,onTap:()=>openGame(g[0] as String));
       }),
-      const SizedBox(height:14),
-      Card(child:ListTile(leading:const CircleAvatar(child:Icon(Icons.emoji_events_rounded)),title:const Text('Leaderboard',style:TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Skor terbaik Nexora akan ditampilkan di sini.'),trailing:const Icon(Icons.chevron_right_rounded))),
+      const SizedBox(height:14),Card(child:ListTile(leading:const CircleAvatar(child:Icon(Icons.emoji_events_rounded)),title:const Text('Arcade progress',style:TextStyle(fontWeight:FontWeight.w800)),subtitle:const Text('Leaderboard, achievements, dan skor akun akan dihubungkan setelah sistem akun selesai.'),trailing:const Icon(Icons.chevron_right_rounded))),
     ]);
   }
 }
-class _ArcadeTile extends StatelessWidget{
-  final String title,category; final IconData icon; final Color color; final VoidCallback onTap;
-  const _ArcadeTile({required this.title,required this.category,required this.icon,required this.color,required this.onTap});
-  @override Widget build(BuildContext context)=>Material(
-    color:const Color(0xFF111522),borderRadius:BorderRadius.circular(22),
-    child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(22),child:Container(
-      padding:const EdgeInsets.all(15),
-      decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[color.withValues(alpha:.55),const Color(0xFF111522)])),
-      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Row(children:[Container(width:52,height:52,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(17)),child:Icon(icon,size:27)),const Spacer(),const Icon(Icons.play_circle_fill_rounded,size:28)]),
-        const Spacer(),
-        Text(category.toUpperCase(),style:const TextStyle(fontSize:10,fontWeight:FontWeight.w900,letterSpacing:1.1)),
-        const SizedBox(height:4),Text(title,style:const TextStyle(fontSize:18,fontWeight:FontWeight.w900)),
-      ]),
-    )),
-  );
-}
-class _Game extends StatelessWidget {
-  final String title,desc,badge; final IconData icon; final Color color;
-  const _Game(this.title,this.desc,this.icon,this.badge,this.color);
-  @override Widget build(BuildContext context)=>Card(
-    margin:const EdgeInsets.only(bottom:12),
-    clipBehavior:Clip.antiAlias,
-    child:InkWell(
-      onTap: badge=='PLAYABLE' ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => title == 'Memory Grid' ? const MemoryGridPage() : title == 'Reaction Rush' ? const ReactionRushPage() : title == 'Color Clash' ? const ColorClashPage() : title == 'Number Sprint' ? const NumberSprintPage() : title == 'Dodge Zone' ? const DodgeZonePage() : title == 'Nexora Runner' ? const NexoraRunnerPage() : title == 'Neon Circuit' ? const NexoraRunnerPage(mode: 'Neon Circuit') : title == 'Sky Dash' ? const NexoraRunnerPage(mode: 'Sky Dash') : title == 'Block Forge' ? const BlockForgePage() : const TapRushPage())) : null,
-      child:Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(gradient:LinearGradient(colors:[color.withValues(alpha:.45),const Color(0xFF111522)])),child:Row(children:[
-        Container(width:60,height:60,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(17)),child:Icon(icon,size:30)),
-        const SizedBox(width:13),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Row(children:[Expanded(child:Text(title,style:const TextStyle(fontSize:17,fontWeight:FontWeight.w900))),_Badge(badge)]),
-          const SizedBox(height:5),Text(desc),
-        ])),
-        if(badge=='PLAYABLE') const Icon(Icons.play_circle_fill_rounded),
-      ])),
-    ),
-  );
-}
-class _Badge extends StatelessWidget {
-  final String text; const _Badge(this.text);
-  @override Widget build(BuildContext context)=>Container(padding:const EdgeInsets.symmetric(horizontal:8,vertical:4),decoration:BoxDecoration(color:Theme.of(context).colorScheme.primary.withValues(alpha:.18),borderRadius:BorderRadius.circular(20)),child:Text(text,style:TextStyle(fontSize:9,fontWeight:FontWeight.w900,color:Theme.of(context).colorScheme.primary)));
+class _Pill extends StatelessWidget{final String text;const _Pill(this.text);@override Widget build(BuildContext context)=>Container(padding:const EdgeInsets.symmetric(horizontal:11,vertical:7),decoration:BoxDecoration(color:Colors.white12,borderRadius:BorderRadius.circular(30)),child:Text(text,style:const TextStyle(fontSize:10,fontWeight:FontWeight.w900,letterSpacing:.8)));}
+class _GameCard extends StatelessWidget{
+  final String title,category,description;final IconData icon;final Color color;final VoidCallback onTap;
+  const _GameCard({required this.title,required this.category,required this.description,required this.icon,required this.color,required this.onTap});
+  @override Widget build(BuildContext context)=>Material(color:const Color(0xFF111522),borderRadius:BorderRadius.circular(22),child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(22),child:Container(padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[color.withValues(alpha:.48),const Color(0xFF111522)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Row(children:[Container(width:52,height:52,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(17)),child:Icon(icon,size:27)),const Spacer(),Container(width:34,height:34,decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(12)),child:const Icon(Icons.play_arrow_rounded,size:20))]),
+    const Spacer(),Text(category.toUpperCase(),style:const TextStyle(fontSize:9,fontWeight:FontWeight.w900,letterSpacing:1.2)),const SizedBox(height:4),Text(title,style:const TextStyle(fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:4),Text(description,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:11)),const SizedBox(height:11),Row(children:[const Icon(Icons.bolt_rounded,size:15),const SizedBox(width:4),const Text('PLAY NOW',style:TextStyle(fontSize:10,fontWeight:FontWeight.w900))]),
+  ]))));
 }
 
-class TapRushPage extends StatefulWidget {
-  const TapRushPage({super.key});
-  @override State<TapRushPage> createState()=>_TapRushState();
-}
-class _TapRushState extends State<TapRushPage> {
-  final rng=Random(); Timer? timer; int score=0, seconds=20; bool playing=false; double x=.5,y=.5;
-  void start(){
-    timer?.cancel();
-    setState((){score=0;seconds=20;playing=true;move();});
-    timer=Timer.periodic(const Duration(seconds:1),(_){
-      if(!mounted)return;
-      if(seconds<=1){timer?.cancel();setState((){seconds=0;playing=false;});}
-      else { setState(()=>seconds--); }
-    });
-  }
-  void move(){x=.12+rng.nextDouble()*.76;y=.12+rng.nextDouble()*.66;}
-  @override void dispose(){timer?.cancel();super.dispose();}
-  @override Widget build(BuildContext context)=>Scaffold(
-    appBar:AppBar(title:const Text('Tap Rush')),
-    body:Padding(padding:const EdgeInsets.all(16),child:Column(children:[
-      Row(children:[Expanded(child:_Score('Score','$score')),const SizedBox(width:10),Expanded(child:_Score('Time','${seconds}s'))]),
-      const SizedBox(height:14),
-      Expanded(child:Container(clipBehavior:Clip.antiAlias,decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF161B2B),Color(0xFF24133E)])),child:LayoutBuilder(builder:(context,c)=>Stack(children:[
-        if(playing) Positioned(left:c.maxWidth*x-30,top:c.maxHeight*y-30,child:GestureDetector(
-          onTap:()=>setState((){score++;move();}),
-          child:Container(width:60,height:60,decoration:BoxDecoration(shape:BoxShape.circle,color:Theme.of(context).colorScheme.primary,boxShadow:[BoxShadow(color:Theme.of(context).colorScheme.primary.withValues(alpha:.45),blurRadius:22,spreadRadius:4)]),child:const Icon(Icons.touch_app_rounded,size:29)),
-        )) else Center(child:Column(mainAxisSize:MainAxisSize.min,children:[
-          Icon(Icons.touch_app_rounded,size:60,color:Theme.of(context).colorScheme.primary),
-          const SizedBox(height:12),
-          Text(seconds==0?'Selesai! Skor $score':'Tekan Start untuk bermain',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w800)),
-        ])),
-      ])))),
-      const SizedBox(height:14),
-      SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:playing?null:start,icon:const Icon(Icons.play_arrow_rounded),label:Text(seconds==0?'Main Lagi':'Start'))),
-    ])),
-  );
-}
-class NexoraRunnerPage extends StatefulWidget{final String mode;const NexoraRunnerPage({super.key,this.mode='Nexora Runner'});@override State<NexoraRunnerPage> createState()=>_NexoraRunnerState();}
-class _NexoraRunnerState extends State<NexoraRunnerPage>{Timer? timer;final rng=Random();int lane=1,score=0,lives=3,obstacle=1;bool running=false;
-void start(){timer?.cancel();setState((){score=0;lives=3;lane=1;obstacle=rng.nextInt(3);running=true;});timer=Timer.periodic(const Duration(milliseconds:650),(_){if(!mounted)return;setState((){if(obstacle==lane){lives--;if(lives<=0){running=false;timer?.cancel();}}else{score++;}obstacle=rng.nextInt(3);});});}
-@override void dispose(){timer?.cancel();super.dispose();}
-@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text(widget.mode)),body:Padding(padding:const EdgeInsets.all(16),child:Column(children:[Row(children:[Expanded(child:_Score('Score',score.toString())),const SizedBox(width:8),Expanded(child:_Score('Lives',lives.toString()))]),const SizedBox(height:14),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d)=>setState(()=>lane=(lane+(d.delta.dx>0?1:-1)).clamp(0,2)),onTap:()=>setState(()=>lane=(lane+1)%3),child:Container(decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF101827),Color(0xFF23113E)])),child:Stack(children:[Row(children:[for(int i=0;i<3;i++)Expanded(child:Container(margin:const EdgeInsets.symmetric(horizontal:4),color:Colors.white.withValues(alpha:.03)))]),if(running)Align(alignment:Alignment((lane-1)*.7,.75),child:Icon(widget.mode=='Sky Dash'?Icons.flight_takeoff_rounded:Icons.directions_car_filled_rounded,size:58)),if(running)Align(alignment:Alignment((obstacle-1)*.7,-.65),child:const Icon(Icons.warning_rounded,size:52)),if(!running)Center(child:Text(score==0?'Geser atau tap untuk pindah lane':'Game Over • score $score',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)))])))),const SizedBox(height:12),SizedBox(width:double.infinity,child:FilledButton(onPressed:running?null:start,child:Text(running?'RUNNING':'START')))])));}
-class BlockForgePage extends StatefulWidget{const BlockForgePage({super.key});@override State<BlockForgePage> createState()=>_BlockForgeState();}
-class _BlockForgeState extends State<BlockForgePage>{final rng=Random();late List<int> cells;int score=0;@override void initState(){super.initState();cells=List.generate(9,(_)=>rng.nextInt(4));}void tap(int i){setState((){cells[i]=(cells[i]+1)%5;if(cells[i]==0)score+=10;});}@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Block Forge')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[_Score('Score',score.toString()),const SizedBox(height:14),const Text('Naikkan level blok sampai pecah.'),const SizedBox(height:18),Expanded(child:GridView.builder(gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:12,mainAxisSpacing:12),itemCount:9,itemBuilder:(c,i)=>InkWell(onTap:()=>tap(i),child:AnimatedContainer(duration:const Duration(milliseconds:160),decoration:BoxDecoration(borderRadius:BorderRadius.circular(20),color:Theme.of(context).colorScheme.primary.withValues(alpha:.18+cells[i]*.12)),child:Center(child:Text(cells[i]==0?'BREAK':cells[i].toString(),style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900)))))))])));}
 class _Score extends StatelessWidget {
   final String label,value; const _Score(this.label,this.value);
   @override Widget build(BuildContext context)=>Card(child:Padding(padding:const EdgeInsets.symmetric(horizontal:15,vertical:12),child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(label),Text(value,style:const TextStyle(fontWeight:FontWeight.w900))])));
@@ -585,76 +493,37 @@ class MusicPage extends StatefulWidget {
 }
 class _MusicState extends State<MusicPage>{
   final AudioPlayer player=AudioPlayer();
-  int selected=0; bool playing=false; String query='';
-  Duration position=Duration.zero; Duration duration=const Duration(seconds:7);
+  int selected=0;bool playing=false;bool shuffle=false;bool repeat=false;String query='';
+  Duration position=Duration.zero,duration=Duration.zero;
+  final liked=<String>{};
   final tracks=const [
-    ('Nexora Intro','Nexora Studio',440.0,Color(0xFF7C3AED)),
-    ('Afterlight','Nexora Studio',330.0,Color(0xFF2563EB)),
-    ('Night Drive','Nexora Studio',220.0,Color(0xFF0891B2)),
-    ('Pixel Rain','Nexora Studio',523.0,Color(0xFFDB2777)),
-    ('Safe Horizon','Nexora Studio',294.0,Color(0xFF059669)),
-    ('Midnight Bloom','Nexora Studio',196.0,Color(0xFFD97706)),
+    ('Nexora Intro','Nexora Studio',440.0,Color(0xFF7C3AED)),('Afterlight','Nexora Studio',330.0,Color(0xFF2563EB)),
+    ('Night Drive','Nexora Studio',220.0,Color(0xFF0891B2)),('Pixel Rain','Nexora Studio',523.0,Color(0xFFDB2777)),
+    ('Safe Horizon','Nexora Studio',294.0,Color(0xFF059669)),('Midnight Bloom','Nexora Studio',196.0,Color(0xFFD97706)),
+    ('Digital Sunrise','Nexora Studio',392.0,Color(0xFFDC2626)),('Neon Memory','Nexora Studio',262.0,Color(0xFF4F46E5)),
   ];
-  @override void initState(){super.initState();
-    player.onPlayerStateChanged.listen((s){if(mounted)setState(()=>playing=s==PlayerState.playing);});
-    player.onPositionChanged.listen((p){if(mounted)setState(()=>position=p);});
-    player.onDurationChanged.listen((d){if(mounted)setState(()=>duration=d);});
-  }
-  Uint8List _wav(double base){
-    const sr=22050, seconds=8, channels=1, bits=16;
-    final count=sr*seconds;
-    final dataBytes=count*2;
-    final data=ByteData(44+dataBytes);
-    void w32(int o,int v)=>data.setUint32(o,v,Endian.little);
-    void w16(int o,int v)=>data.setUint16(o,v,Endian.little);
-    void ascii(int o,String s){for(int i=0;i<s.length;i++)data.setUint8(o+i,s.codeUnitAt(i));}
-    ascii(0,'RIFF'); w32(4,36+dataBytes); ascii(8,'WAVE');
-    ascii(12,'fmt '); w32(16,16); w16(20,1); w16(22,channels);
-    w32(24,sr); w32(28,sr*channels*bits~/8); w16(32,channels*bits~/8); w16(34,bits);
-    ascii(36,'data'); w32(40,dataBytes);
-    for(int i=0;i<count;i++){
-      final t=i/sr;
-      final fadeIn=min(1.0,t*12);
-      final fadeOut=min(1.0,(seconds-t)*5);
-      final env=fadeIn*fadeOut;
-      final pulse=(sin(2*pi*1.25*t)>0.72)?1.0:0.0;
-      final melody=base*(1+0.06*sin(2*pi*0.33*t));
-      var s=0.24*sin(2*pi*melody*t);
-      s+=0.12*sin(2*pi*melody*1.5*t);
-      s+=0.07*sin(2*pi*melody*2*t);
-      s+=0.045*sin(2*pi*(base/2)*t);
-      s+=pulse*0.08*sin(2*pi*55*t);
-      final sample=(s*env*26000).clamp(-32768,32767).toInt();
-      data.setInt16(44+i*2,sample,Endian.little);
-    }
-    return data.buffer.asUint8List();
-  }
+  @override void initState(){super.initState();player.onPlayerStateChanged.listen((s){if(mounted)setState(()=>playing=s==PlayerState.playing);});player.onPositionChanged.listen((p){if(mounted)setState(()=>position=p);});player.onDurationChanged.listen((d){if(mounted)setState(()=>duration=d);});player.onPlayerComplete.listen((_)=>_completed());}
+  void _completed(){if(repeat){playSelected();return;}selectTrack(shuffle?Random().nextInt(tracks.length):(selected+1)%tracks.length);}
+  Uint8List _wav(double base){const sr=22050,seconds=12,channels=1,bits=16;final count=sr*seconds,dataBytes=count*2;final data=ByteData(44+dataBytes);void w32(int o,int v)=>data.setUint32(o,v,Endian.little);void w16(int o,int v)=>data.setUint16(o,v,Endian.little);void ascii(int o,String s){for(int i=0;i<s.length;i++)data.setUint8(o+i,s.codeUnitAt(i));}ascii(0,'RIFF');w32(4,36+dataBytes);ascii(8,'WAVE');ascii(12,'fmt ');w32(16,16);w16(20,1);w16(22,channels);w32(24,sr);w32(28,sr*channels*bits~/8);w16(32,channels*bits~/8);w16(34,bits);ascii(36,'data');w32(40,dataBytes);for(int i=0;i<count;i++){final t=i/sr,fadeIn=min(1.0,t*8),fadeOut=min(1.0,(seconds-t)*4),env=fadeIn*fadeOut;final beat=(sin(2*pi*2.0*t)>0.88)?1.0:0.0;final melody=base*(1+0.035*sin(2*pi*.22*t));var sw=.20*sin(2*pi*melody*t)+.10*sin(2*pi*melody*1.5*t)+.055*sin(2*pi*melody*2*t)+beat*.07*sin(2*pi*(base/2)*t);data.setInt16(44+i*2,(sw*env*27000).clamp(-32768,32767).toInt(),Endian.little);}return data.buffer.asUint8List();}
   Future<void> playSelected() async{await player.play(BytesSource(_wav(tracks[selected].$3),mimeType:'audio/wav'));}
-  Future<void> selectTrack(int i) async{setState(()=>selected=i);await playSelected();}
+  Future<void> selectTrack(int i) async{await player.stop();if(!mounted)return;setState(()=>{selected=i,position=Duration.zero});await playSelected();}
+  void toggleLike(){setState(()=>liked.contains(tracks[selected].$1)?liked.remove(tracks[selected].$1):liked.add(tracks[selected].$1));}
   @override void dispose(){player.dispose();super.dispose();}
-  @override Widget build(BuildContext context){
-    final filtered=tracks.where((t)=>t.$1.toLowerCase().contains(query.toLowerCase())||t.$2.toLowerCase().contains(query.toLowerCase())).toList();
-    final t=tracks[selected]; final maxMs=max(1,duration.inMilliseconds); final value=min(position.inMilliseconds.toDouble(),maxMs.toDouble());
-    return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,110),children:[
-      Row(children:[const Expanded(child:Text('Nexora Music',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900))),Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:6),decoration:BoxDecoration(color:Theme.of(context).colorScheme.primary.withValues(alpha:.15),borderRadius:BorderRadius.circular(20)),child:const Text('ORIGINAL',style:TextStyle(fontSize:10,fontWeight:FontWeight.w900)))]),
-      const SizedBox(height:4),const Text('Player audio aktif • Library • Playlist • Made for you'),const SizedBox(height:14),
-      TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari lagu atau artis...',filled:true,border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),
-      const SizedBox(height:18),
-      Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:LinearGradient(colors:[t.$4,const Color(0xFF111522)])),child:Column(children:[
-        Container(width:150,height:150,decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),color:Colors.black26),child:const Icon(Icons.album_rounded,size:76)),
-        const SizedBox(height:18),Text(t.$1,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900),textAlign:TextAlign.center),Text(t.$2),
-        Slider(value:value,min:0,max:maxMs.toDouble(),onChanged:(v)=>player.seek(Duration(milliseconds:v.toInt()))),
-        Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(_fmt(position)),Text(_fmt(duration))]),
-        Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>selectTrack((selected-1+tracks.length)%tracks.length),icon:const Icon(Icons.skip_previous_rounded,size:32)),FilledButton(onPressed:playing?()=>player.pause():playSelected,style:FilledButton.styleFrom(shape:const CircleBorder(),padding:const EdgeInsets.all(18)),child:Icon(playing?Icons.pause_rounded:Icons.play_arrow_rounded,size:30)),IconButton(onPressed:()=>selectTrack((selected+1)%tracks.length),icon:const Icon(Icons.skip_next_rounded,size:32))]),
-      ])),
-      const SizedBox(height:22),const _Title('Made for you'),const SizedBox(height:10),
-      SizedBox(height:105,child:ListView(scrollDirection:Axis.horizontal,children:[_MusicCard('Daily Mix','Original Nexora',Icons.auto_awesome_rounded),_MusicCard('Game Focus','Arcade energy',Icons.sports_esports_rounded),_MusicCard('Late Night','Chill original',Icons.nightlight_rounded)])),
-      const SizedBox(height:22),const _Title('Library'),const SizedBox(height:10),
-      for(final tr in filtered) Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(leading:CircleAvatar(backgroundColor:tr.$4,child:const Icon(Icons.music_note_rounded)),title:Text(tr.$1,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(tr.$2),trailing:Icon(tr.$1==t.$1&&playing?Icons.pause_circle_filled:Icons.play_circle_outline_rounded),onTap:()=>selectTrack(tracks.indexOf(tr)))),
-      Card(child:ListTile(leading:const Icon(Icons.info_outline_rounded),title:const Text('Katalog original'),subtitle:const Text('Track bawaan Nexora dibuat original dan dapat langsung diputar. Lagu berhak cipta pihak lain tidak dibundel tanpa lisensi.'))),
-    ]);
-  }
-  String _fmt(Duration d)=>'${d.inMinutes}:${(d.inSeconds%60).toString().padLeft(2,'0')}';
+  @override Widget build(BuildContext context){final filtered=tracks.where((t)=>t.$1.toLowerCase().contains(query.toLowerCase())||t.$2.toLowerCase().contains(query.toLowerCase())).toList();final t=tracks[selected],maxMs=max(1,duration.inMilliseconds),value=min(position.inMilliseconds.toDouble(),maxMs.toDouble());return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,110),children:[
+    Row(children:[const Expanded(child:Text('Nexora Music',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900))),_Pill(tracks.length.toString()+' TRACKS')]),const SizedBox(height:4),const Text('Player • Search • Queue • Repeat • Shuffle • Library'),const SizedBox(height:14),
+    TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari lagu atau artis...',filled:true,border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),const SizedBox(height:18),
+    Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:LinearGradient(colors:[t.$4,const Color(0xFF111522)])),child:Column(children:[
+      Container(width:172,height:172,decoration:BoxDecoration(borderRadius:BorderRadius.circular(30),gradient:LinearGradient(colors:[t.$4.withValues(alpha:.9),Colors.black38])),child:const Icon(Icons.album_rounded,size:82)),const SizedBox(height:16),
+      Text(t.$1,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900),textAlign:TextAlign.center),Text(t.$2),const SizedBox(height:5),Text(liked.contains(t.$1)?'Liked • Original Nexora':'Original Nexora',style:Theme.of(context).textTheme.bodySmall),
+      Slider(value:value,min:0,max:maxMs.toDouble(),onChanged:(v)=>player.seek(Duration(milliseconds:v.toInt()))),Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(_fmt(position)),Text(_fmt(duration))]),
+      Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>selectTrack((selected-1+tracks.length)%tracks.length),icon:const Icon(Icons.skip_previous_rounded,size:32)),FilledButton(onPressed:playing?()=>player.pause():playSelected,style:FilledButton.styleFrom(shape:const CircleBorder(),padding:const EdgeInsets.all(18)),child:Icon(playing?Icons.pause_rounded:Icons.play_arrow_rounded,size:30)),IconButton(onPressed:()=>selectTrack((selected+1)%tracks.length),icon:const Icon(Icons.skip_next_rounded,size:32))]),
+      Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>setState(()=>shuffle=!shuffle),color:shuffle?Theme.of(context).colorScheme.primary:null,icon:const Icon(Icons.shuffle_rounded)),IconButton(onPressed:toggleLike,color:liked.contains(t.$1)?Theme.of(context).colorScheme.primary:null,icon:Icon(liked.contains(t.$1)?Icons.favorite_rounded:Icons.favorite_border_rounded)),IconButton(onPressed:()=>setState(()=>repeat=!repeat),color:repeat?Theme.of(context).colorScheme.primary:null,icon:const Icon(Icons.repeat_rounded))]),
+    ])),const SizedBox(height:22),const _Title('Made for you'),const SizedBox(height:10),
+    SizedBox(height:112,child:ListView(scrollDirection:Axis.horizontal,children:[_MusicCard('Daily Mix','Original Nexora',Icons.auto_awesome_rounded),_MusicCard('Game Focus','Arcade energy',Icons.sports_esports_rounded),_MusicCard('Late Night','Chill original',Icons.nightlight_rounded),_MusicCard('Liked Songs','Your favorites',Icons.favorite_rounded)])),const SizedBox(height:22),
+    const _Title('Library'),const SizedBox(height:10),for(final tr in filtered)Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(leading:CircleAvatar(backgroundColor:tr.$4,child:const Icon(Icons.music_note_rounded)),title:Text(tr.$1,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(tr.$2),trailing:Icon(tr.$1==t.$1&&playing?Icons.pause_circle_filled:Icons.play_circle_outline_rounded),onTap:()=>selectTrack(tracks.indexOf(tr)))),
+    const Card(child:ListTile(leading:Icon(Icons.info_outline_rounded),title:Text('Katalog Nexora'),subtitle:Text('Track bawaan ini adalah audio original/sintetis untuk demo player. Katalog lagu pihak lain membutuhkan lisensi atau integrasi resmi.'))),
+  ]);}
+  String _fmt(Duration d)=>d.inMinutes.toString()+':'+(d.inSeconds%60).toString().padLeft(2,'0');
 }
 class _MusicCard extends StatelessWidget{final String title,sub;final IconData icon;const _MusicCard(this.title,this.sub,this.icon);@override Widget build(BuildContext context)=>Container(width:175,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]));}
 class ReactionRushPage extends StatefulWidget {
