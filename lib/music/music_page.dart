@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:audioplayers/audioplayers.dart';
 import 'music_models.dart';
 import 'music_player.dart';
 import 'music_service.dart';
@@ -83,7 +84,7 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
     try {
       await _player.setQueue(_tracks, startIndex: index);
     } catch (e) {
-      if (mounted) setState(() => _error = 'Audio gagal diputar: ' + e.toString());
+      if (mounted) setState(() => _error = 'Audio gagal diputar: ${e.toString()}');
     }
   }
 
@@ -97,11 +98,11 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
         await _player.resume();
       }
     } catch (e) {
-      if (mounted) setState(() => _error = 'Player error: ' + e.toString());
+      if (mounted) setState(() => _error = 'Player error: ${e.toString()}');
     }
   }
 
-  String _fmt(Duration d) => d.inMinutes.toString() + ':' + (d.inSeconds % 60).toString().padLeft(2, '0');
+  String _fmt(Duration d) => '${d.inMinutes}:${(d.inSeconds % 60).toString().padLeft(2, '0')}';
 
   @override
   void dispose() {
@@ -116,7 +117,6 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
   Widget build(BuildContext context) {
     final current = _current;
     final maxMs = _duration.inMilliseconds > 0 ? _duration.inMilliseconds.toDouble() : 1.0;
-    final value = _position.inMilliseconds.clamp(0, maxMs.toInt()).toDouble();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
@@ -262,7 +262,7 @@ class _TrackTile extends StatelessWidget {
           ? const CircleAvatar(child: Icon(Icons.music_note_rounded))
           : ClipRRect(borderRadius: BorderRadius.circular(10), child: Image.network(track.artworkUrl, width: 52, height: 52, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const CircleAvatar(child: Icon(Icons.music_note_rounded)))),
       title: Text(track.title, style: const TextStyle(fontWeight: FontWeight.w800)),
-      subtitle: Text(track.albumName.isEmpty ? track.artistName : track.artistName + ' • ' + track.albumName, maxLines: 1, overflow: TextOverflow.ellipsis),
+      subtitle: Text(track.albumName.isEmpty ? track.artistName : '${track.artistName} • ${track.albumName}', maxLines: 1, overflow: TextOverflow.ellipsis),
       trailing: Icon(playing ? Icons.pause_circle_filled_rounded : selected ? Icons.music_note_rounded : Icons.play_circle_outline_rounded),
       onTap: onTap,
     ),
