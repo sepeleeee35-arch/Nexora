@@ -22,7 +22,7 @@ class NexoraApiMusicService implements MusicService {
   Future<dynamic> _get(String path, [Map<String, String>? params]) async {
     final response = await client.get(_uri(path, params));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Music API error: ' + response.statusCode.toString());
+      throw Exception('Music API error: ${response.statusCode}');
     }
     return jsonDecode(response.body);
   }
@@ -87,7 +87,7 @@ class JamendoMusicService implements MusicService {
     if (clientId.isEmpty) throw Exception('Jamendo client ID belum dikonfigurasi.');
     final response = await client.get(_uri(path, params));
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Jamendo HTTP ' + response.statusCode.toString());
+      throw Exception('Jamendo HTTP ${response.statusCode}');
     }
     final decoded = jsonDecode(response.body);
     if (decoded is! Map<String, dynamic>) throw Exception('Respons Jamendo tidak valid.');
