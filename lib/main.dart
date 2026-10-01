@@ -6,6 +6,8 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'music/music_page.dart';
+import 'music/music_service.dart';
 
 void main() => runApp(const NexoraApp());
 
@@ -942,45 +944,14 @@ class _2048State extends State<Mini2048Page>{
     if(over)Positioned.fill(child:_Over(title:'GAME OVER',restart:restart)),
   ])));
 }
-class MusicPage extends StatefulWidget {
+class MusicPage extends StatelessWidget {
   const MusicPage({super.key});
-  @override State<MusicPage> createState()=>_MusicState();
+  @override
+  Widget build(BuildContext context) => NexoraMusicPage(
+    service: JamendoMusicService(),
+  );
 }
-class _MusicState extends State<MusicPage>{
-  final AudioPlayer player=AudioPlayer();
-  int selected=0;bool playing=false;bool shuffle=false;bool repeat=false;String query='';
-  Duration position=Duration.zero,duration=Duration.zero;
-  final liked=<String>{};
-  final tracks=const [
-    ('Nexora Intro','Nexora Studio',440.0,Color(0xFF7C3AED)),('Afterlight','Nexora Studio',330.0,Color(0xFF2563EB)),
-    ('Night Drive','Nexora Studio',220.0,Color(0xFF0891B2)),('Pixel Rain','Nexora Studio',523.0,Color(0xFFDB2777)),
-    ('Safe Horizon','Nexora Studio',294.0,Color(0xFF059669)),('Midnight Bloom','Nexora Studio',196.0,Color(0xFFD97706)),
-    ('Digital Sunrise','Nexora Studio',392.0,Color(0xFFDC2626)),('Neon Memory','Nexora Studio',262.0,Color(0xFF4F46E5)),
-  ];
-  @override void initState(){super.initState();player.onPlayerStateChanged.listen((s){if(mounted)setState(()=>playing=s==PlayerState.playing);});player.onPositionChanged.listen((p){if(mounted)setState(()=>position=p);});player.onDurationChanged.listen((d){if(mounted)setState(()=>duration=d);});player.onPlayerComplete.listen((_)=>_completed());}
-  void _completed(){if(!mounted)return;if(repeat){playSelected();return;}selectTrack(shuffle?Random().nextInt(tracks.length):(selected+1)%tracks.length);}
-  Uint8List _wav(double base){const sr=22050,seconds=12,channels=1,bits=16;final count=sr*seconds,dataBytes=count*2;final data=ByteData(44+dataBytes);void w32(int o,int v)=>data.setUint32(o,v,Endian.little);void w16(int o,int v)=>data.setUint16(o,v,Endian.little);void ascii(int o,String s){for(int i=0;i<s.length;i++){data.setUint8(o+i,s.codeUnitAt(i));}}ascii(0,'RIFF');w32(4,36+dataBytes);ascii(8,'WAVE');ascii(12,'fmt ');w32(16,16);w16(20,1);w16(22,channels);w32(24,sr);w32(28,sr*channels*bits~/8);w16(32,channels*bits~/8);w16(34,bits);ascii(36,'data');w32(40,dataBytes);for(int i=0;i<count;i++){final t=i/sr,fadeIn=min(1.0,t*8),fadeOut=min(1.0,(seconds-t)*4),env=fadeIn*fadeOut;final beat=(sin(2*pi*2.0*t)>0.88)?1.0:0.0;final melody=base*(1+0.035*sin(2*pi*.22*t));var sw=.20*sin(2*pi*melody*t)+.10*sin(2*pi*melody*1.5*t)+.055*sin(2*pi*melody*2*t)+beat*.07*sin(2*pi*(base/2)*t);data.setInt16(44+i*2,(sw*env*27000).clamp(-32768,32767).toInt(),Endian.little);}return data.buffer.asUint8List();}
-  Future<void> playSelected() async{await player.play(BytesSource(_wav(tracks[selected].$3),mimeType:'audio/wav'));}
-  Future<void> selectTrack(int i) async{await player.stop();if(!mounted)return;setState(() { selected=i; position=Duration.zero; });await playSelected();}
-  void toggleLike(){setState(()=>liked.contains(tracks[selected].$1)?liked.remove(tracks[selected].$1):liked.add(tracks[selected].$1));}
-  @override void dispose(){player.dispose();super.dispose();}
-  @override Widget build(BuildContext context){final filtered=tracks.where((t)=>t.$1.toLowerCase().contains(query.toLowerCase())||t.$2.toLowerCase().contains(query.toLowerCase())).toList();final t=tracks[selected],maxMs=max(1,duration.inMilliseconds),value=min(position.inMilliseconds.toDouble(),maxMs.toDouble());return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,110),children:[
-    Row(children:[const Expanded(child:Text('Nexora Music',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900))),Chip(label: Text('${tracks.length} TRACKS'))]),const SizedBox(height:4),const Text('Player • Search • Queue • Repeat • Shuffle • Library'),const SizedBox(height:14),
-    TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari lagu atau artis...',filled:true,border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),const SizedBox(height:18),
-    Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:LinearGradient(colors:[t.$4,const Color(0xFF111522)])),child:Column(children:[
-      Container(width:172,height:172,decoration:BoxDecoration(borderRadius:BorderRadius.circular(30),gradient:LinearGradient(colors:[t.$4.withValues(alpha:.9),Colors.black38])),child:const Icon(Icons.album_rounded,size:82)),const SizedBox(height:16),
-      Text(t.$1,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900),textAlign:TextAlign.center),Text(t.$2),const SizedBox(height:5),Text(liked.contains(t.$1)?'Liked • Original Nexora':'Original Nexora',style:Theme.of(context).textTheme.bodySmall),
-      Slider(value:value,min:0,max:maxMs.toDouble(),onChanged:(v)=>player.seek(Duration(milliseconds:v.toInt()))),Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(_fmt(position)),Text(_fmt(duration))]),
-      Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>selectTrack((selected-1+tracks.length)%tracks.length),icon:const Icon(Icons.skip_previous_rounded,size:32)),FilledButton(onPressed:playing?()=>player.pause():playSelected,style:FilledButton.styleFrom(shape:const CircleBorder(),padding:const EdgeInsets.all(18)),child:Icon(playing?Icons.pause_rounded:Icons.play_arrow_rounded,size:30)),IconButton(onPressed:()=>selectTrack((selected+1)%tracks.length),icon:const Icon(Icons.skip_next_rounded,size:32))]),
-      Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>setState(()=>shuffle=!shuffle),color:shuffle?Theme.of(context).colorScheme.primary:null,icon:const Icon(Icons.shuffle_rounded)),IconButton(onPressed:toggleLike,color:liked.contains(t.$1)?Theme.of(context).colorScheme.primary:null,icon:Icon(liked.contains(t.$1)?Icons.favorite_rounded:Icons.favorite_border_rounded)),IconButton(onPressed:()=>setState(()=>repeat=!repeat),color:repeat?Theme.of(context).colorScheme.primary:null,icon:const Icon(Icons.repeat_rounded))]),
-    ])),const SizedBox(height:22),const _Title('Made for you'),const SizedBox(height:10),
-    SizedBox(height:112,child:ListView(scrollDirection:Axis.horizontal,children:[_MusicCard('Daily Mix','Original Nexora',Icons.auto_awesome_rounded),_MusicCard('Game Focus','Arcade energy',Icons.sports_esports_rounded),_MusicCard('Late Night','Chill original',Icons.nightlight_rounded),_MusicCard('Liked Songs','Your favorites',Icons.favorite_rounded)])),const SizedBox(height:22),
-    const _Title('Library'),const SizedBox(height:10),for(final tr in filtered)Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(leading:CircleAvatar(backgroundColor:tr.$4,child:const Icon(Icons.music_note_rounded)),title:Text(tr.$1,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(tr.$2),trailing:Icon(tr.$1==t.$1&&playing?Icons.pause_circle_filled:Icons.play_circle_outline_rounded),onTap:()=>selectTrack(tracks.indexOf(tr)))),
-    const Card(child:ListTile(leading:Icon(Icons.info_outline_rounded),title:Text('Katalog Nexora'),subtitle:Text('Track bawaan ini adalah audio original/sintetis untuk demo player. Katalog lagu pihak lain membutuhkan lisensi atau integrasi resmi.'))),
-  ]);}
-  String _fmt(Duration d)=>'${d.inMinutes}:${(d.inSeconds%60).toString().padLeft(2,'0')}';
-}
-class _MusicCard extends StatelessWidget{final String title,sub;final IconData icon;const _MusicCard(this.title,this.sub,this.icon);@override Widget build(BuildContext context)=>Container(width:175,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]));}
+
 class ReactionRushPage extends StatefulWidget {
   const ReactionRushPage({super.key});
   @override
