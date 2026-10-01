@@ -254,7 +254,7 @@ class HomePage extends StatelessWidget {
     Card(child:Column(children:[
       ListTile(leading:const CircleAvatar(child:Icon(Icons.person_rounded)),title:const Text('Nexora Player',style:TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Rookie • Level 1'),trailing:const Icon(Icons.chevron_right_rounded),onTap:()=>openPage('Profile')),
       const Divider(height:1),
-      ListTile(leading:const Icon(Icons.account_balance_wallet_rounded),title:const Text('Wallet'),subtitle:Text(coins.toString()+' coins tersedia'),trailing:const Icon(Icons.chevron_right_rounded),onTap:()=>openPage('Wallet')),
+      ListTile(leading:const Icon(Icons.account_balance_wallet_rounded),title:const Text('Wallet'),subtitle:Text('$coins coins tersedia'),trailing:const Icon(Icons.chevron_right_rounded),onTap:()=>openPage('Wallet')),
     ])),
     const SizedBox(height:18),
     const _Title('Recent'),
@@ -347,7 +347,7 @@ class _TapRushState extends State<TapRushPage> {
     timer=Timer.periodic(const Duration(seconds:1),(_){
       if(!mounted)return;
       if(seconds<=1){timer?.cancel();setState((){seconds=0;playing=false;});}
-      else setState(()=>seconds--);
+      else { setState(()=>seconds--); }
     });
   }
   void move(){x=.12+rng.nextDouble()*.76;y=.12+rng.nextDouble()*.66;}
@@ -355,7 +355,7 @@ class _TapRushState extends State<TapRushPage> {
   @override Widget build(BuildContext context)=>Scaffold(
     appBar:AppBar(title:const Text('Tap Rush')),
     body:Padding(padding:const EdgeInsets.all(16),child:Column(children:[
-      Row(children:[Expanded(child:_Score('Score',score.toString())),const SizedBox(width:10),Expanded(child:_Score('Time',seconds.toString()+'s'))]),
+      Row(children:[Expanded(child:_Score('Score','$score')),const SizedBox(width:10),Expanded(child:_Score('Time','${seconds}s'))]),
       const SizedBox(height:14),
       Expanded(child:Container(clipBehavior:Clip.antiAlias,decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF161B2B),Color(0xFF24133E)])),child:LayoutBuilder(builder:(context,c)=>Stack(children:[
         if(playing) Positioned(left:c.maxWidth*x-30,top:c.maxHeight*y-30,child:GestureDetector(
@@ -364,7 +364,7 @@ class _TapRushState extends State<TapRushPage> {
         )) else Center(child:Column(mainAxisSize:MainAxisSize.min,children:[
           Icon(Icons.touch_app_rounded,size:60,color:Theme.of(context).colorScheme.primary),
           const SizedBox(height:12),
-          Text(seconds==0?'Selesai! Skor '+score.toString():'Tekan Start untuk bermain',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w800)),
+          Text(seconds==0?'Selesai! Skor $score':'Tekan Start untuk bermain',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w800)),
         ])),
       ])))),
       const SizedBox(height:14),
