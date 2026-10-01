@@ -614,7 +614,7 @@ class _ColorClashState extends State<ColorClashPage>{
   @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Color Clash')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
     _Score('Score','$score'),const SizedBox(height:22),Text('Pilih warna target',style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:12),
     Container(width:130,height:130,decoration:BoxDecoration(shape:BoxShape.circle,color:colors[target])),const SizedBox(height:28),
-    Expanded(child:GridView.count(crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,children:[for(int i=0;i<colors.length)FilledButton(onPressed:(){if(i==target)score++;next();},style:FilledButton.styleFrom(backgroundColor:colors[i]),child:const SizedBox())])),
+    Expanded(child:GridView.count(crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,children:[for(int i=0;i<colors.length)FilledButton(onPressed:(){if(i==target){score++;} next();},style:FilledButton.styleFrom(backgroundColor:colors[i]),child:const SizedBox())]))),
   ]));
 }
 
@@ -624,7 +624,7 @@ class _NumberSprintState extends State<NumberSprintPage>{
   @override void initState(){super.initState();next();}
   @override Widget build(BuildContext context){final opts=[answer,answer+1,answer-1,answer+2]..shuffle(rng);return Scaffold(appBar:AppBar(title:const Text('Number Sprint')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
     _Score('Score','$score'),const SizedBox(height:30),Text('$a + $b = ?',style:const TextStyle(fontSize:42,fontWeight:FontWeight.w900)),const SizedBox(height:25),
-    for(final o in opts)Padding(padding:const EdgeInsets.only(bottom:10),child:SizedBox(width:double.infinity,child:FilledButton(onPressed:(){if(o==answer)score++;setState(next);},child:Text('$o',style:const TextStyle(fontSize:20))))),
+    for(final o in opts)Padding(padding:const EdgeInsets.only(bottom:10),child:SizedBox(width:double.infinity,child:FilledButton(onPressed:(){if(o==answer){score++;} setState(next);},child:Text('$o',style:const TextStyle(fontSize:20))))),
   ]));}
 }
 
