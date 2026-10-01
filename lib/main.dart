@@ -39,7 +39,15 @@ class _NexoraShellState extends State<NexoraShell> {
 
   void selectPage(String value) {
     Navigator.pop(context);
-    setState(() => page = value);
+    if (value == 'Home' || value == 'Games' || value == 'Music' || value == 'Social' || value == 'Market') {
+      final nextTab = names.indexOf(value);
+      setState(() {
+        tab = nextTab < 0 ? 0 : nextTab;
+        page = null;
+      });
+    } else {
+      setState(() => page = value);
+    }
   }
   void selectTab(int value) => setState(() { tab = value; page = null; });
 
