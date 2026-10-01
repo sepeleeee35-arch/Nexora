@@ -210,7 +210,7 @@ class NexoraMultiMusicService implements MusicService {
     final seen = <String>{};
     for (final list in results) {
       for (final item in list) {
-        final key = item.title.toLowerCase() + '|' + item.artistName.toLowerCase() + '|' + item.audioUrl;
+        final key = '${item.title.toLowerCase()}|${item.artistName.toLowerCase()}|${item.audioUrl}';
         if (item.audioUrl.isNotEmpty && seen.add(key)) out.add(item);
       }
     }
@@ -232,7 +232,7 @@ class NexoraMultiMusicService implements MusicService {
     final seen = <String>{};
     for (final list in results) {
       for (final item in list) {
-        final key = item.id + '|' + item.name.toLowerCase();
+        final key = '${item.id}|${item.name.toLowerCase()}';
         if (seen.add(key)) out.add(item);
       }
     }
@@ -253,7 +253,7 @@ class NexoraMultiMusicService implements MusicService {
     final seen = <String>{};
     for (final list in results) {
       for (final item in list) {
-        final key = item.id + '|' + item.title.toLowerCase();
+        final key = '${item.id}|${item.title.toLowerCase()}';
         if (seen.add(key)) out.add(item);
       }
     }
@@ -308,8 +308,7 @@ class NexoraMultiMusicService implements MusicService {
     final seen = <String>{};
     for (final list in results) {
       for (final item in list) {
-        final key = item.title.toLowerCase() + '|' +
-            item.artistName.toLowerCase() + '|' + item.audioUrl;
+        final key = '${item.title.toLowerCase()}|${item.artistName.toLowerCase()}|${item.audioUrl}';
         if (item.audioUrl.isNotEmpty && seen.add(key)) out.add(item);
       }
     }
