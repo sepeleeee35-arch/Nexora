@@ -128,8 +128,6 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
   @override
   Widget build(BuildContext context) {
     final current = _current;
-    final maxMs = _duration.inMilliseconds > 0 ? _duration.inMilliseconds.toDouble() : 1.0;
-
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
       children: [
