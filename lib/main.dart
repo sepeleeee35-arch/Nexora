@@ -334,7 +334,7 @@ class _Game extends StatelessWidget {
     margin:const EdgeInsets.only(bottom:12),
     clipBehavior:Clip.antiAlias,
     child:InkWell(
-      onTap:badge=='PLAYABLE'?()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const TapRushPage())):null,
+      onTap: badge=='PLAYABLE' ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => title == 'Memory Grid' ? const MemoryGridPage() : const TapRushPage())) : null,
       child:Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(gradient:LinearGradient(colors:[color.withValues(alpha:.45),const Color(0xFF111522)])),child:Row(children:[
         Container(width:60,height:60,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(17)),child:Icon(icon,size:30)),
         const SizedBox(width:13),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
@@ -391,6 +391,125 @@ class _TapRushState extends State<TapRushPage> {
 class _Score extends StatelessWidget {
   final String label,value; const _Score(this.label,this.value);
   @override Widget build(BuildContext context)=>Card(child:Padding(padding:const EdgeInsets.symmetric(horizontal:15,vertical:12),child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(label),Text(value,style:const TextStyle(fontWeight:FontWeight.w900))])));
+}
+
+class MemoryGridPage extends StatefulWidget {
+  const MemoryGridPage({super.key});
+  @override State<MemoryGridPage> createState() => _MemoryGridState();
+}
+
+class _MemoryGridState extends State<MemoryGridPage> {
+  final rng = Random();
+  final List<int> values = List<int>.generate(12, (i) => i);
+  final Set<int> revealed = <int>{};
+  int? first;
+  int moves = 0;
+  int pairs = 0;
+  bool locked = false;
+
+  void reset() {
+    setState(() {
+      values.shuffle(rng);
+      revealed.clear();
+      first = null;
+      moves = 0;
+      pairs = 0;
+      locked = false;
+    });
+  }
+
+  Future<void> tap(int index) async {
+    if (locked || revealed.contains(index)) return;
+    setState(() => revealed.add(index));
+
+    if (first == null) {
+      first = index;
+      return;
+    }
+
+    final second = index;
+    final isPair = values[first!] ~/ 2 == values[second] ~/ 2;
+    moves++;
+    locked = true;
+
+    await Future<void>.delayed(const Duration(milliseconds: 550));
+    if (!mounted) return;
+
+    setState(() {
+      if (isPair) {
+        pairs++;
+      } else {
+        revealed.remove(first!);
+        revealed.remove(second);
+      }
+      first = null;
+      locked = false;
+    });
+
+    if (isPair && pairs == 6 && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Memory Grid selesai!')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Memory Grid'),
+      actions: [
+        IconButton(onPressed: reset, icon: const Icon(Icons.refresh_rounded)),
+      ],
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Expanded(child: _Score('Pairs', '$pairs / 6')),
+              const SizedBox(width: 10),
+              Expanded(child: _Score('Moves', '$moves')),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Expanded(
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 3,
+                crossAxisSpacing: 10,
+                mainAxisSpacing: 10,
+              ),
+              itemCount: values.length,
+              itemBuilder: (context, index) {
+                final open = revealed.contains(index);
+                return GestureDetector(
+                  onTap: () => tap(index),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(18),
+                      color: open
+                          ? Theme.of(context).colorScheme.primary
+                          : const Color(0xFF171B2A),
+                    ),
+                    child: Center(
+                      child: Icon(
+                        open ? Icons.star_rounded : Icons.help_outline_rounded,
+                        size: 30,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 10),
+          const Text('Buka dua kartu yang memiliki pasangan simbol yang sama.'),
+        ],
+      ),
+    ),
+  );
 }
 
 class MusicPage extends StatefulWidget {
