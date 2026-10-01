@@ -299,17 +299,33 @@ class _Recent extends StatelessWidget {
   @override Widget build(BuildContext context)=>Card(child:ListTile(leading:CircleAvatar(child:Icon(icon)),title:Text(title,style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:Text(sub),trailing:const Icon(Icons.chevron_right_rounded)));
 }
 
-class GamesPage extends StatelessWidget {
+class GamesPage extends StatefulWidget {
   const GamesPage({super.key});
-  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-    const Text('Game Hub',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
-    const SizedBox(height:5),const Text('Game original Nexora, tanpa taruhan uang.'),
-    const SizedBox(height:18),
-    _Game('Tap Rush','Klik target sebanyak mungkin sebelum waktu habis.',Icons.touch_app_rounded,'PLAYABLE',const Color(0xFF6D28D9)),
-    _Game('Memory Grid','Game memory original untuk update berikutnya.',Icons.grid_view_rounded,'SOON',const Color(0xFF155E75)),
-    _Game('Nexora Runner','Endless runner original untuk update berikutnya.',Icons.directions_run_rounded,'SOON',const Color(0xFF166534)),
-    Card(child:ListTile(leading:const Icon(Icons.emoji_events_rounded),title:const Text('Leaderboard',style:TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Leaderboard online masuk saat backend selesai.'),trailing:const Icon(Icons.chevron_right_rounded))),
-  ]);
+  @override State<GamesPage> createState()=>_GamesState();
+}
+class _GamesState extends State<GamesPage>{
+  String filter='All';
+  final categories=const ['All','Arcade','Puzzle','Racing','Runner'];
+  @override Widget build(BuildContext context){
+    final games=[
+      ['Tap Rush','Arcade','PLAYABLE',Icons.touch_app_rounded,Color(0xFF6D28D9)],
+      ['Memory Grid','Puzzle','PLAYABLE',Icons.grid_view_rounded,Color(0xFF155E75)],
+      ['Nexora Runner','Runner','SOON',Icons.directions_run_rounded,Color(0xFF166534)],
+      ['Neon Circuit','Racing','SOON',Icons.directions_car_rounded,Color(0xFF9A3412)],
+      ['Block Forge','Puzzle','SOON',Icons.extension_rounded,Color(0xFF1D4ED8)],
+      ['Sky Dash','Arcade','SOON',Icons.flight_rounded,Color(0xFF0F766E)],
+    ].where((g)=>filter=='All'||g[1]==filter).toList();
+    return ListView(padding:const EdgeInsets.all(16),children:[
+      const Text('Game Hub',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
+      const SizedBox(height:5),const Text('Katalog game original Nexora. Offline dan online akan ditambahkan bertahap.'),
+      const SizedBox(height:16),
+      SizedBox(height:42,child:ListView.separated(scrollDirection:Axis.horizontal,itemCount:categories.length,itemBuilder:(c,i)=>ChoiceChip(label:Text(categories[i]),selected:filter==categories[i],onSelected:(_)=>setState(()=>filter=categories[i])),separatorBuilder:(_,_)=>const SizedBox(width:8))),
+      const SizedBox(height:16),
+      Card(child:ListTile(leading:const CircleAvatar(child:Icon(Icons.emoji_events_rounded)),title:const Text('Leaderboard',style:TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Skor terbaik dan ranking pemain Nexora.'),trailing:const Icon(Icons.chevron_right_rounded))),
+      const SizedBox(height:10),
+      for(final g in games) _Game(g[0] as String,'${g[1]} • game original Nexora',g[3] as IconData,g[2] as String,g[4] as Color),
+    ]);
+  }
 }
 class _Game extends StatelessWidget {
   final String title,desc,badge; final IconData icon; final Color color;
@@ -382,31 +398,32 @@ class MusicPage extends StatefulWidget {
   @override State<MusicPage> createState()=>_MusicState();
 }
 class _MusicState extends State<MusicPage>{
-  int selected=0;bool playing=false;
-  final tracks=const [('Nexora Intro','Nexora Studio'),('Afterlight','Nexora Studio'),('Night Drive','Nexora Studio'),('Safe Horizon','Nexora Studio')];
-  @override Widget build(BuildContext context){final t=tracks[selected];return ListView(padding:const EdgeInsets.all(16),children:[
-    const Text('Music',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),const Text('Library dan player Nexora.'),
-    const SizedBox(height:18),
-    Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF312E81),Color(0xFF111827)])),child:Column(children:[
-      const CircleAvatar(radius:48,child:Icon(Icons.music_note_rounded,size:48)),const SizedBox(height:14),
-      Text(t.$1,style:const TextStyle(fontSize:21,fontWeight:FontWeight.w900)),Text(t.$2),const SizedBox(height:16),
-      const LinearProgressIndicator(value:.34),const SizedBox(height:7),
-      const Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text('0:42'),Text('2:10')]),
-      Row(mainAxisAlignment:MainAxisAlignment.center,children:[
-        IconButton(onPressed:(){},icon:const Icon(Icons.skip_previous_rounded)),
-        FilledButton(onPressed:()=>setState(()=>playing=!playing),style:FilledButton.styleFrom(shape:const CircleBorder(),padding:const EdgeInsets.all(15)),child:Icon(playing?Icons.pause_rounded:Icons.play_arrow_rounded)),
-        IconButton(onPressed:(){},icon:const Icon(Icons.skip_next_rounded)),
-      ]),
-    ])),
-    const SizedBox(height:20),const _Title('Library'),const SizedBox(height:8),
-    for(var i=0;i<tracks.length;i++) Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(
-      leading:const CircleAvatar(child:Icon(Icons.album_rounded)),title:Text(tracks[i].$1,style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:Text(tracks[i].$2),
-      trailing:Icon(i==selected&&playing?Icons.pause_circle_filled:Icons.play_circle_outline_rounded),
-      onTap:()=>setState((){selected=i;playing=true;}),
-    )),
-  ]);}
+  int selected=0;bool playing=false;bool premium=false;String query='';
+  final tracks=const [('Nexora Intro','Nexora Studio'),('Afterlight','Nexora Studio'),('Night Drive','Nexora Studio'),('Safe Horizon','Nexora Studio'),('Pixel Rain','Nexora Studio'),('Midnight Bloom','Nexora Studio')];
+  @override Widget build(BuildContext context){final filtered=tracks.where((t)=>t.$1.toLowerCase().contains(query.toLowerCase())).toList();final t=tracks[selected];
+    return ListView(padding:const EdgeInsets.all(16),children:[
+      Row(children:[const Expanded(child:Text('Nexora Music',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900))),Text(premium?'PREMIUM':'FREE',style:TextStyle(fontSize:10,fontWeight:FontWeight.w900,color:Theme.of(context).colorScheme.primary))]),
+      const Text('Home • Explore • Library • Playlists • Player'),
+      const SizedBox(height:12),
+      TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari lagu, album, atau artis...',filled:true,border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),
+      const SizedBox(height:16),
+      Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF312E81),Color(0xFF111827)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        const Text('NEXORA MUSIC',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.4)),const SizedBox(height:5),const Text('Your soundtrack',style:TextStyle(fontSize:23,fontWeight:FontWeight.w900)),const SizedBox(height:12),
+        Row(children:[const CircleAvatar(radius:38,child:Icon(Icons.album_rounded,size:38)),const SizedBox(width:14),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(t.$1,style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900)),Text(t.$2),const SizedBox(height:8),const LinearProgressIndicator(value:.34)]))]),
+        Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:(){},icon:const Icon(Icons.skip_previous_rounded)),FilledButton(onPressed:()=>setState(()=>playing=!playing),style:FilledButton.styleFrom(shape:const CircleBorder(),padding:const EdgeInsets.all(15)),child:Icon(playing?Icons.pause_rounded:Icons.play_arrow_rounded)),IconButton(onPressed:(){},icon:const Icon(Icons.skip_next_rounded)),IconButton(onPressed:(){},icon:const Icon(Icons.queue_music_rounded))]),
+      ])),
+      const SizedBox(height:18),const _Title('Made for you'),const SizedBox(height:8),
+      SizedBox(height:110,child:ListView(scrollDirection:Axis.horizontal,children:[_MusicCard('Daily Mix','Campuran harian',Icons.auto_awesome_rounded),_MusicCard('Night Drive','Electronic & chill',Icons.nightlight_rounded),_MusicCard('Game Focus','Musik untuk bermain',Icons.sports_esports_rounded)])),
+      const SizedBox(height:18),const _Title('Library'),const SizedBox(height:8),
+      for(final tr in filtered) Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(leading:const CircleAvatar(child:Icon(Icons.album_rounded)),title:Text(tr.$1,style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:Text(tr.$2),trailing:Icon(tr.$1==t.$1&&playing?Icons.pause_circle_filled:Icons.play_circle_outline_rounded),onTap:()=>setState((){selected=tracks.indexOf(tr);playing=true;}))),
+      const SizedBox(height:10),
+      Card(child:ListTile(leading:const Icon(Icons.workspace_premium_rounded),title:Text(premium?'Nexora Premium aktif':'Nexora Premium'),subtitle:Text(premium?'Mode premium demo aktif.':'Premium akan punya fitur tambahan yang kamu tentukan.'),trailing:FilledButton(onPressed:()=>setState(()=>premium=!premium),child:Text(premium?'ON':'VIEW')))),
+    ]);}
 }
-
+class _MusicCard extends StatelessWidget{
+  final String title,sub;final IconData icon;const _MusicCard(this.title,this.sub,this.icon);
+  @override Widget build(BuildContext context)=>Container(width:170,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]);
+}
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
   @override State<SocialPage> createState()=>_SocialState();
