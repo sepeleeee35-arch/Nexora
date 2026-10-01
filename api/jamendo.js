@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   const endpoint = String(req.query?.endpoint || 'tracks').replace(/^\/+|\/+$/g, '');
-  const allowed = new Set(['tracks', 'artists', 'albums']);
+  const allowed = new Set(['tracks', 'artists', 'albums', 'charts/track']);
 
   if (!allowed.has(endpoint)) {
     return res.status(400).json({ error: 'Invalid music endpoint.' });
