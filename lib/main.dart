@@ -404,7 +404,7 @@ class _MusicState extends State<MusicPage>{
       trailing:Icon(i==selected&&playing?Icons.pause_circle_filled:Icons.play_circle_outline_rounded),
       onTap:()=>setState((){selected=i;playing=true;}),
     )),
-  ];}
+  ]);}
 }
 
 class SocialPage extends StatefulWidget {
@@ -487,7 +487,7 @@ class NotificationsPage extends StatelessWidget{
     _Notice(Icons.celebration_rounded,'Welcome to Nexora V2','Dashboard dan Game Hub baru tersedia.'),
     _Notice(Icons.sports_esports_rounded,'Tap Rush tersedia','Coba mini game pertama Nexora.'),
     _Notice(Icons.storefront_rounded,'Marketplace demo','Produk kosmetik demo sudah bisa dicoba.'),
-  ];
+  ]);
 }
 class _Notice extends StatelessWidget{final IconData icon;final String title,body;const _Notice(this.icon,this.title,this.body);@override Widget build(BuildContext context)=>Card(margin:const EdgeInsets.only(bottom:10),child:ListTile(contentPadding:const EdgeInsets.all(14),leading:CircleAvatar(child:Icon(icon)),title:Text(title,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(body)));}
 
