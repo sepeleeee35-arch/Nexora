@@ -626,7 +626,10 @@ class _WormPainter extends CustomPainter{
   @override bool shouldRepaint(covariant _WormPainter old)=>true;
 }
 
-class NexoraChessPage extends StatefulWidget{const NexoraChessPage({super.key});@override State<NexoraChessPage> createState()=>_ChessState();}
+class NexoraChessPage extends StatefulWidget{
+  const NexoraChessPage({super.key});
+  @override State<NexoraChessPage> createState()=>_ChessState();
+}
 class _ChessState extends State<NexoraChessPage>{
   final rng=Random();late List<String>b;int?sel;bool turn=true,busy=false,over=false,started=false;String msg='WHITE TURN';int difficulty=1;
   bool white(String p)=>'KQRBNP'.contains(p);bool inside(int r,int c)=>r>=0&&r<8&&c>=0&&c<8;
@@ -644,15 +647,90 @@ class _ChessState extends State<NexoraChessPage>{
   void tap(int i){if(!started||over||busy||!turn)return;if(sel==null){if(b[i].isNotEmpty&&white(b[i]))setState(()=>sel=i);return;}if(legal(sel!,true).contains(i)){move(sel!,i);}else if(b[i].isNotEmpty&&white(b[i]))setState(()=>sel=i);else setState(()=>sel=null);}
   void move(int a,int z){setState((){final p=b[a];b[z]=p;b[a]='';if(p=='P'&&z~/8==0)b[z]='Q';sel=null;turn=false;msg='BOT TURN';});end();if(!over){busy=true;Future.delayed(Duration(milliseconds:difficulty==1?550:difficulty==2?330:180),bot);}}
   void bot(){if(!mounted||over||!started)return;final m=all(false);if(m.isEmpty){setState(()=>busy=false);end();return;}final q=m[rng.nextInt(m.length)],p=b[q[0]];setState((){b[q[1]]=p;b[q[0]]='';if(p=='p'&&q[1]~/8==7)b[q[1]]='q';turn=true;busy=false;msg='WHITE TURN';});end();}
-  void end(){final m=all(turn);if(m.isEmpty&&started){setState((){over=true;msg=check(turn)?'CHECKMATE':'STALEMATE';});}}
+  void end(){final m=all(turn);if(m.isEmpty&&started)setState((){over=true;msg=check(turn)?'CHECKMATE':'STALEMATE';});}
   String glyph(String p){const m={'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'};return m[p]??'';}
-  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Nexora Chess',restart:restart,child:Stack(children:[
-    if(!started)Center(child:Container(margin:const EdgeInsets.all(20),padding:const EdgeInsets.all(22),decoration:BoxDecoration(color:const Color(0xFF111522),borderRadius:BorderRadius.circular(24)),child:Column(mainAxisSize:MainAxisSize.min,children:[
-      const Icon(Icons.grid_4x4_rounded,size:54),const SizedBox(height:12),const Text('Nexora Chess',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),const SizedBox(height:8),const Text('Catur offline melawan bot. Pilih kesulitan sebelum mulai.',textAlign:TextAlign.center),const SizedBox(height:14),SegmentedButton<int>(segments:const [ButtonSegment(value:1,label:Text('Easy')),ButtonSegment(value:2,label:Text('Normal')),ButtonSegment(value:3,label:Text('Fast'))],selected:{difficulty},onSelectionChanged:(v)=>setState(()=>difficulty=v.first)),const SizedBox(height:16),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:startGame,icon:const Icon(Icons.play_arrow_rounded),label:const Text('START GAME'))),
-    ]))),
-    if(started)Column(children:[Padding(padding:const EdgeInsets.all(10),child:Row(children:[Text(msg,style:const TextStyle(fontWeight:FontWeight.w900)),const Spacer(),Text(difficulty==1?'EASY BOT':difficulty==2?'NORMAL BOT':'FAST BOT',style:const TextStyle(color:Colors.white54,fontSize:10))])),Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:GridView.builder(itemCount:64,physics:const NeverScrollableScrollPhysics(),gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:8),itemBuilder:(_,i){final r=i~/8,c=i%8,light=(r+c).isEven;return GestureDetector(onTap:()=>tap(i),child:Container(color:sel==i?const Color(0xFF22D3EE):(light?const Color(0xFFD6D3D1):const Color(0xFF57534E)),child:Center(child:Text(glyph(b[i]),style:TextStyle(fontSize:27,color:white(b[i])?Colors.white:Colors.black87)))));})))))),if(over)Padding(padding:const EdgeInsets.all(10),child:FilledButton.icon(onPressed:restart,icon:const Icon(Icons.refresh_rounded),label:Text(msg)))])
-  ]));
+  @override Widget build(BuildContext context){
+    return _MiniScaffold(
+      title:'Nexora Chess',
+      restart:restart,
+      child:Stack(children:[
+        if(!started)
+          Center(child:Container(
+            margin:const EdgeInsets.all(20),
+            padding:const EdgeInsets.all(22),
+            decoration:BoxDecoration(color:const Color(0xFF111522),borderRadius:BorderRadius.circular(24)),
+            child:Column(mainAxisSize:MainAxisSize.min,children:[
+              const Icon(Icons.grid_4x4_rounded,size:54),
+              const SizedBox(height:12),
+              const Text('Nexora Chess',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
+              const SizedBox(height:8),
+              const Text('Catur offline melawan bot. Pilih kesulitan sebelum mulai.',textAlign:TextAlign.center),
+              const SizedBox(height:14),
+              SegmentedButton<int>(
+                segments:const [
+                  ButtonSegment(value:1,label:Text('Easy')),
+                  ButtonSegment(value:2,label:Text('Normal')),
+                  ButtonSegment(value:3,label:Text('Fast')),
+                ],
+                selected:{difficulty},
+                onSelectionChanged:(v)=>setState(()=>difficulty=v.first),
+              ),
+              const SizedBox(height:16),
+              SizedBox(width:double.infinity,child:FilledButton.icon(
+                onPressed:startGame,
+                icon:const Icon(Icons.play_arrow_rounded),
+                label:const Text('START GAME'),
+              )),
+            ]),
+          )),
+        if(started)
+          Column(children:[
+            Padding(
+              padding:const EdgeInsets.all(10),
+              child:Row(children:[
+                Text(msg,style:const TextStyle(fontWeight:FontWeight.w900)),
+                const Spacer(),
+                Text(
+                  difficulty==1?'EASY BOT':difficulty==2?'NORMAL BOT':'FAST BOT',
+                  style:const TextStyle(color:Colors.white54,fontSize:10),
+                ),
+              ]),
+            ),
+            Expanded(
+              child:Center(
+                child:AspectRatio(
+                  aspectRatio:1,
+                  child:GridView.builder(
+                    itemCount:64,
+                    physics:const NeverScrollableScrollPhysics(),
+                    gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:8),
+                    itemBuilder:(_,i){
+                      final rr=i~/8,cc=i%8,light=(rr+cc).isEven;
+                      return GestureDetector(
+                        onTap:()=>tap(i),
+                        child:Container(
+                          color:sel==i?const Color(0xFF22D3EE):(light?const Color(0xFFD6D3D1):const Color(0xFF57534E)),
+                          child:Center(
+                            child:Text(glyph(b[i]),style:TextStyle(fontSize:27,color:white(b[i])?Colors.white:Colors.black87)),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            if(over)
+              Padding(
+                padding:const EdgeInsets.all(10),
+                child:FilledButton.icon(onPressed:restart,icon:const Icon(Icons.refresh_rounded),label:Text(msg)),
+              ),
+          ]),
+      ]),
+    );
+  }
 }
+
 class RoadRushPage extends StatefulWidget{const RoadRushPage({super.key});@override State<RoadRushPage> createState()=>_RoadState();}
 class _Car{double lane,y;_Car(this.lane,this.y);}
 class _RoadState extends State<RoadRushPage>{
