@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'music_models.dart';
 
@@ -79,9 +80,15 @@ class JamendoMusicService implements MusicService {
 
   static const String _base = 'https://api.jamendo.com/v3.0';
 
-  Uri _uri(String path, Map<String, String> params) => Uri.parse('$_base/$path').replace(
-    queryParameters: {'client_id': clientId, 'format': 'json', ...params},
-  );
+  Uri _uri(String path, Map<String, String> params) {
+    final all = <String, String>{'client_id': clientId, 'format': 'json', ...params};
+    if (kIsWeb) {
+      return Uri.base.resolve('/api/jamendo').replace(
+        queryParameters: {'endpoint': path, ...all},
+      );
+    }
+    return Uri.parse('$_base/$path').replace(queryParameters: all);
+  }
 
   Future<Map<String, dynamic>> _get(String path, Map<String, String> params) async {
     if (clientId.isEmpty) throw Exception('Jamendo client ID belum dikonfigurasi.');
@@ -193,9 +200,10 @@ class NexoraMultiMusicService implements MusicService {
     for (final list in results) {
       for (final item in list) {
         final key = item.title.toLowerCase() + '|' + item.artistName.toLowerCase() + '|' + item.audioUrl;
-        if (seen.add(key)) out.add(item);
+        if (item.audioUrl.isNotEmpty && seen.add(key)) out.add(item);
       }
     }
+    if (out.isEmpty) throw Exception('Katalog musik tidak dapat dimuat. Periksa koneksi atau coba lagi.');
     return out;
   }
 
