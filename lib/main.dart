@@ -366,7 +366,7 @@ class _TapRushState extends State<TapRushPage> {
           const SizedBox(height:12),
           Text(seconds==0?'Selesai! Skor '+score.toString():'Tekan Start untuk bermain',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w800)),
         ])),
-      ]))),
+      ])))),
       const SizedBox(height:14),
       SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:playing?null:start,icon:const Icon(Icons.play_arrow_rounded),label:Text(seconds==0?'Main Lagi':'Start'))),
     ])),
