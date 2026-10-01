@@ -274,7 +274,7 @@ class NexoraMultiMusicService implements MusicService {
     final seen = <String>{};
     for (final list in results) {
       for (final item in list) {
-        final key = item.id + '|' + item.name.toLowerCase();
+        final key = '${item.id}|${item.name.toLowerCase()}';
         if (seen.add(key)) out.add(item);
       }
     }
