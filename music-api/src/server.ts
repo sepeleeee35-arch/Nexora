@@ -16,9 +16,9 @@ app.get("/api/search",async(req,res)=>{
     if(!q) return res.json({query:"",tracks:[],artists:[],albums:[],playlists:[]});
     const like=`%${q}%`;
     const [tracks,artists,albums,playlists]=await Promise.all([
-      query("SELECT * FROM music_tracks WHERE title ILIKE $1 ORDER BY title LIMIT 50",[like]),
+      query(`SELECT t.*, a.name AS artist_name, al.title AS album_name FROM music_tracks t LEFT JOIN music_artists a ON a.id=t.artist_id LEFT JOIN music_albums al ON al.id=t.album_id WHERE t.title ILIKE $1 OR a.name ILIKE $1 ORDER BY t.title LIMIT 50`,[like]),
       query("SELECT * FROM music_artists WHERE name ILIKE $1 ORDER BY name LIMIT 25",[like]),
-      query("SELECT * FROM music_albums WHERE title ILIKE $1 ORDER BY title LIMIT 25",[like]),
+      query(`SELECT al.*, a.name AS artist_name FROM music_albums al JOIN music_artists a ON a.id=al.artist_id WHERE al.title ILIKE $1 OR a.name ILIKE $1 ORDER BY al.title LIMIT 25`,[like]),
       query("SELECT * FROM music_playlists WHERE name ILIKE $1 ORDER BY name LIMIT 25",[like])
     ]);
     res.json({query:q,tracks,artists,albums,playlists});
