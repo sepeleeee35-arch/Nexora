@@ -171,6 +171,10 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
             onPrevious: () => _player.previous(),
             onNext: () => _player.next(),
             onPlayPause: _toggle,
+            onShuffle: () { setState(() => _player.shuffle = !_player.shuffle); },
+            onRepeat: () { setState(() => _player.repeat = !_player.repeat); },
+            shuffle: _player.shuffle,
+            repeat: _player.repeat,
             onSeek: (v) => _player.seek(Duration(milliseconds: v.toInt())),
           ),
         if (_loading)
@@ -210,8 +214,12 @@ class _NowPlayingCard extends StatelessWidget {
   final VoidCallback onPlayPause;
   final VoidCallback onNext;
   final ValueChanged<double> onSeek;
+  final VoidCallback onShuffle;
+  final VoidCallback onRepeat;
+  final bool shuffle;
+  final bool repeat;
 
-  const _NowPlayingCard({required this.track, required this.playing, required this.position, required this.duration, required this.format, required this.onPrevious, required this.onPlayPause, required this.onNext, required this.onSeek});
+  const _NowPlayingCard({required this.track, required this.playing, required this.position, required this.duration, required this.format, required this.onPrevious, required this.onPlayPause, required this.onNext, required this.onSeek, required this.onShuffle, required this.onRepeat, required this.shuffle, required this.repeat});
 
   @override
   Widget build(BuildContext context) {
@@ -240,6 +248,10 @@ class _NowPlayingCard extends StatelessWidget {
             IconButton(onPressed: onPrevious, icon: const Icon(Icons.skip_previous_rounded, size: 32)),
             FilledButton(onPressed: onPlayPause, style: FilledButton.styleFrom(shape: const CircleBorder(), padding: const EdgeInsets.all(18)), child: Icon(playing ? Icons.pause_rounded : Icons.play_arrow_rounded, size: 30)),
             IconButton(onPressed: onNext, icon: const Icon(Icons.skip_next_rounded, size: 32)),
+          ]),
+          Row(mainAxisAlignment: MainAxisAlignment.center, children: [
+            IconButton(onPressed: onShuffle, color: shuffle ? Theme.of(context).colorScheme.primary : null, tooltip: 'Shuffle', icon: const Icon(Icons.shuffle_rounded)),
+            IconButton(onPressed: onRepeat, color: repeat ? Theme.of(context).colorScheme.primary : null, tooltip: 'Repeat', icon: const Icon(Icons.repeat_rounded)),
           ]),
         ]),
       ),
