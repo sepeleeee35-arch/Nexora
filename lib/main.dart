@@ -310,8 +310,216 @@ class ArcadeGame{final String title,kind;const ArcadeGame(this.title,this.kind);
 String _cat(String k){if(k=='ttt'||k=='dice')return'BOARD';if(k=='cards'||k=='highlow')return'CARD';if(k=='target')return'ACTION';if(k=='dodge'||k=='timing')return'ARCADE';return'PUZZLE';}
 IconData _ico(String k){switch(k){case'dodge':return Icons.speed_rounded;case'target':return Icons.gps_fixed_rounded;case'merge':case'2048':return Icons.add_box_rounded;case'memory':return Icons.grid_view_rounded;case'word':return Icons.abc_rounded;case'brick':return Icons.view_module_rounded;case'maze':return Icons.route_rounded;case'sort':return Icons.view_column_rounded;case'cards':return Icons.style_rounded;case'timing':return Icons.timer_rounded;case'ttt':return Icons.grid_3x3_rounded;case'pool':return Icons.circle_rounded;case'lights':return Icons.lightbulb_rounded;case'bubble':return Icons.bubble_chart_rounded;case'defense':return Icons.shield_rounded;default:return Icons.extension_rounded;}}
 class GamesPage extends StatefulWidget{const GamesPage({super.key});@override State<GamesPage> createState()=>_GamesState();}
-class _GamesState extends State<GamesPage>{String q='';void open(ArcadeGame g)=>Navigator.push(context,MaterialPageRoute(builder:(_)=>ArcadeGamePage(g)));@override Widget build(BuildContext x){final list=_games.where((g)=>g.title.toLowerCase().contains(q.toLowerCase())).toList();return ListView(padding:const EdgeInsets.fromLTRB(14,14,14,110),children:[Container(padding:const EdgeInsets.all(22),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:const LinearGradient(colors:[Color(0xFF6D28D9),Color(0xFF111827)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Row(children:[const Icon(Icons.sports_esports_rounded,size:34),const Spacer(),Text(_games.length.toString()+' GAMES',style:const TextStyle(fontWeight:FontWeight.w900))]),const SizedBox(height:14),const Text('NEXORA ARCADE',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900,letterSpacing:2)),const Text('Main. Temukan. Ulangi.',style:TextStyle(fontSize:29,fontWeight:FontWeight.w900)),const SizedBox(height:6),Text(_games.length.toString()+' mini-game original. Banyak genre, satu tempat.',style:TextStyle(color:Colors.white70)),const SizedBox(height:14),FilledButton.icon(onPressed:()=>open(_games[Random().nextInt(_games.length)]),icon:const Icon(Icons.shuffle_rounded),label:const Text('Random Play'))])),const SizedBox(height:14),TextField(onChanged:(v)=>setState(()=>q=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari game...',filled:true,fillColor:const Color(0xFF111522),border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),const SizedBox(height:16),Row(children:[const Expanded(child:Text('All Games',style:TextStyle(fontSize:21,fontWeight:FontWeight.w900))),Text(list.length.toString())]),const SizedBox(height:10),GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:list.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:.73),itemBuilder:(c,i){final g=list[i];final col=Colors.primaries[i%Colors.primaries.length];return Material(color:const Color(0xFF171321),borderRadius:BorderRadius.circular(22),child:InkWell(onTap:()=>open(g),borderRadius:BorderRadius.circular(22),child:Container(padding:const EdgeInsets.all(12),decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:LinearGradient(colors:[col.withValues(alpha:.55),const Color(0xFF171321)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Expanded(child:Container(width:double.infinity,decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:col.withValues(alpha:.35)),child:Stack(children:[Center(child:Icon(_ico(g.kind),size:58)),const Positioned(top:9,right:9,child:Icon(Icons.play_circle_fill_rounded,size:28)),Positioned(left:9,bottom:9,child:Text(_cat(g.kind),style:const TextStyle(fontSize:8,fontWeight:FontWeight.w900)))]))),const SizedBox(height:8),Text(g.title,maxLines:2,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:16,fontWeight:FontWeight.w900)),const SizedBox(height:4),Text('Original Nexora • '+_cat(g.kind),style:const TextStyle(fontSize:10,color:Colors.white70)),const SizedBox(height:6),const Row(children:[Icon(Icons.bolt_rounded,size:15),SizedBox(width:3),Text('PLAY',style:TextStyle(fontSize:10,fontWeight:FontWeight.w900))])]))));}})];}}
-class TapRushPage extends StatelessWidget{const TapRushPage({super.key});@override Widget build(BuildContext c)=>ArcadeGamePage(const ArcadeGame('Tap Rush','tap'));}
+class _GamesState extends State<GamesPage> {
+  String query = '';
+
+  void openGame(ArcadeGame game) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => ArcadeGamePage(game)),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final games = _games
+        .where((game) =>
+            game.title.toLowerCase().contains(query.toLowerCase()))
+        .toList();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 110),
+      children: [
+        Container(
+          padding: const EdgeInsets.all(22),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6D28D9), Color(0xFF111827)],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.sports_esports_rounded, size: 34),
+                  const Spacer(),
+                  Text(
+                    '\${_games.length} GAMES',
+                    style: const TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'NEXORA ARCADE',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
+                ),
+              ),
+              const Text(
+                'Main. Temukan. Ulangi.',
+                style: TextStyle(fontSize: 29, fontWeight: FontWeight.w900),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                '\${_games.length} mini-game original. Banyak genre, satu tempat.',
+                style: const TextStyle(color: Colors.white70),
+              ),
+              const SizedBox(height: 14),
+              FilledButton.icon(
+                onPressed: _games.isEmpty
+                    ? null
+                    : () => openGame(
+                          _games[Random().nextInt(_games.length)],
+                        ),
+                icon: const Icon(Icons.shuffle_rounded),
+                label: const Text('Random Play'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
+        TextField(
+          onChanged: (value) => setState(() => query = value),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search_rounded),
+            hintText: 'Cari game...',
+            filled: true,
+            fillColor: const Color(0xFF111522),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(18),
+              borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            const Expanded(
+              child: Text(
+                'All Games',
+                style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+              ),
+            ),
+            Text('\${games.length}'),
+          ],
+        ),
+        const SizedBox(height: 10),
+        GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: games.length,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 2,
+            crossAxisSpacing: 10,
+            mainAxisSpacing: 10,
+            childAspectRatio: .73,
+          ),
+          itemBuilder: (context, index) {
+            final game = games[index];
+            final color = Colors.primaries[index % Colors.primaries.length];
+
+            return Material(
+              color: const Color(0xFF171321),
+              borderRadius: BorderRadius.circular(22),
+              child: InkWell(
+                onTap: () => openGame(game),
+                borderRadius: BorderRadius.circular(22),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(22),
+                    gradient: LinearGradient(
+                      colors: [
+                        color.withValues(alpha: .55),
+                        const Color(0xFF171321),
+                      ],
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(18),
+                            color: color.withValues(alpha: .35),
+                          ),
+                          child: Stack(
+                            children: [
+                              Center(child: Icon(_ico(game.kind), size: 58)),
+                              const Positioned(
+                                top: 9,
+                                right: 9,
+                                child: Icon(
+                                  Icons.play_circle_fill_rounded,
+                                  size: 28,
+                                ),
+                              ),
+                              Positioned(
+                                left: 9,
+                                bottom: 9,
+                                child: Text(
+                                  _cat(game.kind),
+                                  style: const TextStyle(
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        game.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Original Nexora • \${_cat(game.kind)}',
+                        style: const TextStyle(
+                          fontSize: 10,
+                          color: Colors.white70,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      const Row(
+                        children: [
+                          Icon(Icons.bolt_rounded, size: 15),
+                          SizedBox(width: 3),
+                          Text(
+                            'PLAY',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
 class ArcadeGamePage extends StatefulWidget{final ArcadeGame game;const ArcadeGamePage(this.game,{super.key});@override State<ArcadeGamePage> createState()=>_ArcadeState();}
 class _ArcadeState extends State<ArcadeGamePage>{final r=Random();Timer? t;int score=0,time=30,target=0;bool play=false;List<int>b=[];List<bool>o=[];@override void initState(){super.initState();_reset();}void _reset(){t?.cancel();score=0;time=30;target=r.nextInt(25);play=false;b=List.generate(25,(_)=>r.nextInt(5));o=List.filled(16,false);if(mounted)setState((){});}void start(){_reset();setState(()=>play=true);t=Timer.periodic(const Duration(seconds:1),(_){if(!mounted)return;if(time<=1){t?.cancel();setState(()=>play=false);}else setState(()=>time--);});}void end(){t?.cancel();setState(()=>play=false);}void tap(int i){if(!play)return;final k=widget.game.kind;if(k=='tap'||k=='timing'||k=='target'){if(i==target){score+=20;target=r.nextInt(25);}else score=max(0,score-2);}else if(k=='memory'||k=='match'||k=='cards'){if(i<16&&!o[i]){o[i]=true;score+=10;if(o.every((v)=>v))end();}}else if(k=='2048'||k=='merge'){final j=i%5<4?i+1:i-1;if(j>=0&&b[j]==b[i]){b[j]++;b[i]=0;score+=20;}else b[i]=(b[i]+1)%9;}else if(k=='ttt'){if(i>=9||b[i]!=0)return;b[i]=1;final e=[for(int z=0;z<9;z++)if(b[z]==0)z];if(e.isNotEmpty)b[e[r.nextInt(e.length)]]=2;}else if(k=='lights'){for(final z in[i,i-1,i+1,i-5,i+5])if(z>=0&&z<25)b[z]=b[z]==0?1:0;}else{b[i]=(b[i]+1)%9;score+=10;if(score>=180)end();}setState((){});}Widget grid(int n){return GridView.builder(physics:const NeverScrollableScrollPhysics(),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:n,crossAxisSpacing:8,mainAxisSpacing:8),itemCount:n*n,itemBuilder:(c,i)=>GestureDetector(onTap:()=>tap(i),child:AnimatedContainer(duration:const Duration(milliseconds:120),decoration:BoxDecoration(borderRadius:BorderRadius.circular(16),gradient:LinearGradient(colors:[Colors.primaries[i%Colors.primaries.length].withValues(alpha:.55),const Color(0xFF171B2A)])),child:Center(child:Text(widget.game.kind=='2048'||widget.game.kind=='merge'?(b[i]==0?'':(b[i]*2).toString()):widget.game.kind=='target'||widget.game.kind=='timing'||widget.game.kind=='tap'?(i==target?'TARGET':''):widget.game.kind=='memory'||widget.game.kind=='match'||widget.game.kind=='cards'?(i<16&&o[i]?'✓':'?'):widget.game.kind=='ttt'?(i<9&&b[i]>0?(b[i]==1?'X':'O'):''):widget.game.kind=='lights'?(b[i]==1?'ON':''):'•',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900))))));}
 @override void dispose(){t?.cancel();super.dispose();}@override Widget build(BuildContext c)=>Scaffold(appBar:AppBar(title:Text(widget.game.title),actions:[IconButton(onPressed:_reset,icon:const Icon(Icons.refresh_rounded))]),body:Padding(padding:const EdgeInsets.all(15),child:Column(children:[Row(children:[Expanded(child:_H('SCORE',score.toString())),const SizedBox(width:8),Expanded(child:_H('TIME',time.toString()+'s')),const SizedBox(width:8),Expanded(child:_H('MODE',_cat(widget.game.kind)))]),const SizedBox(height:12),Expanded(child:Container(padding:const EdgeInsets.all(10),decoration:BoxDecoration(borderRadius:BorderRadius.circular(27),gradient:const LinearGradient(colors:[Color(0xFF1B1530),Color(0xFF0C1019)])),child:play?grid(widget.game.kind=='ttt'?3:5):Center(child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(_ico(widget.game.kind),size:70,color:Colors.deepPurpleAccent),const SizedBox(height:14),Text(time==0?'ROUND OVER':'READY TO PLAY',style:const TextStyle(fontSize:22,fontWeight:FontWeight.w900)),const SizedBox(height:7),Text(widget.game.kind=='2048'||widget.game.kind=='merge'?'Merge matching tiles.':widget.game.kind=='memory'?'Find matching pairs.':'Tap, solve, and chase your best score.',textAlign:TextAlign.center,style:const TextStyle(color:Colors.white60))])))),const SizedBox(height:10),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:play?null:start,icon:const Icon(Icons.play_arrow_rounded),label:Text(play?'PLAYING':'START GAME')))]));}}
