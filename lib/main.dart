@@ -321,7 +321,7 @@ class HomePage extends StatelessWidget {
         const Text('Kejar skor tertinggi dalam waktu terbatas.'),
         const Spacer(),
         FilledButton.icon(
-          onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const ArcadeGamePage(ArcadeGame('Tap Rush', 'tap')))),
+          onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const NeonJumpPage())),
           icon:const Icon(Icons.play_arrow_rounded),label:const Text('Play'),
         ),
       ]),
@@ -572,7 +572,7 @@ class _NeonPainter extends CustomPainter{
   final double x,y,camera;final List<Rect> platforms,spikes;
   _NeonPainter(this.x,this.y,this.camera,this.platforms,this.spikes);
   @override void paint(Canvas c,Size s){
-    c.drawRect(Offset.zero,Offset(s.width,s.height),Paint()..color=const Color(0xFF070A14));
+    c.drawRect(Rect.fromLTWH(0,0,s.width,s.height),Paint()..color=const Color(0xFF070A14));
     final grid=Paint()..color=const Color(0xFF171D32);
     for(double gx=-(camera%40);gx<s.width;gx+=40)c.drawLine(Offset(gx,0),Offset(gx,s.height),grid);
     for(double gy=0;gy<s.height;gy+=40)c.drawLine(Offset(0,gy),Offset(s.width,gy),grid);
@@ -651,7 +651,7 @@ class _RoadState extends State<RoadRushPage>{
 }
 class _RoadPainter extends CustomPainter{
   final double lane;final List<_Car>cars;_RoadPainter(this.lane,this.cars);
-  @override void paint(Canvas c,Size s){c.drawRect(Offset.zero,Offset(s.width,s.height),Paint()..color=const Color(0xFF102016));final road=Rect.fromLTWH(s.width*.1,0,s.width*.8,s.height);c.drawRect(road,Paint()..color=const Color(0xFF242833));final dash=Paint()..color=Colors.white24..strokeWidth=4;for(int l=1;l<3;l++){final x=road.left+road.width*l/3;for(double y=-30;y<s.height;y+=55)c.drawLine(Offset(x,y),Offset(x,y+25),dash);}final px=road.left+road.width*(lane+.5)/3;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px-25,s.height*.84,50,70),const Radius.circular(12)),Paint()..color=const Color(0xFF22D3EE));for(final car in cars){final x=road.left+road.width*(car.lane+.5)/3;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x-23,car.y*s.height,46,66),const Radius.circular(11)),Paint()..color=const Color(0xFFEF4444));}}
+  @override void paint(Canvas c,Size s){c.drawRect(Rect.fromLTWH(0,0,s.width,s.height),Paint()..color=const Color(0xFF102016));final road=Rect.fromLTWH(s.width*.1,0,s.width*.8,s.height);c.drawRect(road,Paint()..color=const Color(0xFF242833));final dash=Paint()..color=Colors.white24..strokeWidth=4;for(int l=1;l<3;l++){final x=road.left+road.width*l/3;for(double y=-30;y<s.height;y+=55)c.drawLine(Offset(x,y),Offset(x,y+25),dash);}final px=road.left+road.width*(lane+.5)/3;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px-25,s.height*.84,50,70),const Radius.circular(12)),Paint()..color=const Color(0xFF22D3EE));for(final car in cars){final x=road.left+road.width*(car.lane+.5)/3;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x-23,car.y*s.height,46,66),const Radius.circular(11)),Paint()..color=const Color(0xFFEF4444));}}
   @override bool shouldRepaint(covariant _RoadPainter old)=>true;
 }
 
@@ -669,7 +669,7 @@ class _BrickState extends State<BrickSmashPage>{
 }
 class _BrickPainter extends CustomPainter{
   final double x,y,p;final List<bool>b;_BrickPainter(this.x,this.y,this.p,this.b);
-  @override void paint(Canvas c,Size s){c.drawRect(Offset.zero,Offset(s.width,s.height),Paint()..color=const Color(0xFF080B14));for(int i=0;i<30;i++)if(b[i]){final col=i%5,row=i~/5;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*(.05+col*.19),s.height*(.08+row*.055),s.width*.17,s.height*.04),const Radius.circular(6)),Paint()..color=const Color(0xFF8B5CF6));}c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*(p-.12),s.height*.92,s.width*.24,12),const Radius.circular(10)),Paint()..color=Colors.white);c.drawCircle(Offset(x*s.width,y*s.height),9,Paint()..color=const Color(0xFF22D3EE));}
+  @override void paint(Canvas c,Size s){c.drawRect(Rect.fromLTWH(0,0,s.width,s.height),Paint()..color=const Color(0xFF080B14));for(int i=0;i<30;i++)if(b[i]){final col=i%5,row=i~/5;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*(.05+col*.19),s.height*(.08+row*.055),s.width*.17,s.height*.04),const Radius.circular(6)),Paint()..color=const Color(0xFF8B5CF6));}c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*(p-.12),s.height*.92,s.width*.24,12),const Radius.circular(10)),Paint()..color=Colors.white);c.drawCircle(Offset(x*s.width,y*s.height),9,Paint()..color=const Color(0xFF22D3EE));}
   @override bool shouldRepaint(covariant _BrickPainter old)=>true;
 }
 
@@ -689,7 +689,7 @@ class _FlapState extends State<FlapOrbitPage>{
 }
 class _FlapPainter extends CustomPainter{
   final double y,x,g;_FlapPainter(this.y,this.x,this.g);
-  @override void paint(Canvas c,Size s){c.drawRect(Offset.zero,Offset(s.width,s.height),Paint()..color=const Color(0xFF08131A));final p=Paint()..color=const Color(0xFF16A34A);c.drawRect(Rect.fromLTWH(x*s.width,0,s.width*.12,s.height*(g-.16)),p);c.drawRect(Rect.fromLTWH(x*s.width,s.height*(g+.16),s.width*.12,s.height),p);c.drawCircle(Offset(s.width*.5,y*s.height),18,Paint()..color=const Color(0xFFFBBF24));}
+  @override void paint(Canvas c,Size s){c.drawRect(Rect.fromLTWH(0,0,s.width,s.height),Paint()..color=const Color(0xFF08131A));final p=Paint()..color=const Color(0xFF16A34A);c.drawRect(Rect.fromLTWH(x*s.width,0,s.width*.12,s.height*(g-.16)),p);c.drawRect(Rect.fromLTWH(x*s.width,s.height*(g+.16),s.width*.12,s.height),p);c.drawCircle(Offset(s.width*.5,y*s.height),18,Paint()..color=const Color(0xFFFBBF24));}
   @override bool shouldRepaint(covariant _FlapPainter old)=>true;
 }
 
@@ -731,6 +731,394 @@ class _2048State extends State<Mini2048Page>{
     ])),
   ));
 }
+class MusicPage extends StatefulWidget {
+  const MusicPage({super.key});
+  @override State<MusicPage> createState()=>_MusicState();
+}
+class _MusicState extends State<MusicPage>{
+  final AudioPlayer player=AudioPlayer();
+  int selected=0;bool playing=false;bool shuffle=false;bool repeat=false;String query='';
+  Duration position=Duration.zero,duration=Duration.zero;
+  final liked=<String>{};
+  final tracks=const [
+    ('Nexora Intro','Nexora Studio',440.0,Color(0xFF7C3AED)),('Afterlight','Nexora Studio',330.0,Color(0xFF2563EB)),
+    ('Night Drive','Nexora Studio',220.0,Color(0xFF0891B2)),('Pixel Rain','Nexora Studio',523.0,Color(0xFFDB2777)),
+    ('Safe Horizon','Nexora Studio',294.0,Color(0xFF059669)),('Midnight Bloom','Nexora Studio',196.0,Color(0xFFD97706)),
+    ('Digital Sunrise','Nexora Studio',392.0,Color(0xFFDC2626)),('Neon Memory','Nexora Studio',262.0,Color(0xFF4F46E5)),
+  ];
+  @override void initState(){super.initState();player.onPlayerStateChanged.listen((s){if(mounted)setState(()=>playing=s==PlayerState.playing);});player.onPositionChanged.listen((p){if(mounted)setState(()=>position=p);});player.onDurationChanged.listen((d){if(mounted)setState(()=>duration=d);});player.onPlayerComplete.listen((_)=>_completed());}
+  void _completed(){if(repeat){playSelected();return;}selectTrack(shuffle?Random().nextInt(tracks.length):(selected+1)%tracks.length);}
+  Uint8List _wav(double base){const sr=22050,seconds=12,channels=1,bits=16;final count=sr*seconds,dataBytes=count*2;final data=ByteData(44+dataBytes);void w32(int o,int v)=>data.setUint32(o,v,Endian.little);void w16(int o,int v)=>data.setUint16(o,v,Endian.little);void ascii(int o,String s){for(int i=0;i<s.length;i++){data.setUint8(o+i,s.codeUnitAt(i));}}ascii(0,'RIFF');w32(4,36+dataBytes);ascii(8,'WAVE');ascii(12,'fmt ');w32(16,16);w16(20,1);w16(22,channels);w32(24,sr);w32(28,sr*channels*bits~/8);w16(32,channels*bits~/8);w16(34,bits);ascii(36,'data');w32(40,dataBytes);for(int i=0;i<count;i++){final t=i/sr,fadeIn=min(1.0,t*8),fadeOut=min(1.0,(seconds-t)*4),env=fadeIn*fadeOut;final beat=(sin(2*pi*2.0*t)>0.88)?1.0:0.0;final melody=base*(1+0.035*sin(2*pi*.22*t));var sw=.20*sin(2*pi*melody*t)+.10*sin(2*pi*melody*1.5*t)+.055*sin(2*pi*melody*2*t)+beat*.07*sin(2*pi*(base/2)*t);data.setInt16(44+i*2,(sw*env*27000).clamp(-32768,32767).toInt(),Endian.little);}return data.buffer.asUint8List();}
+  Future<void> playSelected() async{await player.play(BytesSource(_wav(tracks[selected].$3),mimeType:'audio/wav'));}
+  Future<void> selectTrack(int i) async{await player.stop();if(!mounted)return;setState(() { selected=i; position=Duration.zero; });await playSelected();}
+  void toggleLike(){setState(()=>liked.contains(tracks[selected].$1)?liked.remove(tracks[selected].$1):liked.add(tracks[selected].$1));}
+  @override void dispose(){player.dispose();super.dispose();}
+  @override Widget build(BuildContext context){final filtered=tracks.where((t)=>t.$1.toLowerCase().contains(query.toLowerCase())||t.$2.toLowerCase().contains(query.toLowerCase())).toList();final t=tracks[selected],maxMs=max(1,duration.inMilliseconds),value=min(position.inMilliseconds.toDouble(),maxMs.toDouble());return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,110),children:[
+    Row(children:[const Expanded(child:Text('Nexora Music',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900))),Chip(label: Text('${tracks.length} TRACKS'))]),const SizedBox(height:4),const Text('Player • Search • Queue • Repeat • Shuffle • Library'),const SizedBox(height:14),
+    TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari lagu atau artis...',filled:true,border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),const SizedBox(height:18),
+    Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:LinearGradient(colors:[t.$4,const Color(0xFF111522)])),child:Column(children:[
+      Container(width:172,height:172,decoration:BoxDecoration(borderRadius:BorderRadius.circular(30),gradient:LinearGradient(colors:[t.$4.withValues(alpha:.9),Colors.black38])),child:const Icon(Icons.album_rounded,size:82)),const SizedBox(height:16),
+      Text(t.$1,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900),textAlign:TextAlign.center),Text(t.$2),const SizedBox(height:5),Text(liked.contains(t.$1)?'Liked • Original Nexora':'Original Nexora',style:Theme.of(context).textTheme.bodySmall),
+      Slider(value:value,min:0,max:maxMs.toDouble(),onChanged:(v)=>player.seek(Duration(milliseconds:v.toInt()))),Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(_fmt(position)),Text(_fmt(duration))]),
+      Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>selectTrack((selected-1+tracks.length)%tracks.length),icon:const Icon(Icons.skip_previous_rounded,size:32)),FilledButton(onPressed:playing?()=>player.pause():playSelected,style:FilledButton.styleFrom(shape:const CircleBorder(),padding:const EdgeInsets.all(18)),child:Icon(playing?Icons.pause_rounded:Icons.play_arrow_rounded,size:30)),IconButton(onPressed:()=>selectTrack((selected+1)%tracks.length),icon:const Icon(Icons.skip_next_rounded,size:32))]),
+      Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>setState(()=>shuffle=!shuffle),color:shuffle?Theme.of(context).colorScheme.primary:null,icon:const Icon(Icons.shuffle_rounded)),IconButton(onPressed:toggleLike,color:liked.contains(t.$1)?Theme.of(context).colorScheme.primary:null,icon:Icon(liked.contains(t.$1)?Icons.favorite_rounded:Icons.favorite_border_rounded)),IconButton(onPressed:()=>setState(()=>repeat=!repeat),color:repeat?Theme.of(context).colorScheme.primary:null,icon:const Icon(Icons.repeat_rounded))]),
+    ])),const SizedBox(height:22),const _Title('Made for you'),const SizedBox(height:10),
+    SizedBox(height:112,child:ListView(scrollDirection:Axis.horizontal,children:[_MusicCard('Daily Mix','Original Nexora',Icons.auto_awesome_rounded),_MusicCard('Game Focus','Arcade energy',Icons.sports_esports_rounded),_MusicCard('Late Night','Chill original',Icons.nightlight_rounded),_MusicCard('Liked Songs','Your favorites',Icons.favorite_rounded)])),const SizedBox(height:22),
+    const _Title('Library'),const SizedBox(height:10),for(final tr in filtered)Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(leading:CircleAvatar(backgroundColor:tr.$4,child:const Icon(Icons.music_note_rounded)),title:Text(tr.$1,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(tr.$2),trailing:Icon(tr.$1==t.$1&&playing?Icons.pause_circle_filled:Icons.play_circle_outline_rounded),onTap:()=>selectTrack(tracks.indexOf(tr)))),
+    const Card(child:ListTile(leading:Icon(Icons.info_outline_rounded),title:Text('Katalog Nexora'),subtitle:Text('Track bawaan ini adalah audio original/sintetis untuk demo player. Katalog lagu pihak lain membutuhkan lisensi atau integrasi resmi.'))),
+  ]);}
+  String _fmt(Duration d)=>'${d.inMinutes}:${(d.inSeconds%60).toString().padLeft(2,'0')}';
+}
+class _MusicCard extends StatelessWidget{final String title,sub;final IconData icon;const _MusicCard(this.title,this.sub,this.icon);@override Widget build(BuildContext context)=>Container(width:175,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]));}
+class ReactionRushPage extends StatefulWidget {
+  const ReactionRushPage({super.key});
+  @override
+  State<ReactionRushPage> createState() => _ReactionState();
+}
+
+class _ReactionState extends State<ReactionRushPage> {
+  final rng = Random();
+  Timer? timer;
+  bool waiting = false;
+  bool ready = false;
+  int score = 0;
+  String text = 'Tekan START';
+
+  void start() {
+    timer?.cancel();
+    setState(() {
+      waiting = true;
+      ready = false;
+      text = 'Tunggu...';
+    });
+    timer = Timer(
+      Duration(milliseconds: 700 + rng.nextInt(1800)),
+      () {
+        if (!mounted) return;
+        setState(() {
+          waiting = false;
+          ready = true;
+          text = 'TAP!';
+        });
+      },
+    );
+  }
+
+  void tap() {
+    if (waiting) {
+      timer?.cancel();
+      setState(() {
+        waiting = false;
+        ready = false;
+        text = 'Terlalu cepat!';
+      });
+    } else if (ready) {
+      setState(() {
+        score++;
+        ready = false;
+        text = 'Bagus!';
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Reaction Rush')),
+      body: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: _Score('Score', '$score')),
+                const SizedBox(width: 10),
+                const Expanded(child: _Score('Mode', 'Reflex')),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Expanded(
+              child: Center(
+                child: GestureDetector(
+                  onTap: tap,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 230,
+                    height: 230,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: ready
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                    child: Center(
+                      child: Text(
+                        text,
+                        style: const TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: start,
+                child: const Text('START'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ColorClashPage extends StatefulWidget {
+  const ColorClashPage({super.key});
+  @override
+  State<ColorClashPage> createState() => _ColorClashState();
+}
+
+class _ColorClashState extends State<ColorClashPage> {
+  final rng = Random();
+  int score = 0;
+  int target = 0;
+  final colors = <Color>[
+    Colors.red,
+    Colors.blue,
+    Colors.green,
+    Colors.orange,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    target = rng.nextInt(colors.length);
+  }
+
+  void next() {
+    setState(() {
+      target = rng.nextInt(colors.length);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Color Clash')),
+      body: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            _Score('Score', '$score'),
+            const SizedBox(height: 22),
+            Text(
+              'Pilih warna target',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colors[target],
+              ),
+            ),
+            const SizedBox(height: 28),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                children: [
+                  for (int i = 0; i < colors.length; i++)
+                    FilledButton(
+                      onPressed: () {
+                        if (i == target) {
+                          setState(() => score++);
+                        }
+                        next();
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colors[i],
+                      ),
+                      child: const SizedBox(),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NumberSprintPage extends StatefulWidget {
+  const NumberSprintPage({super.key});
+  @override
+  State<NumberSprintPage> createState() => _NumberSprintState();
+}
+
+class _NumberSprintState extends State<NumberSprintPage> {
+  final rng = Random();
+  int a = 2;
+  int b = 3;
+  int answer = 5;
+  int score = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _nextQuestion();
+  }
+
+  void _nextQuestion() {
+    a = 1 + rng.nextInt(9);
+    b = 1 + rng.nextInt(9);
+    answer = a + b;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final opts = [answer, answer + 1, answer - 1, answer + 2]..shuffle(rng);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Number Sprint')),
+      body: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            _Score('Score', '$score'),
+            const SizedBox(height: 30),
+            Text(
+              '$a + $b = ?',
+              style: const TextStyle(
+                fontSize: 42,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 25),
+            for (final o in opts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      if (o == answer) {
+                        score++;
+                      }
+                      setState(_nextQuestion);
+                    },
+                    child: Text(
+                      '$o',
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DodgeZonePage extends StatefulWidget {
+  const DodgeZonePage({super.key});
+  @override
+  State<DodgeZonePage> createState() => _DodgeState();
+}
+
+class _DodgeState extends State<DodgeZonePage> {
+  double x = .5;
+  int score = 0;
+  Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer.periodic(
+      const Duration(milliseconds: 700),
+      (_) {
+        if (mounted) {
+          setState(() => score++);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Dodge Zone')),
+      body: Column(
+        children: [
+          _Score('Survival', '$score'),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final playerLeft = (constraints.maxWidth - 56) * x;
+                return GestureDetector(
+                  onHorizontalDragUpdate: (d) {
+                    setState(() {
+                      x = (x + d.delta.dx / constraints.maxWidth)
+                          .clamp(.08, .92);
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: const Color(0xFF111522),
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          bottom: 20,
+                          left: playerLeft,
+                          child: const CircleAvatar(
+                            radius: 28,
+                            child: Icon(Icons.shield_rounded),
+                          ),
+                        ),
+                        const Center(
+                          child: Text(
+                            'Geser kiri/kanan untuk bertahan',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class ToolsPage extends StatefulWidget{const ToolsPage({super.key});@override State<ToolsPage> createState()=>_ToolsState();}
 class _ToolsState extends State<ToolsPage>{
   String input='',output='';
