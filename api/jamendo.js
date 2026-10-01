@@ -11,34 +11,61 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: 'JAMENDO_CLIENT_ID is not configured.' });
   }
 
-  const params = new URLSearchParams();
-  params.set('client_id', clientId);
-  params.set('format', 'json');
+  const params = new URLSearchParams({
+    client_id: clientId,
+    format: 'json',
+  });
 
   const query = req.query || {};
   for (const [key, value] of Object.entries(query)) {
-    if (key === 'endpoint' || value == null) continue;
-    params.set(key, Array.isArray(value) ? String(value[0]) : String(value));
+    if (key === 'endpoint' || key === 'client_id' || value == null) continue;
+    const first = Array.isArray(value) ? value[0] : value;
+    if (first != null && String(first).length > 0) {
+      params.set(key, String(first));
+    }
   }
 
   const url = `https://api.jamendo.com/v3.0/${endpoint}/?${params.toString()}`;
 
   try {
-    const upstream = await fetch(url, {
-      method: 'GET',
-      headers: { accept: 'application/json' },
-    });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+
+    let upstream;
+    try {
+      upstream = await fetch(url, {
+        method: 'GET',
+        headers: { accept: 'application/json' },
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const body = await upstream.text();
 
+    res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    return res.status(upstream.status).send(body);
+
+    if (!upstream.ok) {
+      return res.status(502).json({
+        error: `Jamendo upstream HTTP ${upstream.status}.`,
+        detail: body.slice(0, 1000),
+      });
+    }
+
+    return res.status(200).send(body);
   } catch (error) {
     console.error('Jamendo proxy error:', error);
+    const message = error?.name === 'AbortError'
+      ? 'Jamendo request timed out.'
+      : (error instanceof Error ? error.message : String(error));
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
     return res.status(502).json({
       error: 'Jamendo request failed.',
-      detail: error instanceof Error ? error.message : String(error),
+      detail: message,
     });
   }
 }
