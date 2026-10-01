@@ -399,6 +399,53 @@ const _games = <ArcadeGame>[
   ArcadeGame('Nexora 2048', '2048', Icons.add_box_rounded),
 ];
 
+class GamePreview extends StatelessWidget{
+  final String kind;
+  const GamePreview({required this.kind,super.key});
+  @override Widget build(BuildContext context)=>CustomPaint(painter:_GamePreviewPainter(kind),child:const SizedBox.expand());
+}
+class _GamePreviewPainter extends CustomPainter{
+  final String kind;
+  _GamePreviewPainter(this.kind);
+  @override void paint(Canvas c,Size s){
+    final p=Paint()..isAntiAlias=true;
+    p.color=const Color(0xFF0B1020);c.drawRect(Offset.zero&s,p);
+    void rr(Rect r,Color color,{double radius=8}){p.color=color;c.drawRRect(RRect.fromRectAndRadius(r,Radius.circular(radius)),p);}
+    if(kind=='jump'){
+      rr(Rect.fromLTWH(10,s.height*.72,s.width*.42,9),const Color(0xFF8B5CF6));
+      rr(Rect.fromLTWH(s.width*.58,s.height*.48,s.width*.30,9),const Color(0xFF8B5CF6));
+      p.color=const Color(0xFF22D3EE);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*.25,s.height*.42,18,18),const Radius.circular(4)),p);
+      p.color=const Color(0xFFEF4444);final spike=Path()..moveTo(s.width*.43,s.height*.72)..lineTo(s.width*.48,s.height*.58)..lineTo(s.width*.53,s.height*.72)..close();c.drawPath(spike,p);
+    }else if(kind=='worm'){
+      p.color=const Color(0xFF8B5CF6);for(int i=0;i<4;i++)c.drawCircle(Offset(s.width*.42-i*15,s.height*.56),8,p);
+      p.color=const Color(0xFF22D3EE);c.drawCircle(Offset(s.width*.42,s.height*.56),9,p);
+      p.color=const Color(0xFFEF4444);c.drawCircle(Offset(s.width*.70,s.height*.35),7,p);
+    }else if(kind=='chess'){
+      final cell=min(s.width,s.height)/8;
+      for(int r=0;r<8;r++)for(int q=0;q<8;q++){p.color=(r+q).isEven?const Color(0xFFD6D3D1):const Color(0xFF57534E);c.drawRect(Rect.fromLTWH(q*cell,r*cell,cell,cell),p);}
+      const glyphs=['♜','♞','♝','♛','♚','♝','♞','♜'];
+      for(int i=0;i<8;i++){final tp=TextPainter(text:TextSpan(text:glyphs[i],style:const TextStyle(fontSize:16,color:Colors.black87)),textDirection:TextDirection.ltr)..layout();tp.paint(c,Offset(i*cell+(cell-tp.width)/2,3));}
+    }else if(kind=='road'){
+      p.color=const Color(0xFF252936);c.drawRect(Rect.fromLTWH(s.width*.18,0,s.width*.64,s.height),p);
+      p.color=Colors.white24;p.strokeWidth=3;for(int i=1;i<3;i++)for(double y=0;y<s.height;y+=22)c.drawLine(Offset(s.width*(.18+.64*i/3),y),Offset(s.width*(.18+.64*i/3),y+10),p);
+      rr(Rect.fromLTWH(s.width*.44,s.height*.66,30,45),const Color(0xFF22D3EE),radius:6);rr(Rect.fromLTWH(s.width*.62,s.height*.22,28,42),const Color(0xFFEF4444),radius:6);
+    }else if(kind=='brick'){
+      for(int r=0;r<3;r++)for(int q=0;q<5;q++)rr(Rect.fromLTWH(8+q*(s.width-16)/5,10+r*19,(s.width-22)/5,14),const Color(0xFF8B5CF6),radius:4);
+      rr(Rect.fromLTWH(s.width*.35,s.height*.78,s.width*.30,8),Colors.white,radius:4);p.color=const Color(0xFF22D3EE);c.drawCircle(Offset(s.width*.5,s.height*.68),7,p);
+    }else if(kind=='flap'){
+      p.color=const Color(0xFFFBBF24);c.drawCircle(Offset(s.width*.34,s.height*.50),11,p);
+      rr(Rect.fromLTWH(s.width*.68,0,35,s.height*.34),const Color(0xFF16A34A),radius:4);
+      rr(Rect.fromLTWH(s.width*.68,s.height*.66,35,s.height*.34),const Color(0xFF16A34A),radius:4);
+    }else if(kind=='maze'){
+      p.color=const Color(0xFF312E81);for(int r=0;r<6;r++)for(int q=0;q<8;q++)if((r+q)%3!=1)c.drawRect(Rect.fromLTWH(q*s.width/8,r*s.height/6,s.width/8-2,s.height/6-2),p);
+      p.color=const Color(0xFF22D3EE);c.drawCircle(Offset(s.width*.18,s.height*.18),7,p);p.color=const Color(0xFF22C55E);c.drawCircle(Offset(s.width*.82,s.height*.82),7,p);
+    }else{
+      for(int i=0;i<4;i++){final vals=['2','4','8','2048'];final x=8+i*((s.width-24)/4);rr(Rect.fromLTWH(x,s.height*.35,(s.width-32)/4,34),const Color(0xFF6D28D9),radius:6);final tp=TextPainter(text:TextSpan(text:vals[i],style:TextStyle(fontSize:i==3?10:14,fontWeight:FontWeight.w900,color:Colors.white)),textDirection:TextDirection.ltr)..layout();tp.paint(c,Offset(x+((s.width-32)/4-tp.width)/2,s.height*.35+9));}
+    }
+  }
+  @override bool shouldRepaint(covariant _GamePreviewPainter old)=>old.kind!=kind;
+}
+
 class GamesPage extends StatefulWidget {
   const GamesPage({super.key});
   @override State<GamesPage> createState() => _GamesState();
@@ -470,7 +517,7 @@ class _GamesState extends State<GamesPage> {
                         borderRadius: BorderRadius.circular(17),
                         gradient: LinearGradient(colors: [Theme.of(context).colorScheme.primary.withOpacity(.45),const Color(0xFF151827)]),
                       ),
-                      child: Icon(g.icon,size:48),
+                      child: GamePreview(kind:g.kind),
                     )),
                     const SizedBox(height: 9),
                     Text(g.title,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900)),
@@ -569,7 +616,7 @@ class _NeonJumpState extends State<NeonJumpPage>{
   List<Rect>platforms=[],spikes=[];
   @override void initState(){super.initState();_load();}
   void _load(){platforms=levels[level-1];spikes=[for(int i=0;i<platforms.length-1;i++)if(i%2==0)Rect.fromLTWH(platforms[i].right-28,platforms[i].top-24,28,24)];}
-  Future<void> startGame() async{timer?.cancel();_load();setState((){started=true;dead=false;paused=false;score=0;x=80;y=486;vy=0;camera=0;});await audio.start(240+level*25,volume:.15);timer=Timer.periodic(const Duration(milliseconds:16),(_)=>tick());}
+  Future<void> startGame() async{timer?.cancel();_load();setState((){started=true;dead=false;paused=false;score=0;x=80;y=486;vy=0;camera=0;});unawaited(audio.start(240+level*25,volume:.20));timer=Timer.periodic(const Duration(milliseconds:16),(_)=>tick());}
   void restart(){timer?.cancel();audio.stop();if(mounted)setState((){started=false;dead=false;paused=false;level=1;score=0;x=80;y=486;vy=0;camera=0;_load();});}
   void jump(){if(!started||paused)return;if(y>=450)vy=-10.5;}
   void tick(){if(!mounted||!started||dead||paused)return;setState((){x+=3.7;vy+=.45;y+=vy;final feet=y+34;for(final p in platforms)if(x+28>p.left&&x<p.right&&feet>=p.top&&feet<=p.bottom+18&&vy>0){y=p.top-34;vy=-10.2;}camera=max(0,x-110);score=(x/10).floor();if(y>640||spikes.any((q)=>Rect.fromLTWH(x,y,30,34).overlaps(q))){dead=true;timer?.cancel();audio.stop();}else if(x>platforms.last.right-50){timer?.cancel();audio.stop();if(level<5){level++;_load();started=false;}else{dead=true;}}});}
@@ -577,7 +624,8 @@ class _NeonJumpState extends State<NeonJumpPage>{
   @override Widget build(BuildContext context)=>_MiniScaffold(title:'Neon Jump',restart:restart,child:Stack(children:[
     Positioned.fill(child:CustomPaint(painter:_NeonPainter(x,y,camera,platforms,spikes))),
     if(!started)Positioned.fill(child:Container(color:Colors.black45,child:_GameStart(title:'Neon Jump • Level '+level.toString(),description:'Auto-run seperti rhythm runner: tap untuk lompat dan hindari spike.',extra:'LEVEL '+level.toString()+' / 5 • Backsound ON saat mulai',onStart:startGame))),
-    if(started)Positioned(top:12,left:12,right:12,child:Row(children:[_Badge('LEVEL '+level.toString()),const SizedBox(width:8),_Badge('SCORE '+score.toString()),const Spacer(),_GamePauseButton(paused:paused,onTap:(){setState(()=>paused=!paused);})])),
+    if(started)Positioned(top:12,left:12,child:Row(children:[_Badge('LEVEL '+level.toString()),const SizedBox(width:8),_Badge('SCORE '+score.toString())])),
+    if(started)Positioned(top:12,right:12,child:_GamePauseButton(paused:paused,onTap:(){setState(()=>paused=!paused);})),
     if(started)Positioned.fill(child:GestureDetector(onTap:jump,behavior:HitTestBehavior.opaque)),
     if(dead)Positioned.fill(child:_Over(title:level==5?'ALL LEVELS CLEAR':'LEVEL FAILED',restart:restart)),
   ]));
@@ -647,7 +695,56 @@ class _ChessState extends State<NexoraChessPage>{
   List<List<int>>all(bool w){final out=<List<int>>[];for(int i=0;i<64;i++)if(b[i].isNotEmpty&&white(b[i])==w)for(final z in legal(i,w))out.add([i,z]);return out;}
   void tap(int i){if(!started||over||busy||!turn)return;if(sel==null){if(b[i].isNotEmpty&&white(b[i]))setState(()=>sel=i);return;}if(legal(sel!,true).contains(i)){move(sel!,i);}else if(b[i].isNotEmpty&&white(b[i]))setState(()=>sel=i);else setState(()=>sel=null);}
   void move(int a,int z){setState((){final p=b[a];b[z]=p;b[a]='';if(p=='P'&&z~/8==0)b[z]='Q';sel=null;turn=false;msg='BOT TURN';});end();if(!over){busy=true;Future.delayed(Duration(milliseconds:difficulty==1?550:difficulty==2?330:180),bot);}}
-  void bot(){if(!mounted||over||!started)return;final m=all(false);if(m.isEmpty){setState(()=>busy=false);end();return;}final q=m[rng.nextInt(m.length)],p=b[q[0]];setState((){b[q[1]]=p;b[q[0]]='';if(p=='p'&&q[1]~/8==7)b[q[1]]='q';turn=true;busy=false;msg='WHITE TURN';});end();}
+  int _pieceValue(String p){
+    switch(p.toUpperCase()){
+      case 'P': return 100;
+      case 'N': return 320;
+      case 'B': return 330;
+      case 'R': return 500;
+      case 'Q': return 900;
+      case 'K': return 20000;
+    }
+    return 0;
+  }
+  int _moveScore(List<int> q){
+    final captured=b[q[1]],moving=b[q[0]];
+    var score=_pieceValue(captured);
+    b[q[1]]=moving;b[q[0]]='';
+    if(moving=='p'&&q[1]~/8==7)b[q[1]]='q';
+    if(check(true))score+=80;
+    final replies=all(true);
+    if(replies.isEmpty&&check(true))score+=100000;
+    if(replies.isNotEmpty){
+      var worst=0;
+      for(final r in replies) worst=max(worst,_pieceValue(b[r[1]]));
+      score-=worst;
+    }
+    b[q[0]]=moving;b[q[1]]=captured;
+    return score;
+  }
+  void bot(){
+    if(!mounted||over||!started)return;
+    final m=all(false);
+    if(m.isEmpty){setState(()=>busy=false);end();return;}
+    List<int> q;
+    if(difficulty==1){
+      q=m[rng.nextInt(m.length)];
+    }else if(difficulty==2){
+      final scored=[for(final move in m)[move,_pieceValue(b[move[1]])]];
+      scored.sort((a,z)=>(z[1] as int).compareTo(a[1] as int));
+      final top=scored.take(min(4,scored.length)).toList();
+      q=top[rng.nextInt(top.length)][0] as List<int>;
+    }else{
+      q=m.reduce((best,candidate)=>_moveScore(candidate)>_moveScore(best)?candidate:best);
+    }
+    final p=b[q[0]];
+    setState((){
+      b[q[1]]=p;b[q[0]]='';
+      if(p=='p'&&q[1]~/8==7)b[q[1]]='q';
+      turn=true;busy=false;msg='WHITE TURN';
+    });
+    end();
+  }
   void end(){final m=all(turn);if(m.isEmpty&&started)setState((){over=true;msg=check(turn)?'CHECKMATE':'STALEMATE';});}
   String glyph(String p){const m={'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'};return m[p]??'';}
   @override Widget build(BuildContext context){
@@ -671,7 +768,7 @@ class _ChessState extends State<NexoraChessPage>{
                 segments:const [
                   ButtonSegment(value:1,label:Text('Easy')),
                   ButtonSegment(value:2,label:Text('Normal')),
-                  ButtonSegment(value:3,label:Text('Fast')),
+                  ButtonSegment(value:3,label:Text('Hard')),
                 ],
                 selected:{difficulty},
                 onSelectionChanged:(v)=>setState(()=>difficulty=v.first),
@@ -692,7 +789,7 @@ class _ChessState extends State<NexoraChessPage>{
                 Text(msg,style:const TextStyle(fontWeight:FontWeight.w900)),
                 const Spacer(),
                 Text(
-                  difficulty==1?'EASY BOT':difficulty==2?'NORMAL BOT':'FAST BOT',
+                  difficulty==1?'EASY BOT':difficulty==2?'NORMAL BOT':'HARD BOT',
                   style:const TextStyle(color:Colors.white54,fontSize:10),
                 ),
               ]),
@@ -744,7 +841,8 @@ class _RoadState extends State<RoadRushPage>{
   @override Widget build(BuildContext context)=>_MiniScaffold(title:'Road Rush',restart:restart,child:Stack(children:[
     Positioned.fill(child:CustomPaint(painter:_RoadPainter(lane,cars))),
     if(!started)Positioned.fill(child:Container(color:Colors.black45,child:_GameStart(title:'Road Rush',description:'Pindah jalur, hindari mobil, dan bertahan selama mungkin.',extra:'LEVEL 1 → 5 • kecepatan dan traffic meningkat',onStart:startGame))),
-    if(started)Positioned(top:12,left:12,right:12,child:Row(children:[_Badge('LEVEL '+level.toString()),const SizedBox(width:8),_Badge('TIME '+(score~/20).toString()+'s'),const Spacer(),_GamePauseButton(paused:paused,onTap:(){setState(()=>paused=!paused);})])),
+    if(started)Positioned(top:12,left:12,child:Row(children:[_Badge('LEVEL '+level.toString()),const SizedBox(width:8),_Badge('TIME '+(score~/20).toString()+'s')])),
+    if(started)Positioned(top:12,right:12,child:_GamePauseButton(paused:paused,onTap:(){setState(()=>paused=!paused);})),
     if(started)Positioned(bottom:18,left:0,right:0,child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton.filled(onPressed:()=>move(-1),icon:const Icon(Icons.chevron_left)),const SizedBox(width:90),IconButton.filled(onPressed:()=>move(1),icon:const Icon(Icons.chevron_right))])),
     if(started)Positioned.fill(child:GestureDetector(onHorizontalDragEnd:(d){final v=d.primaryVelocity??0;if(v.abs()>30)move(v>0?1:-1);},behavior:HitTestBehavior.translucent)),
     if(dead)Positioned.fill(child:_Over(title:'CRASH',restart:restart)),
@@ -767,7 +865,8 @@ class _BrickState extends State<BrickSmashPage>{
   @override Widget build(BuildContext context)=>_MiniScaffold(title:'Brick Smash',restart:restart,child:GestureDetector(onHorizontalDragUpdate:(d){if(started&&!paused)setState(()=>paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.12,.88));},behavior:HitTestBehavior.opaque,child:Stack(children:[
     Positioned.fill(child:CustomPaint(painter:_BrickPainter(bx,by,paddle,bricks))),
     if(!started)Positioned.fill(child:Container(color:Colors.black45,child:_GameStart(title:'Brick Smash',description:'Pantulkan bola dan hancurkan semua brick.',extra:'5 LEVEL • pola brick berubah setiap level • backsound ON',onStart:startGame))),
-    if(started)Positioned(top:12,left:12,right:12,child:Row(children:[_Badge('LEVEL '+level.toString()),const Spacer(),_GamePauseButton(paused:paused,onTap:(){setState(()=>paused=!paused);})])),
+    if(started)Positioned(top:12,left:12,child:_Badge('LEVEL '+level.toString())),
+    if(started)Positioned(top:12,right:12,child:_GamePauseButton(paused:paused,onTap:(){setState(()=>paused=!paused);})),
     if(dead)Positioned.fill(child:_Over(title:level==5?'ALL LEVELS CLEAR':'GAME OVER',restart:restart)),
   ])));
 }
@@ -788,7 +887,8 @@ class _FlapState extends State<FlapOrbitPage>{
   @override Widget build(BuildContext context)=>_MiniScaffold(title:'Flap Orbit',restart:restart,child:GestureDetector(onTap:flap,behavior:HitTestBehavior.opaque,child:Stack(children:[
     Positioned.fill(child:CustomPaint(painter:_FlapPainter(y,px,g))),
     if(!started)Positioned.fill(child:Container(color:Colors.black45,child:_GameStart(title:'Flap Orbit',description:'Tap untuk terbang melewati celah. Semakin tinggi level, semakin cepat.',extra:'LEVEL 1 → 5 • backsound ON',onStart:startGame))),
-    if(started)Positioned(top:12,left:12,right:12,child:Row(children:[_Badge('LEVEL '+level.toString()),const SizedBox(width:8),_Badge('SCORE '+score.toString()),const Spacer(),_GamePauseButton(paused:paused,onTap:(){setState(()=>paused=!paused);})])),
+    if(started)Positioned(top:12,left:12,child:Row(children:[_Badge('LEVEL '+level.toString()),const SizedBox(width:8),_Badge('SCORE '+score.toString())])),
+    if(started)Positioned(top:12,right:12,child:_GamePauseButton(paused:paused,onTap:(){setState(()=>paused=!paused);})),
     if(dead)Positioned.fill(child:_Over(title:'GAME OVER',restart:restart)),
   ])));
 }
@@ -858,7 +958,7 @@ class _MusicState extends State<MusicPage>{
     ('Digital Sunrise','Nexora Studio',392.0,Color(0xFFDC2626)),('Neon Memory','Nexora Studio',262.0,Color(0xFF4F46E5)),
   ];
   @override void initState(){super.initState();player.onPlayerStateChanged.listen((s){if(mounted)setState(()=>playing=s==PlayerState.playing);});player.onPositionChanged.listen((p){if(mounted)setState(()=>position=p);});player.onDurationChanged.listen((d){if(mounted)setState(()=>duration=d);});player.onPlayerComplete.listen((_)=>_completed());}
-  void _completed(){if(repeat){playSelected();return;}selectTrack(shuffle?Random().nextInt(tracks.length):(selected+1)%tracks.length);}
+  void _completed(){if(!mounted)return;if(repeat){playSelected();return;}selectTrack(shuffle?Random().nextInt(tracks.length):(selected+1)%tracks.length);}
   Uint8List _wav(double base){const sr=22050,seconds=12,channels=1,bits=16;final count=sr*seconds,dataBytes=count*2;final data=ByteData(44+dataBytes);void w32(int o,int v)=>data.setUint32(o,v,Endian.little);void w16(int o,int v)=>data.setUint16(o,v,Endian.little);void ascii(int o,String s){for(int i=0;i<s.length;i++){data.setUint8(o+i,s.codeUnitAt(i));}}ascii(0,'RIFF');w32(4,36+dataBytes);ascii(8,'WAVE');ascii(12,'fmt ');w32(16,16);w16(20,1);w16(22,channels);w32(24,sr);w32(28,sr*channels*bits~/8);w16(32,channels*bits~/8);w16(34,bits);ascii(36,'data');w32(40,dataBytes);for(int i=0;i<count;i++){final t=i/sr,fadeIn=min(1.0,t*8),fadeOut=min(1.0,(seconds-t)*4),env=fadeIn*fadeOut;final beat=(sin(2*pi*2.0*t)>0.88)?1.0:0.0;final melody=base*(1+0.035*sin(2*pi*.22*t));var sw=.20*sin(2*pi*melody*t)+.10*sin(2*pi*melody*1.5*t)+.055*sin(2*pi*melody*2*t)+beat*.07*sin(2*pi*(base/2)*t);data.setInt16(44+i*2,(sw*env*27000).clamp(-32768,32767).toInt(),Endian.little);}return data.buffer.asUint8List();}
   Future<void> playSelected() async{await player.play(BytesSource(_wav(tracks[selected].$3),mimeType:'audio/wav'));}
   Future<void> selectTrack(int i) async{await player.stop();if(!mounted)return;setState(() { selected=i; position=Duration.zero; });await playSelected();}
