@@ -699,7 +699,7 @@ class _ColorClashState extends State<ColorClashPage> {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 children: [
-                  for (int i = 0; i < colors.length; i++) {
+                  for (int i = 0; i < colors.length; i++)
                     FilledButton(
                       onPressed: () {
                         if (i == target) {
@@ -766,7 +766,7 @@ class _NumberSprintState extends State<NumberSprintPage> {
               ),
             ),
             const SizedBox(height: 25),
-            for (final o in opts) {
+            for (final o in opts)
               Padding(
                 padding: const EdgeInsets.only(bottom: 10),
                 child: SizedBox(
