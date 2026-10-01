@@ -128,13 +128,23 @@ class JamendoMusicService implements MusicService {
 
   Future<List<MusicTrack>> _query({String? search, String? tag}) async {
     final p = <String, String>{
-      'limit': '50',
+      'limit': '100',
       'audioformat': 'mp32',
       'type': 'single albumtrack',
+      'order': 'popularity_total',
     };
     if (search != null && search.trim().isNotEmpty) p['search'] = search.trim();
     if (tag != null && tag.trim().isNotEmpty) p['tags'] = tag.trim();
-    return _tracks(await _get('tracks', p));
+
+    try {
+      final tracks = _tracks(await _get('tracks', p));
+      if (tracks.isNotEmpty) return tracks;
+    } catch (_) {
+      // Retry with the broadly supported MP3 format.
+    }
+
+    final fallback = Map<String, String>.from(p)..['audioformat'] = 'mp31';
+    return _tracks(await _get('tracks', fallback));
   }
 
   Future<List<MusicTrack>> trending() => _query();
@@ -266,6 +276,45 @@ class NexoraMultiMusicService implements MusicService {
         final key = item.id + '|' + item.name.toLowerCase();
         if (seen.add(key)) out.add(item);
       }
+    }
+    return out;
+  }
+
+  Future<List<MusicTrack>> trending() => _mergeTracksSpecial(
+        (service) => service is JamendoMusicService
+            ? service.trending()
+            : service.searchTracks(''),
+      );
+
+  Future<List<MusicTrack>> genre(String tag) => _mergeTracksSpecial(
+        (service) => service is JamendoMusicService
+            ? service.genre(tag)
+            : service.searchTracks(tag),
+      );
+
+  Future<List<MusicTrack>> _mergeTracksSpecial(
+      Future<List<MusicTrack>> Function(MusicService service) action) async {
+    final results = await Future.wait(
+      services.map((service) async {
+        try {
+          return await action(service);
+        } catch (_) {
+          return <MusicTrack>[];
+        }
+      }),
+    );
+    final out = <MusicTrack>[];
+    final seen = <String>{};
+    for (final list in results) {
+      for (final item in list) {
+        final key = item.title.toLowerCase() + '|' +
+            item.artistName.toLowerCase() + '|' + item.audioUrl;
+        if (item.audioUrl.isNotEmpty && seen.add(key)) out.add(item);
+      }
+    }
+    if (out.isEmpty) {
+      throw Exception(
+          'Katalog musik tidak dapat dimuat. Periksa koneksi atau coba lagi.');
     }
     return out;
   }
