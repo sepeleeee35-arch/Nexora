@@ -82,7 +82,7 @@ class _NexoraShellState extends State<NexoraShell> {
           coins: coins,
           cart: cart,
           buy: (price) {
-            if (coins < price) return;
+            if (coins < price) { return; }
             setState(() { coins -= price; cart++; });
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Item masuk ke pesanan demo.')),
@@ -106,7 +106,7 @@ class _NexoraShellState extends State<NexoraShell> {
             child: const Icon(Icons.hexagon_rounded, size: 21),
           ),
           const SizedBox(width: 10),
-          Text('Nexora • ' + title, style: const TextStyle(fontWeight: FontWeight.w800)),
+          Text('Nexora • $title', style: const TextStyle(fontWeight: FontWeight.w800)),
         ]),
         actions: [
           IconButton(onPressed: () => setState(() => page = 'Wallet'), icon: const Icon(Icons.monetization_on_outlined)),
@@ -155,7 +155,7 @@ class NexoraDrawer extends StatelessWidget {
       Card(child: ListTile(
         leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
         title: const Text('Nexora Player', style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(coins.toString() + ' coins'),
+        subtitle: Text('$coins coins'),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () => onSelect('Profile'),
       )),
@@ -443,9 +443,9 @@ class MarketPage extends StatelessWidget{
   static const items=[('Nexora Avatar Pack','Cosmetic pack',250,Icons.person_rounded),('Profile Frame','Cosmetic frame',150,Icons.crop_square_rounded),('Game Badge','Badge profil',300,Icons.workspace_premium_rounded),('Theme Pack','Tema visual',450,Icons.palette_rounded)];
   @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
     Row(children:[const Expanded(child:Text('Marketplace',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900))),Chip(avatar:const Icon(Icons.shopping_cart_rounded,size:17),label:Text(cart.toString()))]),
-    Text('Saldo demo: '+coins.toString()+' coins'),const SizedBox(height:16),
+    Text('Saldo demo: $coins coins'),const SizedBox(height:16),
     for(final item in items) Card(margin:const EdgeInsets.only(bottom:10),child:ListTile(contentPadding:const EdgeInsets.all(13),
-      leading:CircleAvatar(radius:27,child:Icon(item.$4)),title:Text(item.$1,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(item.$2+' • '+item.$3.toString()+' coins'),
+      leading:CircleAvatar(radius:27,child:Icon(item.$4)),title:Text(item.$1,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text('${item.$2} • ${item.$3} coins'),
       trailing:FilledButton(onPressed:coins>=item.$3&&buy!=null?()=>buy!(item.$3):null,child:const Text('Buy')),
     )),
     const Card(child:ListTile(leading:Icon(Icons.info_outline_rounded),title:Text('Marketplace demo'),subtitle:Text('Pembayaran nyata akan memakai backend dan provider resmi pada tahap berikutnya.'))),
@@ -457,7 +457,7 @@ class WalletPage extends StatelessWidget{
   const WalletPage({required this.coins,required this.addCoins,super.key});
   @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
     Container(padding:const EdgeInsets.all(22),decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF4C1D95),Color(0xFF172554)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      const Text('Nexora Wallet'),const SizedBox(height:8),Text(coins.toString(),style:const TextStyle(fontSize:36,fontWeight:FontWeight.w900)),const Text('coins'),const SizedBox(height:14),
+      const Text('Nexora Wallet'),const SizedBox(height:8),Text('$coins',style:const TextStyle(fontSize:36,fontWeight:FontWeight.w900)),const Text('coins'),const SizedBox(height:14),
       FilledButton.icon(onPressed:addCoins,icon:const Icon(Icons.add_rounded),label:const Text('Tambah 250 demo coins')),
     ])),
     const SizedBox(height:18),const _Title('Transactions'),const SizedBox(height:8),
