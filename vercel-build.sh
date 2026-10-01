@@ -11,6 +11,11 @@ echo "==> Extracting Flutter"
 rm -rf "$FLUTTER_DIR"
 tar -xJf /tmp/flutter.tar.xz -C /tmp
 
+# Vercel may run Git as a different user than the owner of the extracted
+# Flutter SDK. Flutter asks Git for repository metadata during startup, and
+# Git can reject that repository with exit code 128 (dubious ownership).
+git config --global --add safe.directory "$FLUTTER_DIR"
+
 export PATH="$FLUTTER_DIR/bin:$PATH"
 
 echo "==> Flutter version"
