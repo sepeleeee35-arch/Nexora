@@ -171,3 +171,36 @@ class EmptyMusicService implements MusicService {
   @override Future<List<MusicAlbum>> searchAlbums(String query) async => [];
   @override Future<List<MusicPlaylist>> getPlaylists() async => [];
 }
+
+/// Aggregates the currently configured official/authorized catalog sources.
+class NexoraMultiMusicService implements MusicService {
+  final List<MusicService> services;
+  NexoraMultiMusicService({List<MusicService>? services})
+      : services = services ?? <MusicService>[JamendoMusicService()];
+
+  Future<List<T>> _merge<T>(Future<List<T>> Function(MusicService s) fn) async {
+    final results = await Future.wait(services.map((s) async {
+      try { return await fn(s); } catch (_) { return <T>[]; }
+    }));
+    final out = <T>[];
+    final seen = <String>{};
+    for (final list in results) {
+      for (final item in list) {
+        final key = item is MusicTrack
+            ? item.title.toLowerCase() + '|' + item.artistName.toLowerCase() + '|' + item.audioUrl
+            : item.toString();
+        if (seen.add(key)) out.add(item);
+      }
+    }
+    return out;
+  }
+
+  @override
+  Future<List<MusicTrack>> searchTracks(String query) => _merge((s) => s.searchTracks(query));
+  @override
+  Future<List<MusicArtist>> searchArtists(String query) => _merge((s) => s.searchArtists(query));
+  @override
+  Future<List<MusicAlbum>> searchAlbums(String query) => _merge((s) => s.searchAlbums(query));
+  @override
+  Future<List<MusicPlaylist>> getPlaylists() => _merge((s) => s.getPlaylists());
+}
