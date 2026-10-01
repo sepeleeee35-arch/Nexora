@@ -948,7 +948,7 @@ class MusicPage extends StatelessWidget {
   const MusicPage({super.key});
   @override
   Widget build(BuildContext context) => NexoraMusicPage(
-    service: JamendoMusicService(),
+    service: NexoraMultiMusicService(),
   );
 }
 
