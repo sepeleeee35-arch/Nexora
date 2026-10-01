@@ -363,6 +363,50 @@ class _GameCard extends StatelessWidget{
   ]))));
 }
 
+class TapRushPage extends StatefulWidget {
+  const TapRushPage({super.key});
+  @override State<TapRushPage> createState()=>_TapRushState();
+}
+class _TapRushState extends State<TapRushPage> {
+  final rng=Random(); Timer? timer; int score=0, seconds=20; bool playing=false; double x=.5,y=.5;
+  void start(){
+    timer?.cancel();
+    setState((){score=0;seconds=20;playing=true;move();});
+    timer=Timer.periodic(const Duration(seconds:1),(_){
+      if(!mounted)return;
+      if(seconds<=1){timer?.cancel();setState((){seconds=0;playing=false;});}
+      else { setState(()=>seconds--); }
+    });
+  }
+  void move(){x=.12+rng.nextDouble()*.76;y=.12+rng.nextDouble()*.66;}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>Scaffold(
+    appBar:AppBar(title:const Text('Tap Rush')),
+    body:Padding(padding:const EdgeInsets.all(16),child:Column(children:[
+      Row(children:[Expanded(child:_Score('Score','$score')),const SizedBox(width:10),Expanded(child:_Score('Time','${seconds}s'))]),
+      const SizedBox(height:14),
+      Expanded(child:Container(clipBehavior:Clip.antiAlias,decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF161B2B),Color(0xFF24133E)])),child:LayoutBuilder(builder:(context,c)=>Stack(children:[
+        if(playing) Positioned(left:c.maxWidth*x-30,top:c.maxHeight*y-30,child:GestureDetector(
+          onTap:()=>setState((){score++;move();}),
+          child:Container(width:60,height:60,decoration:BoxDecoration(shape:BoxShape.circle,color:Theme.of(context).colorScheme.primary,boxShadow:[BoxShadow(color:Theme.of(context).colorScheme.primary.withValues(alpha:.45),blurRadius:22,spreadRadius:4)]),child:const Icon(Icons.touch_app_rounded,size:29)),
+        )) else Center(child:Column(mainAxisSize:MainAxisSize.min,children:[
+          Icon(Icons.touch_app_rounded,size:60,color:Theme.of(context).colorScheme.primary),
+          const SizedBox(height:12),
+          Text(seconds==0?'Selesai! Skor $score':'Tekan Start untuk bermain',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w800)),
+        ])),
+      ])))),
+      const SizedBox(height:14),
+      SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:playing?null:start,icon:const Icon(Icons.play_arrow_rounded),label:Text(seconds==0?'Main Lagi':'Start'))),
+    ])),
+  );
+}
+class NexoraRunnerPage extends StatefulWidget{final String mode;const NexoraRunnerPage({super.key,this.mode='Nexora Runner'});@override State<NexoraRunnerPage> createState()=>_NexoraRunnerState();}
+class _NexoraRunnerState extends State<NexoraRunnerPage>{Timer? timer;final rng=Random();int lane=1,score=0,lives=3,obstacle=1;bool running=false;
+void start(){timer?.cancel();setState((){score=0;lives=3;lane=1;obstacle=rng.nextInt(3);running=true;});timer=Timer.periodic(const Duration(milliseconds:650),(_){if(!mounted)return;setState((){if(obstacle==lane){lives--;if(lives<=0){running=false;timer?.cancel();}}else{score++;}obstacle=rng.nextInt(3);});});}
+@override void dispose(){timer?.cancel();super.dispose();}
+@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:Text(widget.mode)),body:Padding(padding:const EdgeInsets.all(16),child:Column(children:[Row(children:[Expanded(child:_Score('Score',score.toString())),const SizedBox(width:8),Expanded(child:_Score('Lives',lives.toString()))]),const SizedBox(height:14),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d)=>setState(()=>lane=(lane+(d.delta.dx>0?1:-1)).clamp(0,2)),onTap:()=>setState(()=>lane=(lane+1)%3),child:Container(decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),gradient:const LinearGradient(colors:[Color(0xFF101827),Color(0xFF23113E)])),child:Stack(children:[Row(children:[for(int i=0;i<3;i++)Expanded(child:Container(margin:const EdgeInsets.symmetric(horizontal:4),color:Colors.white.withValues(alpha:.03)))]),if(running)Align(alignment:Alignment((lane-1)*.7,.75),child:Icon(widget.mode=='Sky Dash'?Icons.flight_takeoff_rounded:Icons.directions_car_filled_rounded,size:58)),if(running)Align(alignment:Alignment((obstacle-1)*.7,-.65),child:const Icon(Icons.warning_rounded,size:52)),if(!running)Center(child:Text(score==0?'Geser atau tap untuk pindah lane':'Game Over • score $score',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)))])))),const SizedBox(height:12),SizedBox(width:double.infinity,child:FilledButton(onPressed:running?null:start,child:Text(running?'RUNNING':'START')))])));}
+class BlockForgePage extends StatefulWidget{const BlockForgePage({super.key});@override State<BlockForgePage> createState()=>_BlockForgeState();}
+class _BlockForgeState extends State<BlockForgePage>{final rng=Random();late List<int> cells;int score=0;@override void initState(){super.initState();cells=List.generate(9,(_)=>rng.nextInt(4));}void tap(int i){setState((){cells[i]=(cells[i]+1)%5;if(cells[i]==0)score+=10;});}@override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Block Forge')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[_Score('Score',score.toString()),const SizedBox(height:14),const Text('Naikkan level blok sampai pecah.'),const SizedBox(height:18),Expanded(child:GridView.builder(gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:12,mainAxisSpacing:12),itemCount:9,itemBuilder:(c,i)=>InkWell(onTap:()=>tap(i),child:AnimatedContainer(duration:const Duration(milliseconds:160),decoration:BoxDecoration(borderRadius:BorderRadius.circular(20),color:Theme.of(context).colorScheme.primary.withValues(alpha:.18+cells[i]*.12)),child:Center(child:Text(cells[i]==0?'BREAK':cells[i].toString(),style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900)))))))])));}
 class _Score extends StatelessWidget {
   final String label,value; const _Score(this.label,this.value);
   @override Widget build(BuildContext context)=>Card(child:Padding(padding:const EdgeInsets.symmetric(horizontal:15,vertical:12),child:Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(label),Text(value,style:const TextStyle(fontWeight:FontWeight.w900))])));
