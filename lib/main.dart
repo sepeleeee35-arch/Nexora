@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 void main() => runApp(const NexoraApp());
 
@@ -59,6 +60,8 @@ class _NexoraShellState extends State<NexoraShell> {
       body = WalletPage(coins: coins, addCoins: () => setState(() => coins += 250));
     } else if (page == 'Profile') {
       body = const ProfilePage();
+    } else if (page == 'Login') {
+      body = const GoogleLoginPage();
     } else if (page == 'Notifications') {
       body = const NotificationsPage();
     } else if (page == 'Settings') {
@@ -168,6 +171,7 @@ class NexoraDrawer extends StatelessWidget {
       const _Header('ACCOUNT'),
       _Item(Icons.account_balance_wallet_rounded,'Wallet & Coins',()=>onSelect('Wallet')),
       _Item(Icons.person_rounded,'Profile',()=>onSelect('Profile')),
+      _Item(Icons.login_rounded,'Login with Google',()=>onSelect('Login')),
       _Item(Icons.notifications_rounded,'Notifications',()=>onSelect('Notifications')),
       const _Header('APP'),
       _Item(Icons.settings_rounded,'Settings',()=>onSelect('Settings')),
@@ -313,7 +317,11 @@ class _GamesState extends State<GamesPage>{
       ['Nexora Runner','Runner','SOON',Icons.directions_run_rounded,Color(0xFF166534)],
       ['Neon Circuit','Racing','SOON',Icons.directions_car_rounded,Color(0xFF9A3412)],
       ['Block Forge','Puzzle','SOON',Icons.extension_rounded,Color(0xFF1D4ED8)],
-      ['Sky Dash','Arcade','SOON',Icons.flight_rounded,Color(0xFF0F766E)],
+      ['Sky Dash','Arcade','PLAYABLE',Icons.flight_rounded,Color(0xFF0F766E)],
+      ['Color Clash','Arcade','PLAYABLE',Icons.palette_rounded,Color(0xFFBE185D)],
+      ['Reaction Rush','Arcade','PLAYABLE',Icons.flash_on_rounded,Color(0xFFB45309)],
+      ['Number Sprint','Puzzle','PLAYABLE',Icons.calculate_rounded,Color(0xFF047857)],
+      ['Dodge Zone','Runner','PLAYABLE',Icons.shield_rounded,Color(0xFF7C3AED)],
     ].where((g)=>filter=='All'||g[1]==filter).toList();
     return ListView(padding:const EdgeInsets.all(16),children:[
       const Text('Game Hub',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),
@@ -334,7 +342,7 @@ class _Game extends StatelessWidget {
     margin:const EdgeInsets.only(bottom:12),
     clipBehavior:Clip.antiAlias,
     child:InkWell(
-      onTap: badge=='PLAYABLE' ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => title == 'Memory Grid' ? const MemoryGridPage() : const TapRushPage())) : null,
+      onTap: badge=='PLAYABLE' ? () => Navigator.push(context, MaterialPageRoute(builder: (_) => title == 'Memory Grid' ? const MemoryGridPage() : title == 'Reaction Rush' ? const ReactionRushPage() : title == 'Color Clash' ? const ColorClashPage() : title == 'Number Sprint' ? const NumberSprintPage() : title == 'Dodge Zone' ? const DodgeZonePage() : const TapRushPage())) : null,
       child:Container(padding:const EdgeInsets.all(15),decoration:BoxDecoration(gradient:LinearGradient(colors:[color.withValues(alpha:.45),const Color(0xFF111522)])),child:Row(children:[
         Container(width:60,height:60,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(17)),child:Icon(icon,size:30)),
         const SizedBox(width:13),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
@@ -543,6 +551,55 @@ class _MusicCard extends StatelessWidget{
   final String title,sub;final IconData icon;const _MusicCard(this.title,this.sub,this.icon);
   @override Widget build(BuildContext context)=>Container(width:170,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]));
 }
+
+class ReactionRushPage extends StatefulWidget{const ReactionRushPage({super.key});@override State<ReactionRushPage> createState()=>_ReactionState();}
+class _ReactionState extends State<ReactionRushPage>{
+  final rng=Random();Timer? timer;bool waiting=false,ready=false;int score=0;String text='Tekan START';
+  void start(){timer?.cancel();setState((){waiting=true;ready=false;text='Tunggu...';});timer=Timer(Duration(milliseconds:700+rng.nextInt(1800)),(){if(mounted)setState((){waiting=false;ready=true;text='TAP!';});});}
+  void tap(){if(waiting){timer?.cancel();setState(()=>text='Terlalu cepat!');}else if(ready){setState((){score++;ready=false;text='Bagus!';});}}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Reaction Rush')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
+    Row(children:[Expanded(child:_Score('Score','$score')),const SizedBox(width:10),Expanded(child:_Score('Mode','Reflex'))]),const SizedBox(height:18),
+    Expanded(child:Center(child:GestureDetector(onTap:tap,child:AnimatedContainer(duration:const Duration(milliseconds:180),width:230,height:230,decoration:BoxDecoration(shape:BoxShape.circle,color:ready?Colors.green:Theme.of(context).colorScheme.primary),child:Center(child:Text(text,style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900))))))),
+    SizedBox(width:double.infinity,child:FilledButton(onPressed:start,child:const Text('START'))),
+  ]));
+}
+
+class ColorClashPage extends StatefulWidget{const ColorClashPage({super.key});@override State<ColorClashPage> createState()=>_ColorClashState();}
+class _ColorClashState extends State<ColorClashPage>{
+  final rng=Random();int score=0;int target=0;final colors=[Colors.red,Colors.blue,Colors.green,Colors.orange];
+  void next(){setState(()=>target=rng.nextInt(colors.length));}
+  @override void initState(){super.initState();next();}
+  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Color Clash')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
+    _Score('Score','$score'),const SizedBox(height:22),Text('Pilih warna target',style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:12),
+    Container(width:130,height:130,decoration:BoxDecoration(shape:BoxShape.circle,color:colors[target])),const SizedBox(height:28),
+    Expanded(child:GridView.count(crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,children:[for(int i=0;i<colors.length)FilledButton(onPressed:(){if(i==target)score++;next();},style:FilledButton.styleFrom(backgroundColor:colors[i]),child:const SizedBox())])),
+  ]));
+}
+
+class NumberSprintPage extends StatefulWidget{const NumberSprintPage({super.key});@override State<NumberSprintPage> createState()=>_NumberSprintState();}
+class _NumberSprintState extends State<NumberSprintPage>{
+  final rng=Random();int a=2,b=3,answer=5,score=0;void next(){a=1+rng.nextInt(9);b=1+rng.nextInt(9);answer=a+b;}
+  @override void initState(){super.initState();next();}
+  @override Widget build(BuildContext context){final opts=[answer,answer+1,answer-1,answer+2]..shuffle(rng);return Scaffold(appBar:AppBar(title:const Text('Number Sprint')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
+    _Score('Score','$score'),const SizedBox(height:30),Text('$a + $b = ?',style:const TextStyle(fontSize:42,fontWeight:FontWeight.w900)),const SizedBox(height:25),
+    for(final o in opts)Padding(padding:const EdgeInsets.only(bottom:10),child:SizedBox(width:double.infinity,child:FilledButton(onPressed:(){if(o==answer)score++;setState(next);},child:Text('$o',style:const TextStyle(fontSize:20))))),
+  ]));}
+}
+
+class DodgeZonePage extends StatefulWidget{const DodgeZonePage({super.key});@override State<DodgeZonePage> createState()=>_DodgeState();}
+class _DodgeState extends State<DodgeZonePage>{
+  double x=.5;int score=0;Timer? timer;
+  @override void initState(){super.initState();timer=Timer.periodic(const Duration(milliseconds:700),(_){if(mounted)setState(()=>score++);});}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Dodge Zone')),body:Column(children:[
+    _Score('Survival','$score'),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d)=>setState(()=>x=(x+d.delta.dx/300).clamp(.08,.92)),child:Container(margin:const EdgeInsets.all(16),decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),color:const Color(0xFF111522)),child:Stack(children:[
+      Positioned(bottom:20,left:MediaQuery.of(context).size.width*x-38,child:const CircleAvatar(radius:28,child:Icon(Icons.shield_rounded))),
+      const Center(child:Text('Geser kiri/kanan untuk bertahan',textAlign:TextAlign.center)),
+    ]))),
+  ]));
+}
+
 class SocialPage extends StatefulWidget {
   const SocialPage({super.key});
   @override State<SocialPage> createState()=>_SocialState();
@@ -602,19 +659,105 @@ class WalletPage extends StatelessWidget{
   ]);
 }
 
-class ProfilePage extends StatelessWidget{
+class ProfilePage extends StatefulWidget{
   const ProfilePage({super.key});
+  @override State<ProfilePage> createState()=>_ProfileState();
+}
+class _ProfileState extends State<ProfilePage>{
+  GoogleSignInAccount? user;
   @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-    const SizedBox(height:10),const Center(child:CircleAvatar(radius:46,child:Icon(Icons.person_rounded,size:46))),
-    const SizedBox(height:12),const Center(child:Text('Nexora Player',style:TextStyle(fontSize:24,fontWeight:FontWeight.w900))),const Center(child:Text('@nexora_player')),
-    const SizedBox(height:14),Center(child:FilledButton.icon(onPressed:(){},icon:const Icon(Icons.edit_rounded),label:const Text('Edit Profile'))),
-    const SizedBox(height:20),const Row(children:[Expanded(child:_PStat('1','Level')),SizedBox(width:10),Expanded(child:_PStat('0','Posts')),SizedBox(width:10),Expanded(child:_PStat('0','Friends'))]),
+    const SizedBox(height:10),
+    Center(child:user?.photoUrl!=null?CircleAvatar(radius:46,backgroundImage:NetworkImage(user!.photoUrl!)):const CircleAvatar(radius:46,child:Icon(Icons.person_rounded,size:46))),
+    const SizedBox(height:12),
+    Center(child:Text(user?.displayName??'Nexora Player',style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900))),
+    Center(child:Text(user?.email??'@nexora_player')),
+    const SizedBox(height:14),
+    Center(child:FilledButton.icon(
+      onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const GoogleLoginPage())),
+      icon:const Icon(Icons.account_circle_rounded),label:Text(user==null?'Login dengan Google':'Kelola akun Google'),
+    )),
+    const SizedBox(height:20),
+    const Row(children:[Expanded(child:_PStat('1','Level')),SizedBox(width:10),Expanded(child:_PStat('0','Posts')),SizedBox(width:10),Expanded(child:_PStat('0','Friends'))]),
     const SizedBox(height:18),const _Title('Account'),const Card(child:Column(children:[
       ListTile(leading:Icon(Icons.badge_rounded),title:Text('Rookie'),subtitle:Text('Member Nexora'),trailing:Icon(Icons.chevron_right_rounded)),
       Divider(height:1),ListTile(leading:Icon(Icons.verified_user_rounded),title:Text('Account security'),trailing:Icon(Icons.chevron_right_rounded)),
     ])),
   ]);
 }
+
+class GoogleLoginPage extends StatefulWidget{
+  const GoogleLoginPage({super.key});
+  @override State<GoogleLoginPage> createState()=>_GoogleLoginState();
+}
+class _GoogleLoginState extends State<GoogleLoginPage>{
+  GoogleSignInAccount? user;
+  String status='Login Google siap digunakan setelah OAuth Client ID Nexora dikonfigurasi.';
+  bool busy=false;
+
+  Future<void> signIn() async {
+    setState(()=>busy=true);
+    try {
+      final signIn=GoogleSignIn.instance;
+      await signIn.initialize(
+        clientId: const String.fromEnvironment('GOOGLE_CLIENT_ID',defaultValue:''),
+        serverClientId: const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID',defaultValue:''),
+      );
+      if(!signIn.supportsAuthenticate()){
+        setState(()=>status='Platform ini membutuhkan konfigurasi Google OAuth dan tombol web/Android yang sesuai.');
+        return;
+      }
+      final account=await signIn.authenticate();
+      if(!mounted)return;
+      setState(()=>user=account);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text('Login berhasil sebagai ${account.email}')));
+    } on GoogleSignInException catch(e) {
+      if(mounted)setState(()=>status='Google login: ${e.description??e.code.name}');
+    } catch(e) {
+      if(mounted)setState(()=>status='Google login belum dikonfigurasi: $e');
+    } finally {
+      if(mounted)setState(()=>busy=false);
+    }
+  }
+
+  Future<void> signOut() async {
+    await GoogleSignIn.instance.signOut();
+    if(mounted)setState(()=>user=null);
+  }
+
+  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(20),children:[
+    const SizedBox(height:24),
+    const Icon(Icons.account_circle_rounded,size:86),
+    const SizedBox(height:12),
+    const Center(child:Text('Nexora Account',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900))),
+    const SizedBox(height:8),
+    Center(child:Text(user==null?'Masuk untuk menyimpan profil, progres game, dan library.':'Akun Google tersambung.',textAlign:TextAlign.center)),
+    const SizedBox(height:24),
+    if(user!=null) Card(child:ListTile(
+      leading:GoogleUserCircleAvatar(identity:user!),
+      title:Text(user!.displayName??'Google Account',style:const TextStyle(fontWeight:FontWeight.w800)),
+      subtitle:Text(user!.email),
+      trailing:IconButton(onPressed:signOut,icon:const Icon(Icons.logout_rounded)),
+    )) else Card(child:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
+      const CircleAvatar(radius:28,child:Icon(Icons.g_mobiledata_rounded,size:34)),
+      const SizedBox(height:12),
+      const Text('Continue with Google',style:TextStyle(fontSize:18,fontWeight:FontWeight.w800)),
+      const SizedBox(height:6),
+      Text(status,textAlign:TextAlign.center,style:Theme.of(context).textTheme.bodySmall),
+      const SizedBox(height:16),
+      SizedBox(width:double.infinity,child:FilledButton.icon(
+        onPressed:busy?null:signIn,
+        icon:const Icon(Icons.login_rounded),
+        label:Text(busy?'Menghubungkan...':'Login dengan Google'),
+      )),
+    ]))),
+    const SizedBox(height:20),
+    const _Title('Account benefits'),
+    const _Recent(Icons.cloud_sync_rounded,'Cloud profile','Profil dan progres siap disinkronkan.'),
+    const _Recent(Icons.emoji_events_rounded,'Game progress','Skor dan pencapaian bisa dikaitkan ke akun.'),
+    const _Recent(Icons.library_music_rounded,'Music library','Library dan playlist tetap terkait akun.'),
+  ]);
+}
+
 class _PStat extends StatelessWidget{final String v,l;const _PStat(this.v,this.l);@override Widget build(BuildContext context)=>Card(child:Padding(padding:const EdgeInsets.symmetric(vertical:15),child:Column(children:[Text(v,style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)),Text(l)])));}
 
 class NotificationsPage extends StatelessWidget{
