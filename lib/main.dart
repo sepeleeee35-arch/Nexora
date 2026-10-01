@@ -521,10 +521,281 @@ class _GamesState extends State<GamesPage> {
 }
 
 class ArcadeGamePage extends StatefulWidget{final ArcadeGame game;const ArcadeGamePage(this.game,{super.key});@override State<ArcadeGamePage> createState()=>_ArcadeState();}
-class _ArcadeState extends State<ArcadeGamePage>{final r=Random();Timer? t;int score=0,time=30,target=0;bool play=false;List<int>b=[];List<bool>o=[];@override void initState(){super.initState();_reset();}void _reset(){t?.cancel();score=0;time=30;target=r.nextInt(25);play=false;b=List.generate(25,(_)=>r.nextInt(5));o=List.filled(16,false);if(mounted)setState((){});}void start(){_reset();setState(()=>play=true);t=Timer.periodic(const Duration(seconds:1),(_){if(!mounted)return;if(time<=1){t?.cancel();setState(()=>play=false);}else setState(()=>time--);});}void end(){t?.cancel();setState(()=>play=false);}void tap(int i){if(!play)return;final k=widget.game.kind;if(k=='tap'||k=='timing'||k=='target'){if(i==target){score+=20;target=r.nextInt(25);}else score=max(0,score-2);}else if(k=='memory'||k=='match'||k=='cards'){if(i<16&&!o[i]){o[i]=true;score+=10;if(o.every((v)=>v))end();}}else if(k=='2048'||k=='merge'){final j=i%5<4?i+1:i-1;if(j>=0&&b[j]==b[i]){b[j]++;b[i]=0;score+=20;}else b[i]=(b[i]+1)%9;}else if(k=='ttt'){if(i>=9||b[i]!=0)return;b[i]=1;final e=[for(int z=0;z<9;z++)if(b[z]==0)z];if(e.isNotEmpty)b[e[r.nextInt(e.length)]]=2;}else if(k=='lights'){for(final z in[i,i-1,i+1,i-5,i+5])if(z>=0&&z<25)b[z]=b[z]==0?1:0;}else{b[i]=(b[i]+1)%9;score+=10;if(score>=180)end();}setState((){});}Widget grid(int n){return GridView.builder(physics:const NeverScrollableScrollPhysics(),gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:n,crossAxisSpacing:8,mainAxisSpacing:8),itemCount:n*n,itemBuilder:(c,i)=>GestureDetector(onTap:()=>tap(i),child:AnimatedContainer(duration:const Duration(milliseconds:120),decoration:BoxDecoration(borderRadius:BorderRadius.circular(16),gradient:LinearGradient(colors:[Colors.primaries[i%Colors.primaries.length].withValues(alpha:.55),const Color(0xFF171B2A)])),child:Center(child:Text(widget.game.kind=='2048'||widget.game.kind=='merge'?(b[i]==0?'':(b[i]*2).toString()):widget.game.kind=='target'||widget.game.kind=='timing'||widget.game.kind=='tap'?(i==target?'TARGET':''):widget.game.kind=='memory'||widget.game.kind=='match'||widget.game.kind=='cards'?(i<16&&o[i]?'✓':'?'):widget.game.kind=='ttt'?(i<9&&b[i]>0?(b[i]==1?'X':'O'):''):widget.game.kind=='lights'?(b[i]==1?'ON':''):'•',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900))))));}
-@override void dispose(){t?.cancel();super.dispose();}@override Widget build(BuildContext c)=>Scaffold(appBar:AppBar(title:Text(widget.game.title),actions:[IconButton(onPressed:_reset,icon:const Icon(Icons.refresh_rounded))]),body:Padding(padding:const EdgeInsets.all(15),child:Column(children:[Row(children:[Expanded(child:_H('SCORE',score.toString())),const SizedBox(width:8),Expanded(child:_H('TIME',time.toString()+'s')),const SizedBox(width:8),Expanded(child:_H('MODE',_cat(widget.game.kind)))]),const SizedBox(height:12),Expanded(child:Container(padding:const EdgeInsets.all(10),decoration:BoxDecoration(borderRadius:BorderRadius.circular(27),gradient:const LinearGradient(colors:[Color(0xFF1B1530),Color(0xFF0C1019)])),child:play?grid(widget.game.kind=='ttt'?3:5):Center(child:Column(mainAxisSize:MainAxisSize.min,children:[Icon(_ico(widget.game.kind),size:70,color:Colors.deepPurpleAccent),const SizedBox(height:14),Text(time==0?'ROUND OVER':'READY TO PLAY',style:const TextStyle(fontSize:22,fontWeight:FontWeight.w900)),const SizedBox(height:7),Text(widget.game.kind=='2048'||widget.game.kind=='merge'?'Merge matching tiles.':widget.game.kind=='memory'?'Find matching pairs.':'Tap, solve, and chase your best score.',textAlign:TextAlign.center,style:const TextStyle(color:Colors.white60))])))),const SizedBox(height:10),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:play?null:start,icon:const Icon(Icons.play_arrow_rounded),label:Text(play?'PLAYING':'START GAME')))]));}}
-class _Score extends StatelessWidget{final String a,b;const _Score(this.a,this.b);@override Widget build(BuildContext c)=>Container(padding:const EdgeInsets.symmetric(vertical:9,horizontal:10),decoration:BoxDecoration(color:Colors.white.withValues(alpha:.06),borderRadius:BorderRadius.circular(14)),child:Column(children:[Text(a,style:const TextStyle(fontSize:9,color:Colors.white54)),Text(b,style:const TextStyle(fontWeight:FontWeight.w900))]));}
-class _H extends StatelessWidget{final String a,b;const _H(this.a,this.b);@override Widget build(BuildContext c)=>Container(padding:const EdgeInsets.symmetric(vertical:9,horizontal:10),decoration:BoxDecoration(color:Colors.white.withValues(alpha:.06),borderRadius:BorderRadius.circular(14)),child:Column(children:[Text(a,style:const TextStyle(fontSize:9,color:Colors.white54)),Text(b,style:const TextStyle(fontWeight:FontWeight.w900))]));}
+class _ArcadeState extends State<ArcadeGamePage> {
+  final Random random = Random();
+  Timer? timer;
+  int score = 0;
+  int time = 30;
+  int target = 0;
+  bool playing = false;
+  List<int> board = <int>[];
+  List<bool> opened = <bool>[];
+
+  @override
+  void initState() {
+    super.initState();
+    reset();
+  }
+
+  void reset() {
+    timer?.cancel();
+    score = 0;
+    time = 30;
+    target = random.nextInt(25);
+    playing = false;
+    board = List<int>.generate(25, (_) => random.nextInt(5));
+    opened = List<bool>.filled(16, false);
+    if (mounted) setState(() {});
+  }
+
+  void startGame() {
+    timer?.cancel();
+    score = 0;
+    time = 30;
+    target = random.nextInt(25);
+    playing = true;
+    board = List<int>.generate(25, (_) => random.nextInt(5));
+    opened = List<bool>.filled(16, false);
+    setState(() {});
+
+    timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      if (time <= 1) {
+        timer?.cancel();
+        setState(() {
+          time = 0;
+          playing = false;
+        });
+      } else {
+        setState(() => time--);
+      }
+    });
+  }
+
+  void finishGame() {
+    timer?.cancel();
+    if (mounted) setState(() => playing = false);
+  }
+
+  void tapCell(int index) {
+    if (!playing) return;
+    final kind = widget.game.kind;
+
+    if (kind == 'tap' || kind == 'timing' || kind == 'target') {
+      if (index == target) {
+        score += 20;
+        target = random.nextInt(25);
+      } else {
+        score = max(0, score - 2);
+      }
+    } else if (kind == 'memory' || kind == 'match' || kind == 'cards') {
+      if (index < opened.length && !opened[index]) {
+        opened[index] = true;
+        score += 10;
+        if (opened.every((value) => value)) finishGame();
+      }
+    } else if (kind == '2048' || kind == 'merge') {
+      final row = index ~/ 5;
+      final col = index % 5;
+      final neighbor =
+          col < 4 ? index + 1 : (row > 0 ? index - 5 : index - 1);
+
+      if (neighbor >= 0 &&
+          neighbor < board.length &&
+          board[neighbor] == board[index]) {
+        board[neighbor]++;
+        board[index] = 0;
+        score += 20;
+      } else {
+        board[index] = (board[index] + 1) % 9;
+      }
+    } else if (kind == 'ttt') {
+      if (index >= 9 || board[index] != 0) return;
+      board[index] = 1;
+      final empty = <int>[
+        for (int i = 0; i < 9; i++)
+          if (board[i] == 0) i,
+      ];
+      if (empty.isNotEmpty) {
+        board[empty[random.nextInt(empty.length)]] = 2;
+      }
+      score += 5;
+    } else if (kind == 'lights') {
+      final positions = <int>[
+        index,
+        index - 1,
+        index + 1,
+        index - 5,
+        index + 5,
+      ];
+      for (final position in positions) {
+        if (position >= 0 && position < board.length) {
+          board[position] = board[position] == 0 ? 1 : 0;
+        }
+      }
+      score += 5;
+    } else {
+      board[index] = (board[index] + 1) % 9;
+      score += 10;
+      if (score >= 180) finishGame();
+    }
+
+    setState(() {});
+  }
+
+  Widget gameGrid(int columns) {
+    final count = columns * columns;
+
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      itemCount: count,
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: columns,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      itemBuilder: (context, index) {
+        final kind = widget.game.kind;
+        String label = '•';
+
+        if (kind == '2048' || kind == 'merge') {
+          label = board[index] == 0 ? '' : '\${board[index] * 2}';
+        } else if (kind == 'target' || kind == 'timing' || kind == 'tap') {
+          label = index == target ? 'TARGET' : '';
+        } else if (kind == 'memory' || kind == 'match' || kind == 'cards') {
+          label = index < opened.length && opened[index] ? '✓' : '?';
+        } else if (kind == 'ttt') {
+          label = index < 9 && board[index] > 0
+              ? (board[index] == 1 ? 'X' : 'O')
+              : '';
+        } else if (kind == 'lights') {
+          label = board[index] == 1 ? 'ON' : '';
+        }
+
+        final color = Colors.primaries[index % Colors.primaries.length];
+
+        return GestureDetector(
+          onTap: () => tapCell(index),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                colors: [
+                  color.withValues(alpha: .55),
+                  const Color(0xFF171B2A),
+                ],
+              ),
+            ),
+            child: Center(
+              child: Text(
+                label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final kind = widget.game.kind;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget.game.title),
+        actions: [
+          IconButton(
+            onPressed: reset,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: _H('SCORE', score.toString())),
+                const SizedBox(width: 8),
+                Expanded(child: _H('TIME', '\${time}s')),
+                const SizedBox(width: 8),
+                Expanded(child: _H('MODE', _cat(kind))),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(27),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF1B1530), Color(0xFF0C1019)],
+                  ),
+                ),
+                child: playing
+                    ? gameGrid(kind == 'ttt' ? 3 : 5)
+                    : Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              _ico(kind),
+                              size: 70,
+                              color: Colors.deepPurpleAccent,
+                            ),
+                            const SizedBox(height: 14),
+                            Text(
+                              time == 0 ? 'ROUND OVER' : 'READY TO PLAY',
+                              style: const TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                            const SizedBox(height: 7),
+                            Text(
+                              kind == '2048' || kind == 'merge'
+                                  ? 'Merge matching tiles.'
+                                  : kind == 'memory' || kind == 'match'
+                                      ? 'Reveal the tiles and score points.'
+                                      : 'Tap, solve, and chase your best score.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white60),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: playing ? null : startGame,
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: Text(playing ? 'PLAYING' : 'START GAME'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class MusicPage extends StatefulWidget {
   const MusicPage({super.key});
   @override State<MusicPage> createState()=>_MusicState();
