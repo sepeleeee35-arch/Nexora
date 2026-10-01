@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:math';
 import 'package:audioplayers/audioplayers.dart';
 import 'music_models.dart';
 
@@ -52,7 +54,7 @@ class NexoraMusicPlayer {
       final current = queueIndex;
       var nextIndex = current;
       while (nextIndex == current) {
-        nextIndex = DateTime.now().microsecondsSinceEpoch % queue.length;
+        nextIndex = Random().nextInt(queue.length);
       }
       queueIndex = nextIndex;
     } else {
