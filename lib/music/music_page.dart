@@ -194,11 +194,6 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
               onTap: () => _play(i),
             ),
         const SizedBox(height: 10),
-        const Card(child: ListTile(
-          leading: Icon(Icons.verified_rounded),
-          title: Text('Sumber resmi'),
-          subtitle: Text('Audio dan katalog diambil melalui Jamendo API. Hak penggunaan mengikuti lisensi masing-masing track.'),
-        )),
       ],
     );
   }
