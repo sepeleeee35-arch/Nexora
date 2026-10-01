@@ -378,210 +378,103 @@ class _Recent extends StatelessWidget {
   @override Widget build(BuildContext context)=>Card(child:ListTile(leading:CircleAvatar(child:Icon(icon)),title:Text(title,style:const TextStyle(fontWeight:FontWeight.bold)),subtitle:Text(sub),trailing:const Icon(Icons.chevron_right_rounded)));
 }
 
-class ArcadeGame{final String title,kind;const ArcadeGame(this.title,this.kind);}const _games=<ArcadeGame>[ArcadeGame('Geometry Rush','dodge'),ArcadeGame('Happy Filled Glass','puzzle'),ArcadeGame('Apple Worm','maze'),ArcadeGame('Impostor','target'),ArcadeGame('Mr. Shoot','target'),ArcadeGame('Save the Doge','puzzle'),ArcadeGame('Trap Path','dodge'),ArcadeGame('Archers Random','target'),ArcadeGame('Brainrot Merge','merge'),ArcadeGame('Fruits Match 2','match'),ArcadeGame('Head Soccer','tap'),ArcadeGame('Sheep and Sheep','match'),ArcadeGame('Tic Tac Toe','ttt'),ArcadeGame('Knife Hit','timing'),ArcadeGame('Color Maze','maze'),ArcadeGame('Pipe Way','puzzle'),ArcadeGame('Ludo','dice'),ArcadeGame('Coloring Book','color'),ArcadeGame('Master Fall Down','target'),ArcadeGame('Route Digger','maze'),ArcadeGame('Cap Sort','sort'),ArcadeGame('Tanks Battle','target'),ArcadeGame('Color by Number','color'),ArcadeGame('Draw Parking','parking'),ArcadeGame('Turn Light','lights'),ArcadeGame('Blast','blast'),ArcadeGame('Solitaire Association','memory'),ArcadeGame('Skip Card','highlow'),ArcadeGame('Crazy Fishing','timing'),ArcadeGame('Word Search Hidden','word'),ArcadeGame('House Painter','paint'),ArcadeGame('Zombie Tower Defence','defense'),ArcadeGame('Tower Boom','timing'),ArcadeGame('Find Number','number'),ArcadeGame('4 Colors','cards'),ArcadeGame('Golf Day','tap'),ArcadeGame('Jigsaw Puzzle','memory'),ArcadeGame('Pool 8 Pro','pool'),ArcadeGame('Nuts and Bolts','sort'),ArcadeGame('Indianara','dodge'),ArcadeGame('Merge Fruits','merge'),ArcadeGame('City Builder','builder'),ArcadeGame('Tiny Crash Fighters','dodge'),ArcadeGame('Spill Wine','puzzle'),ArcadeGame('Pool Shoot','pool'),ArcadeGame('Sudoku','number'),ArcadeGame('Merge Shooter','target'),ArcadeGame('Math','math'),ArcadeGame('Slider Puzzle','slider'),ArcadeGame('Zumba Pop Marble','match'),ArcadeGame('Solitaire Spider','cards'),ArcadeGame('Collect Em All','match'),ArcadeGame('Shooting Balls','target'),ArcadeGame('Chess','ttt'),ArcadeGame('Pull the Pin','pin'),ArcadeGame('Water Sort','sort'),ArcadeGame('Pinball Rush','timing'),ArcadeGame('Solitaire Classic','cards'),ArcadeGame('Brick Breaker','brick'),ArcadeGame('Word Connect','word'),ArcadeGame('Rope Bowling','timing')];
-String _cat(String k){if(k=='ttt'||k=='dice')return'BOARD';if(k=='cards'||k=='highlow')return'CARD';if(k=='target')return'ACTION';if(k=='dodge'||k=='timing')return'ARCADE';return'PUZZLE';}
-IconData _ico(String k){switch(k){case'dodge':return Icons.speed_rounded;case'target':return Icons.gps_fixed_rounded;case'merge':case'2048':return Icons.add_box_rounded;case'memory':return Icons.grid_view_rounded;case'word':return Icons.abc_rounded;case'brick':return Icons.view_module_rounded;case'maze':return Icons.route_rounded;case'sort':return Icons.view_column_rounded;case'cards':return Icons.style_rounded;case'timing':return Icons.timer_rounded;case'ttt':return Icons.grid_3x3_rounded;case'pool':return Icons.circle_rounded;case'lights':return Icons.lightbulb_rounded;case'bubble':return Icons.bubble_chart_rounded;case'defense':return Icons.shield_rounded;default:return Icons.extension_rounded;}}
-class GamesPage extends StatefulWidget{const GamesPage({super.key});@override State<GamesPage> createState()=>_GamesState();}
+
+class ArcadeGame {
+  final String title;
+  final String kind;
+  final IconData icon;
+  const ArcadeGame(this.title, this.kind, this.icon);
+}
+
+const _games = <ArcadeGame>[
+  ArcadeGame('Neon Jump', 'jump', Icons.flash_on_rounded),
+  ArcadeGame('Worm Arena', 'worm', Icons.circle_rounded),
+  ArcadeGame('Nexora Chess', 'chess', Icons.grid_4x4_rounded),
+  ArcadeGame('Road Rush', 'road', Icons.directions_car_rounded),
+  ArcadeGame('Brick Smash', 'brick', Icons.view_module_rounded),
+  ArcadeGame('Flap Orbit', 'flap', Icons.flutter_dash_rounded),
+  ArcadeGame('Maze Escape', 'maze', Icons.route_rounded),
+  ArcadeGame('Nexora 2048', '2048', Icons.add_box_rounded),
+];
+
+class GamesPage extends StatefulWidget {
+  const GamesPage({super.key});
+  @override State<GamesPage> createState() => _GamesState();
+}
 class _GamesState extends State<GamesPage> {
   String query = '';
-
-  void openGame(ArcadeGame game) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => ArcadeGamePage(game)),
-    );
+  Widget page(ArcadeGame g) {
+    switch (g.kind) {
+      case 'jump': return const NeonJumpPage();
+      case 'worm': return const WormArenaPage();
+      case 'chess': return const NexoraChessPage();
+      case 'road': return const RoadRushPage();
+      case 'brick': return const BrickSmashPage();
+      case 'flap': return const FlapOrbitPage();
+      case 'maze': return const MazeEscapePage();
+      default: return const Mini2048Page();
+    }
   }
-
-  @override
-  Widget build(BuildContext context) {
-    final games = _games
-        .where((game) =>
-            game.title.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-
+  @override Widget build(BuildContext context) {
+    final list = _games.where((g) => g.title.toLowerCase().contains(query.toLowerCase())).toList();
     return ListView(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 110),
+      padding: const EdgeInsets.fromLTRB(14,14,14,110),
       children: [
         Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(28),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF6D28D9), Color(0xFF111827)],
-            ),
+            borderRadius: BorderRadius.circular(26),
+            gradient: const LinearGradient(colors: [Color(0xFF6D28D9),Color(0xFF111827)]),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Icon(Icons.sports_esports_rounded, size: 34),
-                  const Spacer(),
-                  Text(
-                    '\${_games.length} GAMES',
-                    style: const TextStyle(fontWeight: FontWeight.w900),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              const Text(
-                'NEXORA ARCADE',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                ),
-              ),
-              const Text(
-                'Main. Temukan. Ulangi.',
-                style: TextStyle(fontSize: 29, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '\${_games.length} mini-game original. Banyak genre, satu tempat.',
-                style: const TextStyle(color: Colors.white70),
-              ),
-              const SizedBox(height: 14),
-              FilledButton.icon(
-                onPressed: _games.isEmpty
-                    ? null
-                    : () => openGame(
-                          _games[Random().nextInt(_games.length)],
-                        ),
-                icon: const Icon(Icons.shuffle_rounded),
-                label: const Text('Random Play'),
-              ),
-            ],
-          ),
+          child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Icon(Icons.sports_esports_rounded, size: 34),
+            SizedBox(height: 10),
+            Text('NEXORA MINI GAMES', style: TextStyle(fontSize: 11,fontWeight: FontWeight.w900,letterSpacing: 1.5)),
+            SizedBox(height: 4),
+            Text('Main langsung.', style: TextStyle(fontSize: 28,fontWeight: FontWeight.w900)),
+            SizedBox(height: 5),
+            Text('Offline. Tanpa akun, koin, toko, leaderboard, atau fitur tambahan.'),
+          ]),
         ),
         const SizedBox(height: 14),
         TextField(
-          onChanged: (value) => setState(() => query = value),
+          onChanged: (v) => setState(() => query = v),
           decoration: InputDecoration(
             prefixIcon: const Icon(Icons.search_rounded),
             hintText: 'Cari game...',
-            filled: true,
-            fillColor: const Color(0xFF111522),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(18),
-              borderSide: BorderSide.none,
-            ),
+            filled: true, fillColor: const Color(0xFF111522),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(18),borderSide: BorderSide.none),
           ),
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            const Expanded(
-              child: Text(
-                'All Games',
-                style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-              ),
-            ),
-            Text('\${games.length}'),
-          ],
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 14),
         GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: games.length,
+          shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
+          itemCount: list.length,
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-            childAspectRatio: .73,
+            crossAxisCount: 2,crossAxisSpacing: 10,mainAxisSpacing: 10,childAspectRatio: .92,
           ),
-          itemBuilder: (context, index) {
-            final game = games[index];
-            final color = Colors.primaries[index % Colors.primaries.length];
-
-            return Material(
-              color: const Color(0xFF171321),
-              borderRadius: BorderRadius.circular(22),
+          itemBuilder: (_,i) {
+            final g=list[i];
+            return Card(
+              clipBehavior: Clip.antiAlias,
               child: InkWell(
-                onTap: () => openGame(game),
-                borderRadius: BorderRadius.circular(22),
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(22),
-                    gradient: LinearGradient(
-                      colors: [
-                        color.withValues(alpha: .55),
-                        const Color(0xFF171321),
-                      ],
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(18),
-                            color: color.withValues(alpha: .35),
-                          ),
-                          child: Stack(
-                            children: [
-                              Center(child: Icon(_ico(game.kind), size: 58)),
-                              const Positioned(
-                                top: 9,
-                                right: 9,
-                                child: Icon(
-                                  Icons.play_circle_fill_rounded,
-                                  size: 28,
-                                ),
-                              ),
-                              Positioned(
-                                left: 9,
-                                bottom: 9,
-                                child: Text(
-                                  _cat(game.kind),
-                                  style: const TextStyle(
-                                    fontSize: 8,
-                                    fontWeight: FontWeight.w900,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                onTap: () => Navigator.push(context,MaterialPageRoute(builder: (_) => page(g))),
+                child: Padding(
+                  padding: const EdgeInsets.all(13),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Expanded(child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(17),
+                        gradient: LinearGradient(colors: [Theme.of(context).colorScheme.primary.withOpacity(.45),const Color(0xFF151827)]),
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        game.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Original Nexora • \${_cat(game.kind)}',
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Colors.white70,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      const Row(
-                        children: [
-                          Icon(Icons.bolt_rounded, size: 15),
-                          SizedBox(width: 3),
-                          Text(
-                            'PLAY',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                      child: Icon(g.icon,size:48),
+                    )),
+                    const SizedBox(height: 9),
+                    Text(g.title,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900)),
+                    const SizedBox(height:3),
+                    const Text('OFFLINE',style:TextStyle(fontSize:9,fontWeight:FontWeight.w900,color:Colors.white54)),
+                  ]),
                 ),
               ),
             );
@@ -592,670 +485,252 @@ class _GamesState extends State<GamesPage> {
   }
 }
 
-class ArcadeGamePage extends StatefulWidget{final ArcadeGame game;const ArcadeGamePage(this.game,{super.key});@override State<ArcadeGamePage> createState()=>_ArcadeState();}
-class _ArcadeState extends State<ArcadeGamePage> {
-  final Random random = Random();
-  Timer? timer;
-  int score = 0;
-  int time = 30;
-  int target = 0;
-  bool playing = false;
-  List<int> board = <int>[];
-  List<bool> opened = <bool>[];
-
-  @override
-  void initState() {
-    super.initState();
-    reset();
-  }
-
-  void reset() {
-    timer?.cancel();
-    score = 0;
-    time = 30;
-    target = random.nextInt(25);
-    playing = false;
-    board = List<int>.generate(25, (_) => random.nextInt(5));
-    opened = List<bool>.filled(16, false);
-    if (mounted) setState(() {});
-  }
-
-  void startGame() {
-    timer?.cancel();
-    score = 0;
-    time = 30;
-    target = random.nextInt(25);
-    playing = true;
-    board = List<int>.generate(25, (_) => random.nextInt(5));
-    opened = List<bool>.filled(16, false);
-    setState(() {});
-
-    timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (!mounted) return;
-      if (time <= 1) {
-        timer?.cancel();
-        setState(() {
-          time = 0;
-          playing = false;
-        });
-      } else {
-        setState(() => time--);
-      }
-    });
-  }
-
-  void finishGame() {
-    timer?.cancel();
-    if (mounted) setState(() => playing = false);
-  }
-
-  void tapCell(int index) {
-    if (!playing) return;
-    final kind = widget.game.kind;
-
-    if (kind == 'tap' || kind == 'timing' || kind == 'target') {
-      if (index == target) {
-        score += 20;
-        target = random.nextInt(25);
-      } else {
-        score = max(0, score - 2);
-      }
-    } else if (kind == 'memory' || kind == 'match' || kind == 'cards') {
-      if (index < opened.length && !opened[index]) {
-        opened[index] = true;
-        score += 10;
-        if (opened.every((value) => value)) finishGame();
-      }
-    } else if (kind == '2048' || kind == 'merge') {
-      final row = index ~/ 5;
-      final col = index % 5;
-      final neighbor =
-          col < 4 ? index + 1 : (row > 0 ? index - 5 : index - 1);
-
-      if (neighbor >= 0 &&
-          neighbor < board.length &&
-          board[neighbor] == board[index]) {
-        board[neighbor]++;
-        board[index] = 0;
-        score += 20;
-      } else {
-        board[index] = (board[index] + 1) % 9;
-      }
-    } else if (kind == 'ttt') {
-      if (index >= 9 || board[index] != 0) return;
-      board[index] = 1;
-      final empty = <int>[
-        for (int i = 0; i < 9; i++)
-          if (board[i] == 0) i,
-      ];
-      if (empty.isNotEmpty) {
-        board[empty[random.nextInt(empty.length)]] = 2;
-      }
-      score += 5;
-    } else if (kind == 'lights') {
-      final positions = <int>[
-        index,
-        index - 1,
-        index + 1,
-        index - 5,
-        index + 5,
-      ];
-      for (final position in positions) {
-        if (position >= 0 && position < board.length) {
-          board[position] = board[position] == 0 ? 1 : 0;
-        }
-      }
-      score += 5;
-    } else {
-      board[index] = (board[index] + 1) % 9;
-      score += 10;
-      if (score >= 180) finishGame();
-    }
-
-    setState(() {});
-  }
-
-  Widget gameGrid(int columns) {
-    final count = columns * columns;
-
-    return GridView.builder(
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: count,
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: columns,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-      ),
-      itemBuilder: (context, index) {
-        final kind = widget.game.kind;
-        String label = '•';
-
-        if (kind == '2048' || kind == 'merge') {
-          label = board[index] == 0 ? '' : '\${board[index] * 2}';
-        } else if (kind == 'target' || kind == 'timing' || kind == 'tap') {
-          label = index == target ? 'TARGET' : '';
-        } else if (kind == 'memory' || kind == 'match' || kind == 'cards') {
-          label = index < opened.length && opened[index] ? '✓' : '?';
-        } else if (kind == 'ttt') {
-          label = index < 9 && board[index] > 0
-              ? (board[index] == 1 ? 'X' : 'O')
-              : '';
-        } else if (kind == 'lights') {
-          label = board[index] == 1 ? 'ON' : '';
-        }
-
-        final color = Colors.primaries[index % Colors.primaries.length];
-
-        return GestureDetector(
-          onTap: () => tapCell(index),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 120),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  color.withValues(alpha: .55),
-                  const Color(0xFF171B2A),
-                ],
-              ),
-            ),
-            child: Center(
-              child: Text(
-                label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final kind = widget.game.kind;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.game.title),
-        actions: [
-          IconButton(
-            onPressed: reset,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(child: _H('SCORE', score.toString())),
-                const SizedBox(width: 8),
-                Expanded(child: _H('TIME', '\${time}s')),
-                const SizedBox(width: 8),
-                Expanded(child: _H('MODE', _cat(kind))),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(27),
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1B1530), Color(0xFF0C1019)],
-                  ),
-                ),
-                child: playing
-                    ? gameGrid(kind == 'ttt' ? 3 : 5)
-                    : Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _ico(kind),
-                              size: 70,
-                              color: Colors.deepPurpleAccent,
-                            ),
-                            const SizedBox(height: 14),
-                            Text(
-                              time == 0 ? 'ROUND OVER' : 'READY TO PLAY',
-                              style: const TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 7),
-                            Text(
-                              kind == '2048' || kind == 'merge'
-                                  ? 'Merge matching tiles.'
-                                  : kind == 'memory' || kind == 'match'
-                                      ? 'Reveal the tiles and score points.'
-                                      : 'Tap, solve, and chase your best score.',
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(color: Colors.white60),
-                            ),
-                          ],
-                        ),
-                      ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: playing ? null : startGame,
-                icon: const Icon(Icons.play_arrow_rounded),
-                label: Text(playing ? 'PLAYING' : 'START GAME'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+class _MiniScaffold extends StatelessWidget {
+  final String title;
+  final Widget child;
+  final VoidCallback restart;
+  const _MiniScaffold({required this.title,required this.child,required this.restart});
+  @override Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),
+      actions:[IconButton(onPressed:restart,tooltip:'Restart',icon:const Icon(Icons.refresh_rounded))],
+    ),
+    body:child,
+  );
+}
+class _Badge extends StatelessWidget {
+  final String text;
+  const _Badge(this.text);
+  @override Widget build(BuildContext context)=>Container(
+    padding:const EdgeInsets.symmetric(horizontal:12,vertical:8),
+    decoration:BoxDecoration(color:Colors.black54,borderRadius:BorderRadius.circular(12)),
+    child:Text(text,style:const TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1)),
+  );
+}
+class _Over extends StatelessWidget {
+  final String title;
+  final VoidCallback restart;
+  const _Over({required this.title,required this.restart});
+  @override Widget build(BuildContext context)=>Center(child:Container(
+    padding:const EdgeInsets.all(24),margin:const EdgeInsets.all(24),
+    decoration:BoxDecoration(color:const Color(0xFF111522),borderRadius:BorderRadius.circular(24),border:Border.all(color:Colors.white12)),
+    child:Column(mainAxisSize:MainAxisSize.min,children:[
+      Text(title,style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900)),
+      const SizedBox(height:16),
+      FilledButton.icon(onPressed:restart,icon:const Icon(Icons.refresh_rounded),label:const Text('Main Lagi')),
+    ]),
+  ));
 }
 
-class MusicPage extends StatefulWidget {
-  const MusicPage({super.key});
-  @override State<MusicPage> createState()=>_MusicState();
+class NeonJumpPage extends StatefulWidget {
+  const NeonJumpPage({super.key});
+  @override State<NeonJumpPage> createState()=>_NeonJumpState();
 }
-class _MusicState extends State<MusicPage>{
-  final AudioPlayer player=AudioPlayer();
-  int selected=0;bool playing=false;bool shuffle=false;bool repeat=false;String query='';
-  Duration position=Duration.zero,duration=Duration.zero;
-  final liked=<String>{};
-  final tracks=const [
-    ('Nexora Intro','Nexora Studio',440.0,Color(0xFF7C3AED)),('Afterlight','Nexora Studio',330.0,Color(0xFF2563EB)),
-    ('Night Drive','Nexora Studio',220.0,Color(0xFF0891B2)),('Pixel Rain','Nexora Studio',523.0,Color(0xFFDB2777)),
-    ('Safe Horizon','Nexora Studio',294.0,Color(0xFF059669)),('Midnight Bloom','Nexora Studio',196.0,Color(0xFFD97706)),
-    ('Digital Sunrise','Nexora Studio',392.0,Color(0xFFDC2626)),('Neon Memory','Nexora Studio',262.0,Color(0xFF4F46E5)),
+class _NeonJumpState extends State<NeonJumpPage>{
+  Timer? timer; double x=80,y=480,vy=0,camera=0; bool dead=false;
+  final platforms=const [
+    Rect.fromLTWH(0,520,380,24),Rect.fromLTWH(450,445,230,24),
+    Rect.fromLTWH(760,365,220,24),Rect.fromLTWH(1050,470,250,24),
+    Rect.fromLTWH(1370,390,220,24),Rect.fromLTWH(1660,315,260,24),
+    Rect.fromLTWH(1990,430,300,24),
   ];
-  @override void initState(){super.initState();player.onPlayerStateChanged.listen((s){if(mounted)setState(()=>playing=s==PlayerState.playing);});player.onPositionChanged.listen((p){if(mounted)setState(()=>position=p);});player.onDurationChanged.listen((d){if(mounted)setState(()=>duration=d);});player.onPlayerComplete.listen((_)=>_completed());}
-  void _completed(){if(repeat){playSelected();return;}selectTrack(shuffle?Random().nextInt(tracks.length):(selected+1)%tracks.length);}
-  Uint8List _wav(double base){const sr=22050,seconds=12,channels=1,bits=16;final count=sr*seconds,dataBytes=count*2;final data=ByteData(44+dataBytes);void w32(int o,int v)=>data.setUint32(o,v,Endian.little);void w16(int o,int v)=>data.setUint16(o,v,Endian.little);void ascii(int o,String s){for(int i=0;i<s.length;i++){data.setUint8(o+i,s.codeUnitAt(i));}}ascii(0,'RIFF');w32(4,36+dataBytes);ascii(8,'WAVE');ascii(12,'fmt ');w32(16,16);w16(20,1);w16(22,channels);w32(24,sr);w32(28,sr*channels*bits~/8);w16(32,channels*bits~/8);w16(34,bits);ascii(36,'data');w32(40,dataBytes);for(int i=0;i<count;i++){final t=i/sr,fadeIn=min(1.0,t*8),fadeOut=min(1.0,(seconds-t)*4),env=fadeIn*fadeOut;final beat=(sin(2*pi*2.0*t)>0.88)?1.0:0.0;final melody=base*(1+0.035*sin(2*pi*.22*t));var sw=.20*sin(2*pi*melody*t)+.10*sin(2*pi*melody*1.5*t)+.055*sin(2*pi*melody*2*t)+beat*.07*sin(2*pi*(base/2)*t);data.setInt16(44+i*2,(sw*env*27000).clamp(-32768,32767).toInt(),Endian.little);}return data.buffer.asUint8List();}
-  Future<void> playSelected() async{await player.play(BytesSource(_wav(tracks[selected].$3),mimeType:'audio/wav'));}
-  Future<void> selectTrack(int i) async{await player.stop();if(!mounted)return;setState(() { selected=i; position=Duration.zero; });await playSelected();}
-  void toggleLike(){setState(()=>liked.contains(tracks[selected].$1)?liked.remove(tracks[selected].$1):liked.add(tracks[selected].$1));}
-  @override void dispose(){player.dispose();super.dispose();}
-  @override Widget build(BuildContext context){final filtered=tracks.where((t)=>t.$1.toLowerCase().contains(query.toLowerCase())||t.$2.toLowerCase().contains(query.toLowerCase())).toList();final t=tracks[selected],maxMs=max(1,duration.inMilliseconds),value=min(position.inMilliseconds.toDouble(),maxMs.toDouble());return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,110),children:[
-    Row(children:[const Expanded(child:Text('Nexora Music',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900))),Chip(label: Text('${tracks.length} TRACKS'))]),const SizedBox(height:4),const Text('Player • Search • Queue • Repeat • Shuffle • Library'),const SizedBox(height:14),
-    TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari lagu atau artis...',filled:true,border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),const SizedBox(height:18),
-    Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:LinearGradient(colors:[t.$4,const Color(0xFF111522)])),child:Column(children:[
-      Container(width:172,height:172,decoration:BoxDecoration(borderRadius:BorderRadius.circular(30),gradient:LinearGradient(colors:[t.$4.withValues(alpha:.9),Colors.black38])),child:const Icon(Icons.album_rounded,size:82)),const SizedBox(height:16),
-      Text(t.$1,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900),textAlign:TextAlign.center),Text(t.$2),const SizedBox(height:5),Text(liked.contains(t.$1)?'Liked • Original Nexora':'Original Nexora',style:Theme.of(context).textTheme.bodySmall),
-      Slider(value:value,min:0,max:maxMs.toDouble(),onChanged:(v)=>player.seek(Duration(milliseconds:v.toInt()))),Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[Text(_fmt(position)),Text(_fmt(duration))]),
-      Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>selectTrack((selected-1+tracks.length)%tracks.length),icon:const Icon(Icons.skip_previous_rounded,size:32)),FilledButton(onPressed:playing?()=>player.pause():playSelected,style:FilledButton.styleFrom(shape:const CircleBorder(),padding:const EdgeInsets.all(18)),child:Icon(playing?Icons.pause_rounded:Icons.play_arrow_rounded,size:30)),IconButton(onPressed:()=>selectTrack((selected+1)%tracks.length),icon:const Icon(Icons.skip_next_rounded,size:32))]),
-      Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton(onPressed:()=>setState(()=>shuffle=!shuffle),color:shuffle?Theme.of(context).colorScheme.primary:null,icon:const Icon(Icons.shuffle_rounded)),IconButton(onPressed:toggleLike,color:liked.contains(t.$1)?Theme.of(context).colorScheme.primary:null,icon:Icon(liked.contains(t.$1)?Icons.favorite_rounded:Icons.favorite_border_rounded)),IconButton(onPressed:()=>setState(()=>repeat=!repeat),color:repeat?Theme.of(context).colorScheme.primary:null,icon:const Icon(Icons.repeat_rounded))]),
-    ])),const SizedBox(height:22),const _Title('Made for you'),const SizedBox(height:10),
-    SizedBox(height:112,child:ListView(scrollDirection:Axis.horizontal,children:[_MusicCard('Daily Mix','Original Nexora',Icons.auto_awesome_rounded),_MusicCard('Game Focus','Arcade energy',Icons.sports_esports_rounded),_MusicCard('Late Night','Chill original',Icons.nightlight_rounded),_MusicCard('Liked Songs','Your favorites',Icons.favorite_rounded)])),const SizedBox(height:22),
-    const _Title('Library'),const SizedBox(height:10),for(final tr in filtered)Card(margin:const EdgeInsets.only(bottom:8),child:ListTile(leading:CircleAvatar(backgroundColor:tr.$4,child:const Icon(Icons.music_note_rounded)),title:Text(tr.$1,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(tr.$2),trailing:Icon(tr.$1==t.$1&&playing?Icons.pause_circle_filled:Icons.play_circle_outline_rounded),onTap:()=>selectTrack(tracks.indexOf(tr)))),
-    const Card(child:ListTile(leading:Icon(Icons.info_outline_rounded),title:Text('Katalog Nexora'),subtitle:Text('Track bawaan ini adalah audio original/sintetis untuk demo player. Katalog lagu pihak lain membutuhkan lisensi atau integrasi resmi.'))),
-  ]);}
-  String _fmt(Duration d)=>'${d.inMinutes}:${(d.inSeconds%60).toString().padLeft(2,'0')}';
-}
-class _MusicCard extends StatelessWidget{final String title,sub;final IconData icon;const _MusicCard(this.title,this.sub,this.icon);@override Widget build(BuildContext context)=>Container(width:175,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]));}
-class ReactionRushPage extends StatefulWidget {
-  const ReactionRushPage({super.key});
-  @override
-  State<ReactionRushPage> createState() => _ReactionState();
-}
-
-class _ReactionState extends State<ReactionRushPage> {
-  final rng = Random();
-  Timer? timer;
-  bool waiting = false;
-  bool ready = false;
-  int score = 0;
-  String text = 'Tekan START';
-
-  void start() {
-    timer?.cancel();
-    setState(() {
-      waiting = true;
-      ready = false;
-      text = 'Tunggu...';
-    });
-    timer = Timer(
-      Duration(milliseconds: 700 + rng.nextInt(1800)),
-      () {
-        if (!mounted) return;
-        setState(() {
-          waiting = false;
-          ready = true;
-          text = 'TAP!';
-        });
-      },
-    );
-  }
-
-  void tap() {
-    if (waiting) {
-      timer?.cancel();
-      setState(() {
-        waiting = false;
-        ready = false;
-        text = 'Terlalu cepat!';
-      });
-    } else if (ready) {
-      setState(() {
-        score++;
-        ready = false;
-        text = 'Bagus!';
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Reaction Rush')),
-      body: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(child: _Score('Score', '$score')),
-                const SizedBox(width: 10),
-                const Expanded(child: _Score('Mode', 'Reflex')),
-              ],
-            ),
-            const SizedBox(height: 18),
-            Expanded(
-              child: Center(
-                child: GestureDetector(
-                  onTap: tap,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 180),
-                    width: 230,
-                    height: 230,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: ready
-                          ? Colors.green
-                          : Theme.of(context).colorScheme.primary,
-                    ),
-                    child: Center(
-                      child: Text(
-                        text,
-                        style: const TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: start,
-                child: const Text('START'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class ColorClashPage extends StatefulWidget {
-  const ColorClashPage({super.key});
-  @override
-  State<ColorClashPage> createState() => _ColorClashState();
-}
-
-class _ColorClashState extends State<ColorClashPage> {
-  final rng = Random();
-  int score = 0;
-  int target = 0;
-  final colors = <Color>[
-    Colors.red,
-    Colors.blue,
-    Colors.green,
-    Colors.orange,
+  final spikes=const [
+    Rect.fromLTWH(350,496,30,24),Rect.fromLTWH(680,421,30,24),
+    Rect.fromLTWH(1300,446,30,24),Rect.fromLTWH(1590,366,30,24),
   ];
-
-  @override
-  void initState() {
-    super.initState();
-    target = rng.nextInt(colors.length);
+  @override void initState(){super.initState();restart();}
+  void restart(){
+    timer?.cancel();
+    setState((){x=80;y=486;vy=0;camera=0;dead=false;});
+    timer=Timer.periodic(const Duration(milliseconds:16),(_)=>tick());
   }
-
-  void next() {
-    setState(() {
-      target = rng.nextInt(colors.length);
+  void jump(){if(dead){restart();return;}if(y>=450)vy=-10.5;}
+  void tick(){
+    if(!mounted||dead)return;
+    setState((){
+      x+=3.7;vy+=.45;y+=vy;
+      final feet=y+34;
+      for(final p in platforms){
+        if(x+28>p.left&&x<p.right&&feet>=p.top&&feet<=p.bottom+18&&vy>0){y=p.top-34;vy=-10.2;}
+      }
+      camera=max(0,x-110);
+      if(y>640||spikes.any((s)=>Rect.fromLTWH(x,y,30,34).overlaps(s))||x>2250){dead=true;timer?.cancel();}
     });
   }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Color Clash')),
-      body: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            _Score('Score', '$score'),
-            const SizedBox(height: 22),
-            Text(
-              'Pilih warna target',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 12),
-            Container(
-              width: 130,
-              height: 130,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: colors[target],
-              ),
-            ),
-            const SizedBox(height: 28),
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                children: [
-                  for (int i = 0; i < colors.length; i++)
-                    FilledButton(
-                      onPressed: () {
-                        if (i == target) {
-                          setState(() => score++);
-                        }
-                        next();
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: colors[i],
-                      ),
-                      child: const SizedBox(),
-                    ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_MiniScaffold(
+    title:'Neon Jump',restart:restart,
+    child:GestureDetector(onTap:jump,child:Stack(children:[
+      Positioned.fill(child:CustomPaint(painter:_NeonPainter(x,y,camera,platforms,spikes))),
+      const Positioned(top:14,left:16,child:_Badge('TAP = JUMP')),
+      if(dead)const SizedBox.shrink(),
+      if(dead)Positioned.fill(child:_Over(title:'LEVEL END',restart:restart)),
+    ])),
+  );
+}
+class _NeonPainter extends CustomPainter{
+  final double x,y,camera;final List<Rect> platforms,spikes;
+  _NeonPainter(this.x,this.y,this.camera,this.platforms,this.spikes);
+  @override void paint(Canvas c,Size s){
+    c.drawRect(Offset.zero,Offset(s.width,s.height),Paint()..color=const Color(0xFF070A14));
+    final grid=Paint()..color=const Color(0xFF171D32);
+    for(double gx=-(camera%40);gx<s.width;gx+=40)c.drawLine(Offset(gx,0),Offset(gx,s.height),grid);
+    for(double gy=0;gy<s.height;gy+=40)c.drawLine(Offset(0,gy),Offset(s.width,gy),grid);
+    for(final r in platforms)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(r.left-camera,r.top,r.width,r.height),const Radius.circular(7)),Paint()..color=const Color(0xFF7C3AED));
+    for(final r in spikes){final p=Path()..moveTo(r.left-camera,r.bottom)..lineTo(r.center.dx-camera,r.top)..lineTo(r.right-camera,r.bottom)..close();c.drawPath(p,Paint()..color=const Color(0xFFEF4444));}
+    c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x-camera,y,34,34),const Radius.circular(8)),Paint()..color=const Color(0xFF22D3EE));
   }
+  @override bool shouldRepaint(covariant _NeonPainter old)=>true;
 }
 
-class NumberSprintPage extends StatefulWidget {
-  const NumberSprintPage({super.key});
-  @override
-  State<NumberSprintPage> createState() => _NumberSprintState();
+class WormArenaPage extends StatefulWidget{const WormArenaPage({super.key});@override State<WormArenaPage> createState()=>_WormState();}
+class _WormState extends State<WormArenaPage>{
+  static const rows=18,cols=11;final rng=Random();Timer?timer;
+  List<Point<int>> worm=[];Point<int> food=const Point(6,9),dir=const Point(0,-1),next=const Point(0,-1);bool dead=false;int score=0;
+  @override void initState(){super.initState();restart();}
+  void restart(){timer?.cancel();setState((){worm=[const Point(5,9),const Point(5,10),const Point(5,11)];dir=const Point(0,-1);next=const Point(0,-1);score=0;dead=false;placeFood();});timer=Timer.periodic(const Duration(milliseconds:135),(_)=>tick());}
+  void placeFood(){Point<int> p;do{p=Point(rng.nextInt(cols),rng.nextInt(rows));}while(worm.contains(p));food=p;}
+  void setDir(Point<int>d){if(d.x+dir.x==0&&d.y+dir.y==0)return;next=d;}
+  void tick(){if(!mounted||dead)return;setState((){dir=next;final h=worm.first;final n=Point(h.x+dir.x,h.y+dir.y);if(n.x<0||n.x>=cols||n.y<0||n.y>=rows||worm.contains(n)){dead=true;timer?.cancel();return;}worm=[n,...worm];if(n==food){score++;placeFood();}else{worm.removeLast();}});}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  Widget key(IconData i,Point<int>d)=>IconButton.filled(onPressed:()=>setDir(d),icon:Icon(i));
+  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Worm Arena',restart:restart,child:Column(children:[
+    Padding(padding:const EdgeInsets.all(12),child:Row(children:[_Badge('FOOD '+score.toString()),const Spacer(),if(dead)const Text('GAME OVER',style:TextStyle(color:Colors.redAccent,fontWeight:FontWeight.w900))])),
+    Expanded(child:Center(child:AspectRatio(aspectRatio:cols/rows,child:Container(margin:const EdgeInsets.all(12),decoration:BoxDecoration(color:const Color(0xFF101522),borderRadius:BorderRadius.circular(18)),child:CustomPaint(painter:_WormPainter(worm,food)))))),
+    Row(mainAxisAlignment:MainAxisAlignment.center,children:[key(Icons.arrow_back_rounded,const Point(-1,0)),Column(children:[key(Icons.arrow_upward_rounded,const Point(0,-1)),key(Icons.arrow_downward_rounded,const Point(0,1))]),key(Icons.arrow_forward_rounded,const Point(1,0))]),
+    const SizedBox(height:10),
+  ]));
+}
+class _WormPainter extends CustomPainter{
+  final List<Point<int>> worm;final Point<int> food;_WormPainter(this.worm,this.food);
+  @override void paint(Canvas c,Size s){final cell=min(s.width/11,s.height/18),ox=(s.width-cell*11)/2,oy=(s.height-cell*18)/2;c.drawCircle(Offset(ox+food.x*cell+cell/2,oy+food.y*cell+cell/2),cell*.28,Paint()..color=const Color(0xFFEF4444));for(int i=worm.length-1;i>=0;i--){final p=worm[i];c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+p.x*cell+2,oy+p.y*cell+2,cell-4,cell-4),const Radius.circular(7)),Paint()..color=i==0?const Color(0xFF22D3EE):const Color(0xFF8B5CF6));}}
+  @override bool shouldRepaint(covariant _WormPainter old)=>true;
 }
 
-class _NumberSprintState extends State<NumberSprintPage> {
-  final rng = Random();
-  int a = 2;
-  int b = 3;
-  int answer = 5;
-  int score = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _nextQuestion();
-  }
-
-  void _nextQuestion() {
-    a = 1 + rng.nextInt(9);
-    b = 1 + rng.nextInt(9);
-    answer = a + b;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final opts = [answer, answer + 1, answer - 1, answer + 2]..shuffle(rng);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Number Sprint')),
-      body: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            _Score('Score', '$score'),
-            const SizedBox(height: 30),
-            Text(
-              '$a + $b = ?',
-              style: const TextStyle(
-                fontSize: 42,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 25),
-            for (final o in opts)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      if (o == answer) {
-                        score++;
-                      }
-                      setState(_nextQuestion);
-                    },
-                    child: Text(
-                      '$o',
-                      style: const TextStyle(fontSize: 20),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+class NexoraChessPage extends StatefulWidget{const NexoraChessPage({super.key});@override State<NexoraChessPage> createState()=>_ChessState();}
+class _ChessState extends State<NexoraChessPage>{
+  final rng=Random();late List<String>b;int?sel;bool turn=true,busy=false,over=false;String msg='WHITE TURN';
+  bool white(String p)=>'KQRBNP'.contains(p);
+  bool inside(int r,int c)=>r>=0&&r<8&&c>=0&&c<8;
+  @override void initState(){super.initState();restart();}
+  void restart(){b=['r','n','b','q','k','b','n','r','p','p','p','p','p','p','p','p',...List.filled(32,''),'P','P','P','P','P','P','P','P','R','N','B','Q','K','B','N','R'];sel=null;turn=true;busy=false;over=false;msg='WHITE TURN';setState((){});}
+  bool enemy(String p,bool w)=>p.isNotEmpty&&white(p)!=w;
+  bool clear(int a,int z){final ar=a~/8,ac=a%8,br=z~/8,bc=z%8,dr=(br-ar).sign,dc=(bc-ac).sign;var r=ar+dr,c=ac+dc;while(r!=br||c!=bc){if(b[r*8+c].isNotEmpty)return false;r+=dr;c+=dc;}return true;}
+  bool attacks(int a,int z,bool w){final p=b[a],ar=a~/8,ac=a%8,br=z~/8,bc=z%8,dr=br-ar,dc=bc-ac;switch(p.toUpperCase()){case'P':return dr==(w?-1:1)&&dc.abs()==1;case'N':return(dr.abs()==2&&dc.abs()==1)||(dr.abs()==1&&dc.abs()==2);case'K':return dr.abs()<=1&&dc.abs()<=1&&(dr!=0||dc!=0);case'B':return dr.abs()==dc.abs()&&clear(a,z);case'R':return(dr==0||dc==0)&&clear(a,z);case'Q':return(dr==0||dc==0||dr.abs()==dc.abs())&&clear(a,z);}return false;}
+  bool check(bool w){final k=b.indexOf(w?'K':'k');if(k<0)return true;for(int i=0;i<64;i++)if(b[i].isNotEmpty&&white(b[i])!=w&&attacks(i,k,!w))return true;return false;}
+  List<int> pseudo(int a,bool w){final p=b[a],r=a~/8,c=a%8,out=<int>[];void add(int rr,int cc){if(!inside(rr,cc))return;final i=rr*8+cc;if(b[i].isEmpty||enemy(b[i],w))out.add(i);}if(p.toUpperCase()=='P'){final d=w?-1:1,st=w?6:1;if(inside(r+d,c)&&b[(r+d)*8+c].isEmpty){out.add((r+d)*8+c);if(r==st&&b[(r+2*d)*8+c].isEmpty)out.add((r+2*d)*8+c);}for(final dc in[-1,1])if(inside(r+d,c+dc)&&enemy(b[(r+d)*8+c+dc],w))out.add((r+d)*8+c+dc);}else if(p.toUpperCase()=='N'){for(final d in[[-2,-1],[-2,1],[-1,-2],[-1,2],[1,-2],[1,2],[2,-1],[2,1]])add(r+d[0],c+d[1]);}else if(p.toUpperCase()=='K'){for(int rr=-1;rr<=1;rr++)for(int cc=-1;cc<=1;cc++)if(rr!=0||cc!=0)add(r+rr,c+cc);}else{final ds=<List<int>>[];if(p.toUpperCase()=='B'||p.toUpperCase()=='Q')ds.addAll([[-1,-1],[-1,1],[1,-1],[1,1]]);if(p.toUpperCase()=='R'||p.toUpperCase()=='Q')ds.addAll([[-1,0],[1,0],[0,-1],[0,1]]);for(final d in ds){var rr=r+d[0],cc=c+d[1];while(inside(rr,cc)){final i=rr*8+cc;if(b[i].isEmpty)out.add(i);else{if(enemy(b[i],w))out.add(i);break;}rr+=d[0];cc+=d[1];}}}return out;}
+  List<int> legal(int a,bool w){final out=<int>[];for(final z in pseudo(a,w)){final p=b[a],old=b[z];b[z]=p;b[a]='';if(p=='P'&&z~/8==0)b[z]='Q';if(p=='p'&&z~/8==7)b[z]='q';if(!check(w))out.add(z);b[a]=p;b[z]=old;}return out;}
+  List<List<int>> all(bool w){final out=<List<int>>[];for(int i=0;i<64;i++)if(b[i].isNotEmpty&&white(b[i])==w)for(final z in legal(i,w))out.add([i,z]);return out;}
+  void tap(int i){if(over||busy||!turn)return;if(sel==null){if(b[i].isNotEmpty&&white(b[i]))setState(()=>sel=i);return;}if(legal(sel!,true).contains(i)){move(sel!,i,true);}else if(b[i].isNotEmpty&&white(b[i]))setState(()=>sel=i);else setState(()=>sel=null);}
+  void move(int a,int z,bool w){setState((){final p=b[a];b[z]=p;b[a]='';if(p=='P'&&z~/8==0)b[z]='Q';sel=null;turn=!turn;msg='BOT TURN';});end();if(!over&&!turn){busy=true;Future.delayed(const Duration(milliseconds:300),bot);}}
+  void bot(){if(!mounted||over)return;final m=all(false);if(m.isEmpty){setState(()=>busy=false);end();return;}final q=m[rng.nextInt(m.length)],p=b[q[0]];setState((){b[q[1]]=p;b[q[0]]='';if(p=='p'&&q[1]~/8==7)b[q[1]]='q';turn=true;busy=false;msg='WHITE TURN';});end();}
+  void end(){final m=all(turn);if(m.isEmpty){setState((){over=true;msg=check(turn)?'CHECKMATE':'STALEMATE';});}}
+  String glyph(String p){const m={'K':'♔','Q':'♕','R':'♖','B':'♗','N':'♘','P':'♙','k':'♚','q':'♛','r':'♜','b':'♝','n':'♞','p':'♟'};return m[p]??'';}
+  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Nexora Chess',restart:restart,child:Column(children:[
+    Padding(padding:const EdgeInsets.all(10),child:Row(children:[Text(msg,style:const TextStyle(fontWeight:FontWeight.w900)),const Spacer(),const Text('OFFLINE BOT',style:TextStyle(color:Colors.white54,fontSize:10))])),
+    Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:GridView.builder(itemCount:64,physics:const NeverScrollableScrollPhysics(),gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:8),itemBuilder:(_,i){final r=i~/8,c=i%8,light=(r+c).isEven;return GestureDetector(onTap:()=>tap(i),child:Container(color:sel==i?const Color(0xFF22D3EE):(light?const Color(0xFFD6D3D1):const Color(0xFF57534E)),child:Center(child:Text(glyph(b[i]),style:TextStyle(fontSize:27,color:white(b[i])?Colors.white:Colors.black87)))));})))),
+    if(over)Padding(padding:const EdgeInsets.all(10),child:Text(msg,style:const TextStyle(fontWeight:FontWeight.w900))),
+  ]));
 }
 
-class DodgeZonePage extends StatefulWidget {
-  const DodgeZonePage({super.key});
-  @override
-  State<DodgeZonePage> createState() => _DodgeState();
+class RoadRushPage extends StatefulWidget{const RoadRushPage({super.key});@override State<RoadRushPage> createState()=>_RoadState();}
+class _Car{double lane,y;_Car(this.lane,this.y);}
+class _RoadState extends State<RoadRushPage>{
+  Timer?timer;final rng=Random();double lane=1;List<_Car>cars=[];int score=0;bool dead=false;
+  @override void initState(){super.initState();restart();}
+  void restart(){timer?.cancel();setState((){lane=1;cars=[];score=0;dead=false;});timer=Timer.periodic(const Duration(milliseconds:35),(_)=>tick());}
+  void tick(){if(!mounted||dead)return;setState((){for(final c in cars)c.y+=.012;cars.removeWhere((c)=>c.y>1.1);if(rng.nextDouble()<.035)cars.add(_Car(rng.nextInt(3).toDouble(),-.1));score++;if(cars.any((c)=>(c.lane-lane).abs()<.25&&c.y>.78&&c.y<.94)){dead=true;timer?.cancel();}});}
+  void move(double d){setState(()=>lane=(lane+d).clamp(0,2));}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Road Rush',restart:restart,child:GestureDetector(onHorizontalDragEnd:(d)=>move(d.primaryVelocity!>0?1:-1),child:Stack(children:[
+    Positioned.fill(child:CustomPaint(painter:_RoadPainter(lane,cars))),
+    Positioned(top:14,left:16,child:_Badge('TIME '+(score~/20).toString())),
+    Positioned(bottom:18,left:0,right:0,child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton.filled(onPressed:()=>move(-1),icon:const Icon(Icons.chevron_left)),const SizedBox(width:80),IconButton.filled(onPressed:()=>move(1),icon:const Icon(Icons.chevron_right))])),
+    if(dead)Positioned.fill(child:_Over(title:'CRASH',restart:restart)),
+  ])));
+}
+class _RoadPainter extends CustomPainter{
+  final double lane;final List<_Car>cars;_RoadPainter(this.lane,this.cars);
+  @override void paint(Canvas c,Size s){c.drawRect(Offset.zero,Offset(s.width,s.height),Paint()..color=const Color(0xFF102016));final road=Rect.fromLTWH(s.width*.1,0,s.width*.8,s.height);c.drawRect(road,Paint()..color=const Color(0xFF242833));final dash=Paint()..color=Colors.white24..strokeWidth=4;for(int l=1;l<3;l++){final x=road.left+road.width*l/3;for(double y=-30;y<s.height;y+=55)c.drawLine(Offset(x,y),Offset(x,y+25),dash);}final px=road.left+road.width*(lane+.5)/3;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px-25,s.height*.84,50,70),const Radius.circular(12)),Paint()..color=const Color(0xFF22D3EE));for(final car in cars){final x=road.left+road.width*(car.lane+.5)/3;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x-23,car.y*s.height,46,66),const Radius.circular(11)),Paint()..color=const Color(0xFFEF4444));}}
+  @override bool shouldRepaint(covariant _RoadPainter old)=>true;
 }
 
-class _DodgeState extends State<DodgeZonePage> {
-  double x = .5;
-  int score = 0;
-  Timer? timer;
-
-  @override
-  void initState() {
-    super.initState();
-    timer = Timer.periodic(
-      const Duration(milliseconds: 700),
-      (_) {
-        if (mounted) {
-          setState(() => score++);
-        }
-      },
-    );
-  }
-
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Dodge Zone')),
-      body: Column(
-        children: [
-          _Score('Survival', '$score'),
-          Expanded(
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final playerLeft = (constraints.maxWidth - 56) * x;
-                return GestureDetector(
-                  onHorizontalDragUpdate: (d) {
-                    setState(() {
-                      x = (x + d.delta.dx / constraints.maxWidth)
-                          .clamp(.08, .92);
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(24),
-                      color: const Color(0xFF111522),
-                    ),
-                    child: Stack(
-                      children: [
-                        Positioned(
-                          bottom: 20,
-                          left: playerLeft,
-                          child: const CircleAvatar(
-                            radius: 28,
-                            child: Icon(Icons.shield_rounded),
-                          ),
-                        ),
-                        const Center(
-                          child: Text(
-                            'Geser kiri/kanan untuk bertahan',
-                            textAlign: TextAlign.center,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+class BrickSmashPage extends StatefulWidget{const BrickSmashPage({super.key});@override State<BrickSmashPage> createState()=>_BrickState();}
+class _BrickState extends State<BrickSmashPage>{
+  Timer?timer;double bx=.5,by=.75,vx=.006,vy=-.009,paddle=.5;List<bool>bricks=List.filled(30,true);bool dead=false;
+  @override void initState(){super.initState();restart();}
+  void restart(){timer?.cancel();setState((){bx=.5;by=.75;vx=.006;vy=-.009;paddle=.5;bricks=List.filled(30,true);dead=false;});timer=Timer.periodic(const Duration(milliseconds:16),(_)=>tick());}
+  void tick(){if(!mounted||dead)return;setState((){bx+=vx;by+=vy;if(bx<.03||bx>.97)vx=-vx;if(by<.03)vy=vy.abs();if(by>.82&&by<.94&&(bx-paddle).abs()<.15)vy=-vy.abs();for(int i=0;i<30;i++)if(bricks[i]){final col=i%5,row=i~/5,l=.05+col*.19,t=.1+row*.06;if(bx>l&&bx<l+.16&&by>t&&by<t+.045){bricks[i]=false;vy=-vy;break;}}if(by>1.05||bricks.every((v)=>!v)){dead=true;timer?.cancel();}});}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Brick Smash',restart:restart,child:GestureDetector(onHorizontalDragUpdate:(d)=>setState(()=>paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.12,.88)),child:Stack(children:[
+    Positioned.fill(child:CustomPaint(painter:_BrickPainter(bx,by,paddle,bricks))),
+    if(dead)Positioned.fill(child:_Over(title:bricks.every((v)=>!v)?'CLEAR':'GAME OVER',restart:restart)),
+  ])));
+}
+class _BrickPainter extends CustomPainter{
+  final double x,y,p;final List<bool>b;_BrickPainter(this.x,this.y,this.p,this.b);
+  @override void paint(Canvas c,Size s){c.drawRect(Offset.zero,Offset(s.width,s.height),Paint()..color=const Color(0xFF080B14));for(int i=0;i<30;i++)if(b[i]){final col=i%5,row=i~/5;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*(.05+col*.19),s.height*(.08+row*.055),s.width*.17,s.height*.04),const Radius.circular(6)),Paint()..color=const Color(0xFF8B5CF6));}c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*(p-.12),s.height*.92,s.width*.24,12),const Radius.circular(10)),Paint()..color=Colors.white);c.drawCircle(Offset(x*s.width,y*s.height),9,Paint()..color=const Color(0xFF22D3EE));}
+  @override bool shouldRepaint(covariant _BrickPainter old)=>true;
 }
 
+class FlapOrbitPage extends StatefulWidget{const FlapOrbitPage({super.key});@override State<FlapOrbitPage> createState()=>_FlapState();}
+class _FlapState extends State<FlapOrbitPage>{
+  Timer?timer;final rng=Random();double y=.5,vy=0,px=1.1,g=.5;int score=0;bool dead=false;
+  @override void initState(){super.initState();restart();}
+  void restart(){timer?.cancel();setState((){y=.5;vy=0;px=1.1;g=.5;score=0;dead=false;});timer=Timer.periodic(const Duration(milliseconds:16),(_)=>tick());}
+  void flap(){if(dead){restart();return;}setState(()=>vy=-.011);}
+  void tick(){if(!mounted||dead)return;setState((){vy+=.00055;y+=vy;px-=.006;if(px<-.15){px=1.1;g=.3+rng.nextDouble()*.4;score++;}if(y<.02||y>.98||(px<.62&&px>.36&&(y<g-.16||y>g+.16))){dead=true;timer?.cancel();}});}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Flap Orbit',restart:restart,child:GestureDetector(onTap:flap,child:Stack(children:[
+    Positioned.fill(child:CustomPaint(painter:_FlapPainter(y,px,g))),
+    const Positioned(top:14,left:16,child:_Badge('TAP TO FLY')),
+    if(dead)Positioned.fill(child:_Over(title:'GAME OVER',restart:restart)),
+  ])));
+}
+class _FlapPainter extends CustomPainter{
+  final double y,x,g;_FlapPainter(this.y,this.x,this.g);
+  @override void paint(Canvas c,Size s){c.drawRect(Offset.zero,Offset(s.width,s.height),Paint()..color=const Color(0xFF08131A));final p=Paint()..color=const Color(0xFF16A34A);c.drawRect(Rect.fromLTWH(x*s.width,0,s.width*.12,s.height*(g-.16)),p);c.drawRect(Rect.fromLTWH(x*s.width,s.height*(g+.16),s.width*.12,s.height),p);c.drawCircle(Offset(s.width*.5,y*s.height),18,Paint()..color=const Color(0xFFFBBF24));}
+  @override bool shouldRepaint(covariant _FlapPainter old)=>true;
+}
+
+class MazeEscapePage extends StatefulWidget{const MazeEscapePage({super.key});@override State<MazeEscapePage> createState()=>_MazeState();}
+class _MazeState extends State<MazeEscapePage>{
+  static const map=['1111111111','1000000001','1011111101','1010000101','1010110101','1000100101','1110101101','1000100001','1011111101','1000000001','1111111111'];
+  int r=1,c=1,moves=0;bool win=false;
+  void restart(){setState((){r=1;c=1;moves=0;win=false;});}
+  void go(int dr,int dc){if(win)return;final nr=r+dr,nc=c+dc;if(map[nr][nc]=='0')setState((){r=nr;c=nc;moves++;if(r==9&&c==8)win=true;});}
+  Widget key(IconData i,int dr,int dc)=>IconButton.filled(onPressed:()=>go(dr,dc),icon:Icon(i));
+  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Maze Escape',restart:restart,child:Column(children:[
+    Padding(padding:const EdgeInsets.all(10),child:Row(children:[_Badge('MOVES '+moves.toString()),const Spacer(),if(win)const Text('ESCAPED',style:TextStyle(color:Colors.greenAccent,fontWeight:FontWeight.w900))])),
+    Expanded(child:Center(child:AspectRatio(aspectRatio:10/11,child:CustomPaint(painter:_MazePainter(map,r,c))))),
+    Row(mainAxisAlignment:MainAxisAlignment.center,children:[key(Icons.arrow_back,0,-1),Column(children:[key(Icons.arrow_upward,-1,0),key(Icons.arrow_downward,1,0)]),key(Icons.arrow_forward,0,1)]),
+    const SizedBox(height:10),
+  ]));
+}
+class _MazePainter extends CustomPainter{
+  final List<String>m;final int r,c;_MazePainter(this.m,this.r,this.c);
+  @override void paint(Canvas p,Size s){final cell=min(s.width/10,s.height/11);for(int y=0;y<11;y++)for(int x=0;x<10;x++)p.drawRect(Rect.fromLTWH(x*cell,y*cell,cell,cell),Paint()..color=m[y][x]=='1'?const Color(0xFF312E81):const Color(0xFF111827));p.drawCircle(Offset(c*cell+cell/2,r*cell+cell/2),cell*.3,Paint()..color=const Color(0xFF22D3EE));p.drawCircle(Offset(8*cell+cell/2,9*cell+cell/2),cell*.23,Paint()..color=const Color(0xFF22C55E));}
+  @override bool shouldRepaint(covariant _MazePainter old)=>true;
+}
+
+class Mini2048Page extends StatefulWidget{const Mini2048Page({super.key});@override State<Mini2048Page> createState()=>_2048State();}
+class _2048State extends State<Mini2048Page>{
+  final rng=Random();List<int>b=List.filled(16,0);int score=0;
+  @override void initState(){super.initState();restart();}
+  void restart(){setState((){b=List.filled(16,0);score=0;add();add();});}
+  void add(){final e=[for(int i=0;i<16;i++)if(b[i]==0)i];if(e.isNotEmpty)b[e[rng.nextInt(e.length)]]=rng.nextDouble()<.9?2:4;}
+  List<int> merge(List<int>a){final v=a.where((x)=>x>0).toList();for(int i=0;i<v.length-1;i++)if(v[i]==v[i+1]){v[i]*=2;score+=v[i];v.removeAt(i+1);}while(v.length<4)v.add(0);return v;}
+  void move(int dr,int dc){final old=List<int>.from(b);if(dr==0){for(int r=0;r<4;r++){final a=[for(int c=0;c<4;c++)b[r*4+c]];final q=merge(dc<0?a:a.reversed.toList());final z=dc<0?q:q.reversed.toList();for(int c=0;c<4;c++)b[r*4+c]=z[c];}}else{for(int c=0;c<4;c++){final a=[for(int r=0;r<4;r++)b[r*4+c]];final q=merge(dr<0?a:a.reversed.toList());final z=dr<0?q:q.reversed.toList();for(int r=0;r<4;r++)b[r*4+c]=z[r];}}if(old.toString()!=b.toString())setState(add);}
+  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Nexora 2048',restart:restart,child:GestureDetector(
+    onHorizontalDragEnd:(d){final v=d.primaryVelocity??0;move(0,v>0?1:-1);},
+    onVerticalDragEnd:(d){final v=d.primaryVelocity??0;move(v>0?1:-1,0);},
+    child:Padding(padding:const EdgeInsets.all(16),child:Column(children:[
+      Row(children:[_Badge('SCORE '+score.toString()),const Spacer(),const Text('SWIPE',style:TextStyle(color:Colors.white54,fontWeight:FontWeight.w900))]),
+      const SizedBox(height:14),
+      Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:GridView.builder(itemCount:16,physics:const NeverScrollableScrollPhysics(),gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:4,crossAxisSpacing:8,mainAxisSpacing:8),itemBuilder:(_,i)=>Container(decoration:BoxDecoration(color:b[i]==0?const Color(0xFF1A1E2A):const Color(0xFF6D28D9),borderRadius:BorderRadius.circular(12)),child:Center(child:Text(b[i]==0?'':b[i].toString(),style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900)))))))),
+    ])),
+  ));
+}
 class ToolsPage extends StatefulWidget{const ToolsPage({super.key});@override State<ToolsPage> createState()=>_ToolsState();}
 class _ToolsState extends State<ToolsPage>{
   String input='',output='';
