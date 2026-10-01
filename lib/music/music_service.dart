@@ -178,17 +178,84 @@ class NexoraMultiMusicService implements MusicService {
   NexoraMultiMusicService({List<MusicService>? services})
       : services = services ?? <MusicService>[JamendoMusicService()];
 
-  Future<List<T>> _merge<T>(Future<List<T>> Function(MusicService s) fn) async {
-    final results = await Future.wait(services.map((s) async {
-      try { return await fn(s); } catch (_) { return <T>[]; }
-    }));
-    final out = <T>[];
+  Future<List<MusicTrack>> _mergeTracks(String query) async {
+    final results = await Future.wait(
+      services.map((service) async {
+        try {
+          return await service.searchTracks(query);
+        } catch (_) {
+          return <MusicTrack>[];
+        }
+      }),
+    );
+    final out = <MusicTrack>[];
     final seen = <String>{};
     for (final list in results) {
       for (final item in list) {
-        final key = item is MusicTrack
-            ? item.title.toLowerCase() + '|' + item.artistName.toLowerCase() + '|' + item.audioUrl
-            : item.toString();
+        final key = item.title.toLowerCase() + '|' + item.artistName.toLowerCase() + '|' + item.audioUrl;
+        if (seen.add(key)) out.add(item);
+      }
+    }
+    return out;
+  }
+
+  Future<List<MusicArtist>> _mergeArtists(String query) async {
+    final results = await Future.wait(
+      services.map((service) async {
+        try {
+          return await service.searchArtists(query);
+        } catch (_) {
+          return <MusicArtist>[];
+        }
+      }),
+    );
+    final out = <MusicArtist>[];
+    final seen = <String>{};
+    for (final list in results) {
+      for (final item in list) {
+        final key = item.id + '|' + item.name.toLowerCase();
+        if (seen.add(key)) out.add(item);
+      }
+    }
+    return out;
+  }
+
+  Future<List<MusicAlbum>> _mergeAlbums(String query) async {
+    final results = await Future.wait(
+      services.map((service) async {
+        try {
+          return await service.searchAlbums(query);
+        } catch (_) {
+          return <MusicAlbum>[];
+        }
+      }),
+    );
+    final out = <MusicAlbum>[];
+    final seen = <String>{};
+    for (final list in results) {
+      for (final item in list) {
+        final key = item.id + '|' + item.title.toLowerCase();
+        if (seen.add(key)) out.add(item);
+      }
+    }
+    return out;
+  }
+
+  Future<List<MusicPlaylist>> _mergePlaylists() async {
+    final results = await Future.wait(
+      services.map((service) async {
+        try {
+          return await service.getPlaylists();
+        } catch (_) {
+          return <MusicPlaylist>[];
+        }
+      }),
+    );
+    final out = <MusicPlaylist>[];
+    final seen = <String>{};
+    for (final list in results) {
+      for (final item in list) {
+        final key = item.id + '|' + item.name.toLowerCase();
         if (seen.add(key)) out.add(item);
       }
     }
@@ -196,11 +263,11 @@ class NexoraMultiMusicService implements MusicService {
   }
 
   @override
-  Future<List<MusicTrack>> searchTracks(String query) => _merge((s) => s.searchTracks(query));
+  Future<List<MusicTrack>> searchTracks(String query) => _mergeTracks(query);
   @override
-  Future<List<MusicArtist>> searchArtists(String query) => _merge((s) => s.searchArtists(query));
+  Future<List<MusicArtist>> searchArtists(String query) => _mergeArtists(query);
   @override
-  Future<List<MusicAlbum>> searchAlbums(String query) => _merge((s) => s.searchAlbums(query));
+  Future<List<MusicAlbum>> searchAlbums(String query) => _mergeAlbums(query);
   @override
-  Future<List<MusicPlaylist>> getPlaylists() => _merge((s) => s.getPlaylists());
+  Future<List<MusicPlaylist>> getPlaylists() => _mergePlaylists();
 }
