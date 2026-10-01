@@ -23,6 +23,9 @@ flutter --version
 echo "==> Enabling Flutter Web"
 flutter config --enable-web
 
+echo "==> Creating web platform files"
+flutter create . --platforms=web
+
 echo "==> Installing Dart packages"
 flutter pub get
 
