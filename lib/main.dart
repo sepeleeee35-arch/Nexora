@@ -766,7 +766,7 @@ class _ColorClashState extends State<ColorClashPage> {
                 crossAxisSpacing: 12,
                 mainAxisSpacing: 12,
                 children: [
-                  for (int i = 0; i < colors.length)
+                  for (int i = 0; i < colors.length; i++)
                     FilledButton(
                       onPressed: () {
                         if (i == target) {
