@@ -50,15 +50,27 @@ class _NexoraMusicPageState extends State<NexoraMusicPage> {
   }
 
   Future<void> _loadTrending() async {
-    await _load(() => widget.service is JamendoMusicService
-        ? (widget.service as JamendoMusicService).trending()
-        : widget.service.searchTracks(''), 'trending');
+    await _load(() {
+      if (widget.service is NexoraMultiMusicService) {
+        return (widget.service as NexoraMultiMusicService).trending();
+      }
+      if (widget.service is JamendoMusicService) {
+        return (widget.service as JamendoMusicService).trending();
+      }
+      return widget.service.searchTracks('');
+    }, 'trending');
   }
 
   Future<void> _loadGenre(String tag) async {
-    await _load(() => widget.service is JamendoMusicService
-        ? (widget.service as JamendoMusicService).genre(tag)
-        : widget.service.searchTracks(tag), tag);
+    await _load(() {
+      if (widget.service is NexoraMultiMusicService) {
+        return (widget.service as NexoraMultiMusicService).genre(tag);
+      }
+      if (widget.service is JamendoMusicService) {
+        return (widget.service as JamendoMusicService).genre(tag);
+      }
+      return widget.service.searchTracks(tag);
+    }, tag);
   }
 
   Future<void> _load(Future<List<MusicTrack>> Function() action, String active) async {
