@@ -198,6 +198,78 @@ class _Item extends StatelessWidget {
   );
 }
 
+class _H extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _H(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF151827),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              color: Colors.white54,
+            ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Score extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _Score(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        color: const Color(0xFF171B2A),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                color: Colors.white60,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class HomePage extends StatelessWidget {
   final int coins; final ValueChanged<int> openTab; final ValueChanged<String> openPage;
   const HomePage({required this.coins,required this.openTab,required this.openPage,super.key});
@@ -249,7 +321,7 @@ class HomePage extends StatelessWidget {
         const Text('Kejar skor tertinggi dalam waktu terbatas.'),
         const Spacer(),
         FilledButton.icon(
-          onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const TapRushPage())),
+          onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const ArcadeGamePage(ArcadeGame('Tap Rush', 'tap')))),
           icon:const Icon(Icons.play_arrow_rounded),label:const Text('Play'),
         ),
       ]),
