@@ -593,52 +593,353 @@ class _MusicCard extends StatelessWidget{
   @override Widget build(BuildContext context)=>Container(width:170,margin:const EdgeInsets.only(right:10),padding:const EdgeInsets.all(14),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),color:const Color(0xFF111522)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[CircleAvatar(child:Icon(icon)),const Spacer(),Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),Text(sub,style:const TextStyle(fontSize:11))]));
 }
 
-class ReactionRushPage extends StatefulWidget{const ReactionRushPage({super.key});@override State<ReactionRushPage> createState()=>_ReactionState();}
-class _ReactionState extends State<ReactionRushPage>{
-  final rng=Random();Timer? timer;bool waiting=false,ready=false;int score=0;String text='Tekan START';
-  void start(){timer?.cancel();setState((){waiting=true;ready=false;text='Tunggu...';});timer=Timer(Duration(milliseconds:700+rng.nextInt(1800)),(){if(mounted)setState((){waiting=false;ready=true;text='TAP!';});});}
-  void tap(){if(waiting){timer?.cancel();setState(()=>text='Terlalu cepat!');}else if(ready){setState((){score++;ready=false;text='Bagus!';});}}
-  @override void dispose(){timer?.cancel();super.dispose();}
-  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Reaction Rush')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
-    Row(children:[Expanded(child:_Score('Score','$score')),const SizedBox(width:10),Expanded(child:_Score('Mode','Reflex'))]),const SizedBox(height:18),
-    Expanded(child:Center(child:GestureDetector(onTap:tap,child:AnimatedContainer(duration:const Duration(milliseconds:180),width:230,height:230,decoration:BoxDecoration(shape:BoxShape.circle,color:ready?Colors.green:Theme.of(context).colorScheme.primary),child:Center(child:Text(text,style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900))))))),
-    SizedBox(width:double.infinity,child:FilledButton(onPressed:start,child:const Text('START'))),
-  ]));
+class ReactionRushPage extends StatefulWidget {
+  const ReactionRushPage({super.key});
+  @override
+  State<ReactionRushPage> createState() => _ReactionState();
 }
 
-class ColorClashPage extends StatefulWidget{const ColorClashPage({super.key});@override State<ColorClashPage> createState()=>_ColorClashState();}
-class _ColorClashState extends State<ColorClashPage>{
-  final rng=Random();int score=0;int target=0;final colors=[Colors.red,Colors.blue,Colors.green,Colors.orange];
-  void next(){setState(()=>target=rng.nextInt(colors.length));}
-  @override void initState(){super.initState();next();}
-  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Color Clash')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
-    _Score('Score','$score'),const SizedBox(height:22),Text('Pilih warna target',style:Theme.of(context).textTheme.titleLarge),const SizedBox(height:12),
-    Container(width:130,height:130,decoration:BoxDecoration(shape:BoxShape.circle,color:colors[target])),const SizedBox(height:28),
-    Expanded(child:GridView.count(crossAxisCount:2,crossAxisSpacing:12,mainAxisSpacing:12,children:[for(int i=0;i<colors.length)FilledButton(onPressed:(){if(i==target){score++;} next();},style:FilledButton.styleFrom(backgroundColor:colors[i]),child:const SizedBox())]))),
-  ]));
+class _ReactionState extends State<ReactionRushPage> {
+  final rng = Random();
+  Timer? timer;
+  bool waiting = false;
+  bool ready = false;
+  int score = 0;
+  String text = 'Tekan START';
+
+  void start() {
+    timer?.cancel();
+    setState(() {
+      waiting = true;
+      ready = false;
+      text = 'Tunggu...';
+    });
+    timer = Timer(
+      Duration(milliseconds: 700 + rng.nextInt(1800)),
+      () {
+        if (!mounted) return;
+        setState(() {
+          waiting = false;
+          ready = true;
+          text = 'TAP!';
+        });
+      },
+    );
+  }
+
+  void tap() {
+    if (waiting) {
+      timer?.cancel();
+      setState(() {
+        waiting = false;
+        ready = false;
+        text = 'Terlalu cepat!';
+      });
+    } else if (ready) {
+      setState(() {
+        score++;
+        ready = false;
+        text = 'Bagus!';
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Reaction Rush')),
+      body: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(child: _Score('Score', '$score')),
+                const SizedBox(width: 10),
+                const Expanded(child: _Score('Mode', 'Reflex')),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Expanded(
+              child: Center(
+                child: GestureDetector(
+                  onTap: tap,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 230,
+                    height: 230,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: ready
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.primary,
+                    ),
+                    child: Center(
+                      child: Text(
+                        text,
+                        style: const TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: start,
+                child: const Text('START'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class NumberSprintPage extends StatefulWidget{const NumberSprintPage({super.key});@override State<NumberSprintPage> createState()=>_NumberSprintState();}
-class _NumberSprintState extends State<NumberSprintPage>{
-  final rng=Random();int a=2,b=3,answer=5,score=0;void next(){a=1+rng.nextInt(9);b=1+rng.nextInt(9);answer=a+b;}
-  @override void initState(){super.initState();next();}
-  @override Widget build(BuildContext context){final opts=[answer,answer+1,answer-1,answer+2]..shuffle(rng);return Scaffold(appBar:AppBar(title:const Text('Number Sprint')),body:Padding(padding:const EdgeInsets.all(18),child:Column(children:[
-    _Score('Score','$score'),const SizedBox(height:30),Text('$a + $b = ?',style:const TextStyle(fontSize:42,fontWeight:FontWeight.w900)),const SizedBox(height:25),
-    for(final o in opts)Padding(padding:const EdgeInsets.only(bottom:10),child:SizedBox(width:double.infinity,child:FilledButton(onPressed:(){if(o==answer){score++;} setState(next);},child:Text('$o',style:const TextStyle(fontSize:20))))),
-  ]));}
+class ColorClashPage extends StatefulWidget {
+  const ColorClashPage({super.key});
+  @override
+  State<ColorClashPage> createState() => _ColorClashState();
 }
 
-class DodgeZonePage extends StatefulWidget{const DodgeZonePage({super.key});@override State<DodgeZonePage> createState()=>_DodgeState();}
-class _DodgeState extends State<DodgeZonePage>{
-  double x=.5;int score=0;Timer? timer;
-  @override void initState(){super.initState();timer=Timer.periodic(const Duration(milliseconds:700),(_){if(mounted)setState(()=>score++);});}
-  @override void dispose(){timer?.cancel();super.dispose();}
-  @override Widget build(BuildContext context)=>Scaffold(appBar:AppBar(title:const Text('Dodge Zone')),body:Column(children:[
-    _Score('Survival','$score'),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d)=>setState(()=>x=(x+d.delta.dx/300).clamp(.08,.92)),child:Container(margin:const EdgeInsets.all(16),decoration:BoxDecoration(borderRadius:BorderRadius.circular(24),color:const Color(0xFF111522)),child:Stack(children:[
-      Positioned(bottom:20,left:MediaQuery.of(context).size.width*x-38,child:const CircleAvatar(radius:28,child:Icon(Icons.shield_rounded))),
-      const Center(child:Text('Geser kiri/kanan untuk bertahan',textAlign:TextAlign.center)),
-    ]))),
-  ]));
+class _ColorClashState extends State<ColorClashPage> {
+  final rng = Random();
+  int score = 0;
+  int target = 0;
+  final colors = <Color>[
+    Colors.red,
+    Colors.blue,
+    Colors.green,
+    Colors.orange,
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    target = rng.nextInt(colors.length);
+  }
+
+  void next() {
+    setState(() {
+      target = rng.nextInt(colors.length);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Color Clash')),
+      body: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            _Score('Score', '$score'),
+            const SizedBox(height: 22),
+            Text(
+              'Pilih warna target',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: colors[target],
+              ),
+            ),
+            const SizedBox(height: 28),
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                children: [
+                  for (int i = 0; i < colors.length)
+                    FilledButton(
+                      onPressed: () {
+                        if (i == target) {
+                          setState(() => score++);
+                        }
+                        next();
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colors[i],
+                      ),
+                      child: const SizedBox(),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class NumberSprintPage extends StatefulWidget {
+  const NumberSprintPage({super.key});
+  @override
+  State<NumberSprintPage> createState() => _NumberSprintState();
+}
+
+class _NumberSprintState extends State<NumberSprintPage> {
+  final rng = Random();
+  int a = 2;
+  int b = 3;
+  int answer = 5;
+  int score = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _nextQuestion();
+  }
+
+  void _nextQuestion() {
+    a = 1 + rng.nextInt(9);
+    b = 1 + rng.nextInt(9);
+    answer = a + b;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final opts = [answer, answer + 1, answer - 1, answer + 2]..shuffle(rng);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Number Sprint')),
+      body: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          children: [
+            _Score('Score', '$score'),
+            const SizedBox(height: 30),
+            Text(
+              '$a + $b = ?',
+              style: const TextStyle(
+                fontSize: 42,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 25),
+            for (final o in opts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      if (o == answer) {
+                        score++;
+                      }
+                      setState(_nextQuestion);
+                    },
+                    child: Text(
+                      '$o',
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class DodgeZonePage extends StatefulWidget {
+  const DodgeZonePage({super.key});
+  @override
+  State<DodgeZonePage> createState() => _DodgeState();
+}
+
+class _DodgeState extends State<DodgeZonePage> {
+  double x = .5;
+  int score = 0;
+  Timer? timer;
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer.periodic(
+      const Duration(milliseconds: 700),
+      (_) {
+        if (mounted) {
+          setState(() => score++);
+        }
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Dodge Zone')),
+      body: Column(
+        children: [
+          _Score('Survival', '$score'),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final playerLeft = (constraints.maxWidth - 56) * x;
+                return GestureDetector(
+                  onHorizontalDragUpdate: (d) {
+                    setState(() {
+                      x = (x + d.delta.dx / constraints.maxWidth)
+                          .clamp(.08, .92);
+                    });
+                  },
+                  child: Container(
+                    margin: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(24),
+                      color: const Color(0xFF111522),
+                    ),
+                    child: Stack(
+                      children: [
+                        Positioned(
+                          bottom: 20,
+                          left: playerLeft,
+                          child: const CircleAvatar(
+                            radius: 28,
+                            child: Icon(Icons.shield_rounded),
+                          ),
+                        ),
+                        const Center(
+                          child: Text(
+                            'Geser kiri/kanan untuk bertahan',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class SocialPage extends StatefulWidget {
