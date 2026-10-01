@@ -147,7 +147,14 @@ class JamendoMusicService implements MusicService {
     return _tracks(await _get('tracks', fallback));
   }
 
-  Future<List<MusicTrack>> trending() => _query();
+  Future<List<MusicTrack>> trending() async {
+    final data = await _get('charts/track', {
+      'limit': '100',
+      'audioformat': 'mp32',
+    });
+    return _tracks(data);
+  }
+
   Future<List<MusicTrack>> genre(String tag) => _query(tag: tag);
 
   @override
