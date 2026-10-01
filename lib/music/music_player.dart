@@ -2,11 +2,23 @@ import 'package:audioplayers/audioplayers.dart';
 import 'music_models.dart';
 
 class NexoraMusicPlayer {
-  NexoraMusicPlayer._();
+  NexoraMusicPlayer._() {
+    _completionSub = _audio.onPlayerComplete.listen((_) {
+      if (repeat) {
+        final track = currentTrack;
+        if (track != null) {
+          play(track);
+        }
+      } else {
+        next();
+      }
+    });
+  }
 
   static final NexoraMusicPlayer instance = NexoraMusicPlayer._();
 
   final AudioPlayer _audio = AudioPlayer();
+  StreamSubscription<void>? _completionSub;
 
   MusicTrack? currentTrack;
   List<MusicTrack> queue = [];
@@ -20,32 +32,39 @@ class NexoraMusicPlayer {
 
   Future<void> play(MusicTrack track) async {
     currentTrack = track;
+    final index = queue.indexWhere((item) => item.id == track.id);
+    if (index >= 0) queueIndex = index;
+    if (track.audioUrl.isEmpty) {
+      throw Exception('Track tidak memiliki URL audio.');
+    }
     await _audio.play(UrlSource(track.audioUrl));
   }
 
   Future<void> pause() => _audio.pause();
-
   Future<void> resume() => _audio.resume();
-
   Future<void> seek(Duration position) => _audio.seek(position);
-
   Future<void> stop() => _audio.stop();
-
   Future<void> setVolume(double value) => _audio.setVolume(value.clamp(0.0, 1.0));
 
   Future<void> next() async {
     if (queue.isEmpty) return;
-
-    if (shuffle) {
-      queueIndex = (queueIndex + 1) % queue.length;
+    if (shuffle && queue.length > 1) {
+      final current = queueIndex;
+      var nextIndex = current;
+      while (nextIndex == current) {
+        nextIndex = DateTime.now().microsecondsSinceEpoch % queue.length;
+      }
+      queueIndex = nextIndex;
     } else {
       queueIndex++;
       if (queueIndex >= queue.length) {
-        if (!repeat) return;
+        if (!repeat) {
+          queueIndex = queue.length - 1;
+          return;
+        }
         queueIndex = 0;
       }
     }
-
     await play(queue[queueIndex]);
   }
 
@@ -61,12 +80,15 @@ class NexoraMusicPlayer {
     if (queue.isEmpty) {
       queueIndex = -1;
       currentTrack = null;
+      await stop();
       return;
     }
-
     queueIndex = startIndex.clamp(0, queue.length - 1);
     await play(queue[queueIndex]);
   }
 
-  Future<void> dispose() => _audio.dispose();
+  Future<void> dispose() async {
+    await _completionSub?.cancel();
+    await _audio.dispose();
+  }
 }
