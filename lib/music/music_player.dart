@@ -27,19 +27,27 @@ class NexoraMusicPlayer {
   int queueIndex = -1;
   bool shuffle = false;
   bool repeat = false;
+  bool _disposed = false;
 
   Stream<Duration> get positionStream => _audio.onPositionChanged;
   Stream<Duration> get durationStream => _audio.onDurationChanged;
   Stream<PlayerState> get playerStateStream => _audio.onPlayerStateChanged;
 
   Future<void> play(MusicTrack track) async {
+    if (_disposed) throw StateError('Music player sudah ditutup.');
     currentTrack = track;
     final index = queue.indexWhere((item) => item.id == track.id);
     if (index >= 0) queueIndex = index;
     if (track.audioUrl.isEmpty) {
       throw Exception('Track tidak memiliki URL audio.');
     }
-    await _audio.play(UrlSource(track.audioUrl));
+    try {
+      await _audio.stop();
+      await _audio.play(UrlSource(track.audioUrl), volume: 1.0);
+    } catch (e) {
+      currentTrack = null;
+      throw Exception('Audio gagal diputar: $e');
+    }
   }
 
   Future<void> pause() => _audio.pause();
@@ -78,7 +86,8 @@ class NexoraMusicPlayer {
   }
 
   Future<void> setQueue(List<MusicTrack> tracks, {int startIndex = 0}) async {
-    queue = List<MusicTrack>.from(tracks);
+    if (_disposed) throw StateError('Music player sudah ditutup.');
+    queue = List<MusicTrack>.from(tracks.where((t) => t.audioUrl.trim().isNotEmpty));
     if (queue.isEmpty) {
       queueIndex = -1;
       currentTrack = null;
@@ -90,6 +99,8 @@ class NexoraMusicPlayer {
   }
 
   Future<void> dispose() async {
+    if (_disposed) return;
+    _disposed = true;
     await _completionSub?.cancel();
     await _audio.dispose();
   }
