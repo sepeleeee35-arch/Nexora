@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'music/music_page.dart';
+import 'games/game_hub.dart';
 import 'music/music_service.dart';
 
 void main() => runApp(const NexoraApp());
@@ -76,7 +77,7 @@ class _NexoraShellState extends State<NexoraShell> {
       body = const AboutPage();
     } else {
       body = switch (tab) {
-        1 => const GamesPage(),
+        1 => const NexoraGameHub(),
         2 => const MusicPage(),
         3 => const ToolsPage(),
         4 => MarketPage(coins: coins, cart: cart, buy: null),
