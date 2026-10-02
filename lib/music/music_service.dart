@@ -91,18 +91,50 @@ class JamendoMusicService implements MusicService {
   }
 
   Future<Map<String, dynamic>> _get(String path, Map<String, String> params) async {
-    if (clientId.isEmpty) throw Exception('Jamendo client ID belum dikonfigurasi.');
-    final response = await client.get(_uri(path, params));
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Jamendo HTTP ${response.statusCode}');
+    if (clientId.isEmpty) {
+      throw Exception('Jamendo client ID belum dikonfigurasi.');
     }
-    final decoded = jsonDecode(response.body);
-    if (decoded is! Map<String, dynamic>) throw Exception('Respons Jamendo tidak valid.');
-    final headers = decoded['headers'];
-    if (headers is Map && headers['status'] == 'error') {
-      throw Exception(_s(headers['error_message']) == '' ? 'Jamendo API error' : _s(headers['error_message']));
+
+    Future<Map<String, dynamic>> request(Uri uri) async {
+      final response = await client.get(uri);
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        throw Exception('Jamendo HTTP ${response.statusCode}');
+      }
+
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic>) {
+        throw Exception('Respons Jamendo tidak valid.');
+      }
+
+      final headers = decoded['headers'];
+      if (headers is Map && headers['status'] == 'error') {
+        final message = _s(headers['error_message']);
+        throw Exception(message.isEmpty ? 'Jamendo API error' : message);
+      }
+
+      return decoded;
     }
-    return decoded;
+
+    if (kIsWeb) {
+      try {
+        // Prefer the Nexora proxy so the web app keeps working without
+        // exposing a browser-side dependency on Jamendo's CORS behavior.
+        return await request(_uri(path, params));
+      } catch (_) {
+        // If the deployed proxy is temporarily unavailable, fall back to
+        // Jamendo's documented public read API. This keeps the catalog
+        // usable while the proxy recovers.
+        return await request(Uri.parse('$_base/$path').replace(
+          queryParameters: <String, String>{
+            'client_id': clientId,
+            'format': 'json',
+            ...params,
+          },
+        ));
+      }
+    }
+
+    return request(_uri(path, params));
   }
 
   String _s(dynamic v) => v == null ? '' : v.toString();
