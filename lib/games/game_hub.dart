@@ -1,3 +1,4 @@
+// ignore_for_file: prefer_interpolation_to_compose_strings, curly_braces_in_flow_control_structures, no_leading_underscores_for_local_identifiers
 
 import 'dart:async';
 import 'dart:math';
