@@ -5,6 +5,9 @@ import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+String? nexoraActiveAccountId;
 
 const _hubPurple = Color(0xFF8B5CF6);
 
@@ -29,7 +32,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
     _GameInfo('Neon Jump', 'ARCADE', Icons.bolt_rounded, Color(0xFFA855F7), 'Jump, dodge and chase a high score.'),
     _GameInfo('Minesweeper', 'PUZZLE', Icons.warning_amber_rounded, Color(0xFFF97316), 'Open safe cells.'),
     _GameInfo('Simon Says', 'PUZZLE', Icons.psychology_rounded, Color(0xFF14B8A6), 'Remember the color sequence.'),
-    _GameInfo('Color Stack', 'PUZZLE', Icons.view_agenda_rounded, Color(0xFF10B981), 'Susun kapsul warna tanpa memakai baut.'),
+    _GameInfo('Color Stack', 'PUZZLE', Icons.water_drop_rounded, Color(0xFF7C3AED), 'Sortir cairan warna dalam botol.'),
   ];
 
   Widget _gamePage(String name) {
@@ -748,15 +751,14 @@ class _ColorStackGame extends StatefulWidget {
 
 class _ColorStackGameState extends State<_ColorStackGame> {
   static const _modes = <String>['Easy', 'Normal', 'Hard', 'Pro', 'Impossible'];
-  static final Map<String, int> _savedLevels = <String, int>{
-    'Easy': 1,
-    'Normal': 1,
-    'Hard': 1,
-    'Pro': 1,
-    'Impossible': 1,
-  };
+  static const _capacity = 4;
+  static final _prefs = SharedPreferencesAsync();
 
   final Random _rng = Random();
+  final Map<String, int> _savedLevels = <String, int>{
+    'Easy': 1, 'Normal': 1, 'Hard': 1, 'Pro': 1, 'Impossible': 1,
+  };
+
   String _mode = 'Easy';
   int _level = 1;
   List<List<int>> _tubes = <List<int>>[];
@@ -765,125 +767,162 @@ class _ColorStackGameState extends State<_ColorStackGame> {
   int _moves = 0;
   List<List<List<int>>> _history = <List<List<int>>>[];
   bool _won = false;
+  bool _loadingProgress = true;
 
   static const List<Color> _colorsPaint = <Color>[
-    Color(0xFFFF6B35),
-    Color(0xFF22C55E),
-    Color(0xFF06B6D4),
-    Color(0xFFEC4899),
-    Color(0xFFFACC15),
-    Color(0xFF3B82F6),
-    Color(0xFFA855F7),
-    Color(0xFFEF4444),
-    Color(0xFF14B8A6),
-    Color(0xFFF97316),
-    Color(0xFF84CC16),
-    Color(0xFF8B5CF6),
+    Color(0xFFFF6B35), Color(0xFF22C55E), Color(0xFF06B6D4),
+    Color(0xFFEC4899), Color(0xFFFACC15), Color(0xFF3B82F6),
+    Color(0xFFA855F7), Color(0xFFEF4444), Color(0xFF14B8A6),
+    Color(0xFFF97316), Color(0xFF84CC16), Color(0xFF8B5CF6),
   ];
 
   int _modeBaseColors(String mode) {
     switch (mode) {
-      case 'Normal':
-        return 4;
-      case 'Hard':
-        return 5;
-      case 'Pro':
-        return 6;
-      case 'Impossible':
-        return 7;
-      default:
-        return 3;
-    }
-  }
-
-  int _emptyTubesFor(String mode) {
-    switch (mode) {
-      case 'Easy':
-        return 2;
-      case 'Normal':
-        return 2;
-      case 'Hard':
-        return 2;
-      case 'Pro':
-        return 2;
-      default:
-        return 2;
+      case 'Normal': return 4;
+      case 'Hard': return 5;
+      case 'Pro': return 6;
+      case 'Impossible': return 7;
+      default: return 3;
     }
   }
 
   int _levelColorCount() {
     final base = _modeBaseColors(_mode);
-    // Level 2 visibly adds another color/object group, then grows gradually.
-    final growth = (_level + 1) ~/ 2;
-    return min(_colorsPaint.length, base + growth - 1);
+    final growth = (_level - 1) ~/ 3;
+    return min(_colorsPaint.length, base + growth);
   }
 
   int _scrambleCount() {
     final modeIndex = _modes.indexOf(_mode);
-    final base = 18 + modeIndex * 10;
-    return base + (_level - 1) * (4 + modeIndex);
+    return 18 + modeIndex * 7 + (_level - 1) * (5 + modeIndex * 2);
   }
 
-  void _startLevel() {
-    _colors = _levelColorCount();
-    final capacity = 4;
-    final total = _colors * capacity;
-    final pool = <int>[];
-    for (int color = 0; color < _colors; color++) {
-      for (int i = 0; i < capacity; i++) {
-        pool.add(color);
-      }
-    }
+  int _emptyTubesFor(String mode) => 2;
 
+  String _progressKey(String mode) {
+    final account = nexoraActiveAccountId;
+    if (account == null || account.isEmpty) return '';
+    final safe = account.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
+    return 'nexora_color_stack_\${safe}_$mode';
+  }
+
+  Future<void> _loadProgress() async {
+    final account = nexoraActiveAccountId;
+    if (account == null || account.isEmpty) return;
+    for (final mode in _modes) {
+      final value = await _prefs.getInt(_progressKey(mode));
+      if (value != null && value > 0) _savedLevels[mode] = value;
+    }
+  }
+
+  Future<void> _saveModeProgress(String mode) async {
+    final key = _progressKey(mode);
+    if (key.isEmpty) return;
+    await _prefs.setInt(key, _savedLevels[mode] ?? 1);
+  }
+
+  List<List<int>> _copyTubes(List<List<int>> source) =>
+      source.map((tube) => List<int>.from(tube)).toList();
+
+  List<List<int>> _newSolvedBoard() {
     final tubes = <List<int>>[];
-    for (int i = 0; i < _colors; i++) {
-      tubes.add(<int>[for (int j = 0; j < capacity; j++) pool[i * capacity + j]]);
+    for (int color = 0; color < _colors; color++) {
+      tubes.add(<int>[for (int i = 0; i < _capacity; i++) color]);
     }
-    final empties = _emptyTubesFor(_mode);
-    for (int i = 0; i < empties; i++) {
-      tubes.add(<int>[]);
-    }
+    for (int i = 0; i < _emptyTubesFor(_mode); i++) tubes.add(<int>[]);
+    return tubes;
+  }
 
-    // Scramble from a solved state using only legal pours. This keeps the
-    // puzzle reversible while making later levels increasingly mixed.
-    for (int i = 0; i < _scrambleCount(); i++) {
+  List<List<int>> _scrambleCandidate() {
+    final tubes = _newSolvedBoard();
+    int? lastFrom;
+    int? lastTo;
+
+    for (int step = 0; step < _scrambleCount(); step++) {
       final legal = <List<int>>[];
       for (int from = 0; from < tubes.length; from++) {
         if (tubes[from].isEmpty) continue;
+        if (tubes[from].length == _capacity &&
+            tubes[from].every((v) => v == tubes[from].first)) continue;
+
         final color = tubes[from].last;
-        int count = 1;
-        for (int k = tubes[from].length - 2; k >= 0 && tubes[from][k] == color; k--) {
-          count++;
-        }
         for (int to = 0; to < tubes.length; to++) {
-          if (to == from || tubes[to].length >= capacity) continue;
+          if (from == to || tubes[to].length >= _capacity) continue;
+          if (lastFrom == to && lastTo == from) continue;
           if (tubes[to].isEmpty || tubes[to].last == color) {
-            legal.add(<int>[from, to, count]);
+            legal.add(<int>[from, to]);
           }
         }
       }
       if (legal.isEmpty) break;
+
       final move = legal[_rng.nextInt(legal.length)];
       final from = move[0];
       final to = move[1];
-      final maxMove = min(move[2], capacity - tubes[to].length);
-      for (int j = 0; j < maxMove; j++) {
+      final color = tubes[from].last;
+      int block = 1;
+      for (int i = tubes[from].length - 2;
+          i >= 0 && tubes[from][i] == color;
+          i--) {
+        block++;
+      }
+      final amount = min(block, _capacity - tubes[to].length);
+      for (int i = 0; i < amount; i++) {
         tubes[to].add(tubes[from].removeLast());
       }
+      lastFrom = from;
+      lastTo = to;
     }
+    return tubes;
+  }
 
-    // Avoid a boring solved opening if the random scramble happened to cancel out.
-    if (_isSolved(tubes)) {
-      final a = tubes.length - 1;
-      final b = tubes.length - 2;
-      if (tubes[a].isEmpty && tubes[b].isEmpty && tubes[0].isNotEmpty) {
-        tubes[b].add(tubes[0].removeLast());
-        tubes[a].add(tubes[0].removeLast());
+  int _layoutScore(List<List<int>> tubes) {
+    int mixed = 0;
+    int transitions = 0;
+    int uniqueTop = 0;
+    for (final tube in tubes) {
+      if (tube.isEmpty) continue;
+      final unique = tube.toSet().length;
+      if (unique > 1) mixed++;
+      uniqueTop += unique;
+      for (int i = 1; i < tube.length; i++) {
+        if (tube[i] != tube[i - 1]) transitions++;
+      }
+    }
+    return mixed * 100 + transitions * 12 + uniqueTop;
+  }
+
+  bool _goodOpening(List<List<int>> tubes) {
+    int mixed = 0;
+    final seenByColor = List<int>.filled(_colors, 0);
+    for (final tube in tubes) {
+      if (tube.toSet().length > 1) mixed++;
+      for (final color in tube.toSet()) seenByColor[color]++;
+    }
+    return mixed >= max(2, _colors ~/ 2) &&
+        seenByColor.every((count) => count >= 2);
+  }
+
+  void _startLevel() {
+    _colors = _levelColorCount();
+    List<List<int>>? best;
+    var bestScore = -1;
+
+    for (int attempt = 0; attempt < 90; attempt++) {
+      final candidate = _scrambleCandidate();
+      final score = _layoutScore(candidate);
+      if (score > bestScore) {
+        bestScore = score;
+        best = _copyTubes(candidate);
+      }
+      if (_goodOpening(candidate)) {
+        best = candidate;
+        break;
       }
     }
 
     setState(() {
-      _tubes = tubes;
+      _tubes = best ?? _scrambleCandidate();
       _selected = null;
       _moves = 0;
       _history = <List<List<int>>>[];
@@ -894,32 +933,27 @@ class _ColorStackGameState extends State<_ColorStackGame> {
   bool _isSolved(List<List<int>> tubes) {
     for (final tube in tubes) {
       if (tube.isEmpty) continue;
-      if (tube.length != 4) return false;
+      if (tube.length != _capacity) return false;
       if (tube.any((v) => v != tube.first)) return false;
     }
     return true;
   }
 
   void _selectTube(int index) {
-    if (_won || _tubes[index].isEmpty && _selected == null) return;
-
+    if (_won) return;
     if (_selected == null) {
-      if (_tubes[index].isNotEmpty) {
-        setState(() => _selected = index);
-      }
+      if (_tubes[index].isNotEmpty) setState(() => _selected = index);
       return;
     }
-
     if (_selected == index) {
       setState(() => _selected = null);
       return;
     }
-
     _pour(_selected!, index);
   }
 
   void _pour(int from, int to) {
-    if (from == to || _tubes[from].isEmpty || _tubes[to].length >= 4) {
+    if (from == to || _tubes[from].isEmpty || _tubes[to].length >= _capacity) {
       setState(() => _selected = null);
       return;
     }
@@ -927,34 +961,26 @@ class _ColorStackGameState extends State<_ColorStackGame> {
     final source = _tubes[from];
     final target = _tubes[to];
     final color = source.last;
-
     if (target.isNotEmpty && target.last != color) {
       setState(() => _selected = null);
       return;
     }
 
     int count = 1;
-    for (int i = source.length - 2; i >= 0 && source[i] == color; i--) {
-      count++;
-    }
-    count = min(count, 4 - target.length);
+    for (int i = source.length - 2; i >= 0 && source[i] == color; i--) count++;
+    count = min(count, _capacity - target.length);
 
     _history.add(_copyTubes(_tubes));
-    for (int i = 0; i < count; i++) {
-      target.add(source.removeLast());
-    }
+    for (int i = 0; i < count; i++) target.add(source.removeLast());
     _moves++;
     _selected = null;
     _won = _isSolved(_tubes);
 
     if (_won) {
-      _savedLevels[_mode] = _level + 1;
+      _savedLevels[_mode] = max(_savedLevels[_mode] ?? 1, _level + 1);
+      unawaited(_saveModeProgress(_mode));
     }
     setState(() {});
-  }
-
-  List<List<int>> _copyTubes(List<List<int>> source) {
-    return source.map((tube) => List<int>.from(tube)).toList();
   }
 
   void _undo() {
@@ -970,6 +996,7 @@ class _ColorStackGameState extends State<_ColorStackGame> {
   void _nextLevel() {
     _level++;
     _savedLevels[_mode] = _level;
+    unawaited(_saveModeProgress(_mode));
     _startLevel();
   }
 
@@ -988,30 +1015,34 @@ class _ColorStackGameState extends State<_ColorStackGame> {
     _startLevel();
   }
 
+  Future<void> _bootstrap() async {
+    await _loadProgress();
+    if (!mounted) return;
+    _level = _savedLevels[_mode] ?? 1;
+    _loadingProgress = false;
+    _startLevel();
+  }
+
   @override
   void initState() {
     super.initState();
-    _level = _savedLevels[_mode] ?? 1;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _startLevel();
-    });
+    unawaited(_bootstrap());
   }
 
   @override
   Widget build(BuildContext context) {
-    final tubeCount = _tubes.length;
-    final columns = tubeCount <= 7 ? tubeCount : 7;
-    final rows = tubeCount <= 7 ? 1 : 2;
+    if (_loadingProgress) {
+      return const Scaffold(
+        appBar: AppBar(title: Text('Color Stack', style: TextStyle(fontWeight: FontWeight.w900))),
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Color Stack', style: TextStyle(fontWeight: FontWeight.w900)),
         actions: [
-          IconButton(
-            tooltip: 'Restart level',
-            onPressed: _restart,
-            icon: const Icon(Icons.refresh_rounded),
-          ),
+          IconButton(onPressed: _restart, tooltip: 'Restart level', icon: const Icon(Icons.refresh_rounded)),
         ],
       ),
       body: SafeArea(
@@ -1026,11 +1057,11 @@ class _ColorStackGameState extends State<_ColorStackGame> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(_mode.toUpperCase(), style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w900, letterSpacing: 1.4)),
-                        Text('Level ' + _level.toString(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                        Text('Level $_level', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
                       ],
                     ),
                   ),
-                  _GameBadge('MOVES ' + _moves.toString()),
+                  _GameBadge('MOVES $_moves'),
                 ],
               ),
             ),
@@ -1051,31 +1082,36 @@ class _ColorStackGameState extends State<_ColorStackGame> {
                 },
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(12, 2, 12, 4),
               child: Text(
-                'Pilih kapsul lalu pilih tabung tujuan. Hanya warna yang sama atau tabung kosong yang boleh menerima.',
+                'Pilih botol sumber lalu botol tujuan. Cairan hanya bisa ke warna yang sama atau botol kosong.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 11, color: Colors.white54, height: 1.3),
+                style: TextStyle(fontSize: 11, color: Colors.white54, height: 1.3),
               ),
             ),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
-                child: Wrap(
-                  alignment: WrapAlignment.center,
-                  runSpacing: 18,
-                  spacing: 8,
-                  children: [
-                    for (int i = 0; i < tubeCount; i++)
-                      _ColorStackTube(
-                        tube: _tubes[i],
-                        selected: _selected == i,
-                        width: tubeCount <= 7 ? 48 : 42,
-                        onTap: () => _selectTube(i),
-                      ),
-                  ],
-                ),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final width = constraints.maxWidth < 520 ? 54.0 : 62.0;
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(8, 10, 8, 12),
+                    child: Wrap(
+                      alignment: WrapAlignment.center,
+                      runSpacing: 18,
+                      spacing: constraints.maxWidth < 520 ? 8 : 12,
+                      children: [
+                        for (int i = 0; i < _tubes.length; i++)
+                          _ColorStackTube(
+                            tube: _tubes[i],
+                            selected: _selected == i,
+                            width: width,
+                            onTap: () => _selectTube(i),
+                          ),
+                      ],
+                    ),
+                  );
+                },
               ),
             ),
             Padding(
@@ -1086,19 +1122,23 @@ class _ColorStackGameState extends State<_ColorStackGame> {
                     child: OutlinedButton.icon(
                       onPressed: _history.isEmpty || _won ? null : _undo,
                       icon: const Icon(Icons.undo_rounded, size: 18),
-                      label: const Text('Batal'),
+                      label: const Text('UNDO'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: OutlinedButton.icon(
-                      onPressed: _won ? null : () {
-                        final empty = _tubes.indexWhere((t) => t.isEmpty);
-                        if (empty < 0 || _selected == null) return;
-                        _pour(_selected!, empty);
+                      onPressed: _won || _selected == null ? null : () {
+                        final source = _tubes[_selected!];
+                        final choices = <int>[];
+                        for (int i = 0; i < _tubes.length; i++) {
+                          if (i == _selected || _tubes[i].length >= _capacity) continue;
+                          if (_tubes[i].isEmpty || _tubes[i].last == source.last) choices.add(i);
+                        }
+                        if (choices.isNotEmpty) _pour(_selected!, choices[_rng.nextInt(choices.length)]);
                       },
                       icon: const Icon(Icons.lightbulb_outline_rounded, size: 18),
-                      label: const Text('Petunjuk'),
+                      label: const Text('HINT'),
                     ),
                   ),
                 ],
@@ -1118,16 +1158,11 @@ class _ColorStackGameState extends State<_ColorStackGame> {
                     children: [
                       const Icon(Icons.check_circle_rounded, color: Colors.greenAccent),
                       const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Level ' + _level.toString() + ' selesai. Level berikutnya akan lebih sulit.',
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                      FilledButton(
-                        onPressed: _nextLevel,
-                        child: const Text('NEXT'),
-                      ),
+                      Expanded(child: Text(
+                        'Level $_level selesai. Progress $_mode tersimpan di akun Google.',
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      )),
+                      FilledButton(onPressed: _nextLevel, child: const Text('NEXT')),
                     ],
                   ),
                 ),
@@ -1145,33 +1180,26 @@ class _ColorStackTube extends StatelessWidget {
   final double width;
   final VoidCallback onTap;
 
-  const _ColorStackTube({
-    required this.tube,
-    required this.selected,
-    required this.width,
-    required this.onTap,
-  });
+  const _ColorStackTube({required this.tube, required this.selected, required this.width, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
+        duration: const Duration(milliseconds: 150),
         width: width,
-        height: 172,
-        padding: const EdgeInsets.fromLTRB(6, 10, 6, 6),
+        height: 194,
+        padding: const EdgeInsets.fromLTRB(6, 10, 6, 7),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .035),
-          borderRadius: BorderRadius.circular(22),
+          color: Colors.white.withValues(alpha: .025),
+          borderRadius: BorderRadius.circular(28),
           border: Border.all(
-            color: selected ? Colors.white : Colors.white.withValues(alpha: .12),
-            width: selected ? 2.4 : 1,
+            color: selected ? const Color(0xFFD8B4FE) : Colors.white.withValues(alpha: .16),
+            width: selected ? 2.6 : 1.3,
           ),
           boxShadow: selected
-              ? <BoxShadow>[
-                  BoxShadow(color: Colors.white.withValues(alpha: .12), blurRadius: 16, spreadRadius: 2),
-                ]
+              ? <BoxShadow>[BoxShadow(color: const Color(0xFF8B5CF6).withValues(alpha: .22), blurRadius: 20, spreadRadius: 2)]
               : const <BoxShadow>[],
         ),
         child: Column(
@@ -1182,36 +1210,39 @@ class _ColorStackTube extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 1.5),
                 child: slot < tube.length
                     ? Container(
-                        height: 31,
+                        height: 35,
                         width: width - 12,
                         decoration: BoxDecoration(
-                          color: _ColorStackGameState._colorsPaint[tube[slot]],
-                          borderRadius: BorderRadius.circular(9),
-                          border: Border.all(color: Colors.white.withValues(alpha: .22)),
-                          boxShadow: const <BoxShadow>[
-                            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
-                          ],
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: [
+                              Color.lerp(_ColorStackGameState._colorsPaint[tube[slot]], Colors.white, .12)!,
+                              _ColorStackGameState._colorsPaint[tube[slot]],
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(11),
+                          border: Border.all(color: Colors.white.withValues(alpha: .28)),
+                          boxShadow: const <BoxShadow>[BoxShadow(color: Colors.black38, blurRadius: 5, offset: Offset(0, 2))],
                         ),
-                        child: const Center(
-                          child: Icon(Icons.circle, size: 5, color: Colors.white54),
-                        ),
+                        child: const Center(child: Icon(Icons.water_drop_rounded, size: 8, color: Colors.white54)),
                       )
                     : Container(
-                        height: 31,
+                        height: 35,
                         width: width - 12,
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: .012),
-                          borderRadius: BorderRadius.circular(9),
-                          border: Border.all(color: Colors.white.withValues(alpha: .045)),
+                          color: Colors.white.withValues(alpha: .018),
+                          borderRadius: BorderRadius.circular(11),
+                          border: Border.all(color: Colors.white.withValues(alpha: .055)),
                         ),
                       ),
               ),
             Container(
-              height: 8,
+              height: 9,
               width: width - 8,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: .18),
-                borderRadius: BorderRadius.circular(8),
+                gradient: const LinearGradient(colors: [Color(0xFFB8A4FF), Color(0xFF6D28D9)]),
+                borderRadius: BorderRadius.circular(10),
               ),
             ),
           ],
@@ -1220,7 +1251,6 @@ class _ColorStackTube extends StatelessWidget {
     );
   }
 }
-
 
 class _GameBadge extends StatelessWidget {
   final String text;
