@@ -422,6 +422,9 @@ class _TwentyFortyEightState extends State<_TwentyFortyEightGame>{
     );
   }
 
+  }
+}
+
 // 3 Tetris
 class _TetrisGame extends StatefulWidget { const _TetrisGame(); @override State<_TetrisGame> createState()=>_TetrisGameState(); }
 class _TetrisGameState extends State<_TetrisGame>{
