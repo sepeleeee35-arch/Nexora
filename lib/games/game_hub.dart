@@ -421,8 +421,6 @@ class _TwentyFortyEightState extends State<_TwentyFortyEightGame>{
       ),
     );
   }
-
-  }
 }
 
 // 3 Tetris
