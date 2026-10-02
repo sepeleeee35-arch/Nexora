@@ -641,7 +641,7 @@ class _MemoryGameState extends State<_MemoryGame>{
 class _PongGame extends StatefulWidget { const _PongGame(); @override State<_PongGame> createState()=>_PongGameState(); }
 class _PongGameState extends State<_PongGame>{
   Timer? _tm;double _player=.5,_bot=.5,_x=.5,_y=.5,_vx=.009,_vy=.008;int _score=0,_botScore=0;String _difficulty='NORMAL';bool _run=false,_over=false;
-  double get _botSpeed=>_difficulty=='EASY'?.045:_difficulty=='HARD'?.13:.085;
+  double get _botSpeed=>_difficulty=='EASY' ? .045 : _difficulty=='HARD' ? .13 : .085;
   void _start(){_tm?.cancel();setState((){_run=true;_over=false;_score=0;_botScore=0;_player=.5;_bot=.5;_x=.5;_y=.5;_vx=.009;_vy=.008;});_tm=Timer.periodic(const Duration(milliseconds:25),(_)=>_tick());}
   void _tick(){if(!mounted||!_run||_over)return;setState((){
     _x+=_vx;_y+=_vy;_bot+=(_y-_bot)*_botSpeed;
