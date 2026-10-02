@@ -803,7 +803,7 @@ class _ColorStackGameState extends State<_ColorStackGame> {
     final account = nexoraActiveAccountId;
     if (account == null || account.isEmpty) return '';
     final safe = account.replaceAll(RegExp(r'[^A-Za-z0-9_-]'), '_');
-    return 'nexora_color_stack_\${safe}_$mode';
+    return 'nexora_color_stack_${safe}_$mode';
   }
 
   Future<void> _loadProgress() async {
@@ -1032,7 +1032,7 @@ class _ColorStackGameState extends State<_ColorStackGame> {
   @override
   Widget build(BuildContext context) {
     if (_loadingProgress) {
-      return const Scaffold(
+      return Scaffold(
         appBar: AppBar(title: Text('Color Stack', style: TextStyle(fontWeight: FontWeight.w900))),
         body: Center(child: CircularProgressIndicator()),
       );
@@ -1370,7 +1370,6 @@ class _LegacyGameStart extends StatelessWidget {
   );
 }
 
-class _OriginalGameInfo { final String name,subtitle; final IconData icon; const _OriginalGameInfo(this.name,this.subtitle,this.icon); }
 class NeonJumpPage extends StatefulWidget{const NeonJumpPage({super.key});@override State<NeonJumpPage> createState()=>_NeonJumpState();}
 class _NeonJumpState extends State<NeonJumpPage>{
   Timer?timer;final audio=_GameAudio();int level=1,score=0;double x=80,y=486,vy=0,camera=0;bool started=false,dead=false,paused=false;
@@ -1695,8 +1694,8 @@ class _MazePainter extends CustomPainter{
   @override bool shouldRepaint(covariant _MazePainter old)=>true;
 }
 
-class Mini2048Page extends StatefulWidget{const Mini2048Page({super.key});@override State<Mini2048Page> createState()=>_2048State();}
-class _2048State extends State<Mini2048Page>{
+class Mini2048Page extends StatefulWidget{const Mini2048Page({super.key});@override State<Mini2048Page> createState()=>_Mini2048State();}
+class _Mini2048State extends State<Mini2048Page>{
   final rng=Random();List<int>b=List.filled(16,0);int score=0,best=0;bool started=false,over=false;
   void _add(){final e=[for(int i=0;i<16;i++)if(b[i]==0)i];if(e.isNotEmpty)b[e[rng.nextInt(e.length)]]=rng.nextDouble()<.9?2:4;}
   void startGame(){setState((){started=true;over=false;score=0;b=List.filled(16,0);_add();_add();});}
