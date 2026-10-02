@@ -349,12 +349,78 @@ class _TwentyFortyEightState extends State<_TwentyFortyEightGame>{
   bool _can(){if(_b.contains(0))return true;for(var y=0;y<4;y++)for(var x=0;x<4;x++){final v=_b[y*4+x];if(x<3&&v==_b[y*4+x+1])return true;if(y<3&&v==_b[(y+1)*4+x])return true;}return false;}
   void _move(int dr,int dc){if(!_run||_over)return;final before=_b.toString();if(dr==0){for(var y=0;y<4;y++){final a=[for(var x=0;x<4;x++)_b[y*4+x]],m=_merge(dc<0?a:a.reversed.toList()),o=dc<0?m:m.reversed.toList();for(var x=0;x<4;x++)_b[y*4+x]=o[x];}}else{for(var x=0;x<4;x++){final a=[for(var y=0;y<4;y++)_b[y*4+x]],m=_merge(dr<0?a:a.reversed.toList()),o=dr<0?m:m.reversed.toList();for(var y=0;y<4;y++)_b[y*4+x]=o[y];}}if(before!=_b.toString()){_add();setState(()=>_over=!_can());}}
   void _restart(){setState((){_run=false;_over=false;_score=0;_b=List<int>.filled(16,0);});}
-  @override Widget build(BuildContext c)=>_GameShell(title:'2048',restart:_restart,child:GestureDetector(onHorizontalDragEnd:(d){final v=d.primaryVelocity??0;if(v.abs()>30)_move(0,v>0?1:-1);},onVerticalDragEnd:(d){final v=d.primaryVelocity??0;if(v.abs()>30)_move(v>0?1:-1,0);},child:Stack(children:[
-    if(!_run)Positioned.fill(child:_GameStart(title:'2048',description:'Geser ubin dan gabungkan angka.',details:'ENDLESS • PUZZLE',start:_start)),
-    if(_run)Padding(padding:const EdgeInsets.all(16),child:Column(children:[Text('SCORE '+_score.toString(),style:const TextStyle(fontWeight:FontWeight.w900)),const SizedBox(height:12),Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:GridView.builder(itemCount:16,physics:const NeverScrollableScrollPhysics(),gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:4,crossAxisSpacing:8,mainAxisSpacing:8),itemBuilder:(_,i)=>Container(decoration:BoxDecoration(color:_b[i]==0?const Color(0xFF1A1E2A):_hubPurple,borderRadius:BorderRadius.circular(12)),child:Center(child:Text(_b[i]==0?'':_b[i].toString(),style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900))))))))]),
-    if(_over)Positioned.fill(child:_GameOver(title:'GAME OVER',score:_score,restart:_restart)),
-  ]));
-}
+  @override
+  Widget build(BuildContext context) {
+    return _GameShell(
+      title: '2048',
+      restart: _restart,
+      child: GestureDetector(
+        onHorizontalDragEnd: (details) {
+          final v = details.primaryVelocity ?? 0;
+          if (v.abs() > 30) _move(0, v > 0 ? 1 : -1);
+        },
+        onVerticalDragEnd: (details) {
+          final v = details.primaryVelocity ?? 0;
+          if (v.abs() > 30) _move(v > 0 ? 1 : -1, 0);
+        },
+        child: Stack(
+          children: [
+            if (!_run)
+              Positioned.fill(
+                child: _GameStart(
+                  title: '2048',
+                  description: 'Geser ubin dan gabungkan angka.',
+                  details: 'ENDLESS • PUZZLE',
+                  start: _start,
+                ),
+              ),
+            if (_run)
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Text('SCORE ' + _score.toString(), style: const TextStyle(fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 12),
+                    Expanded(
+                      child: Center(
+                        child: AspectRatio(
+                          aspectRatio: 1,
+                          child: GridView.builder(
+                            itemCount: 16,
+                            physics: const NeverScrollableScrollPhysics(),
+                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 4,
+                              crossAxisSpacing: 8,
+                              mainAxisSpacing: 8,
+                            ),
+                            itemBuilder: (_, index) => Container(
+                              decoration: BoxDecoration(
+                                color: _b[index] == 0 ? const Color(0xFF1A1E2A) : _hubPurple,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Center(
+                                child: Text(
+                                  _b[index] == 0 ? '' : _b[index].toString(),
+                                  style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            if (_over)
+              Positioned.fill(
+                child: _GameOver(title: 'GAME OVER', score: _score, restart: _restart),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
 // 3 Tetris
 class _TetrisGame extends StatefulWidget { const _TetrisGame(); @override State<_TetrisGame> createState()=>_TetrisGameState(); }
@@ -437,7 +503,7 @@ class _PongGame extends StatefulWidget { const _PongGame(); @override State<_Pon
 class _PongGameState extends State<_PongGame>{
   Timer? _tm;final Random _r=Random();double _x=.5,_y=.5,_vx=.008,_vy=.006,_me=.5,_ai=.5;int _you=0,_cpu=0;bool _run=false,_over=false;
   void _start(){_tm?.cancel();setState((){_x=.5;_y=.5;_vx=.008;_vy=.006;_me=.5;_ai=.5;_you=0;_cpu=0;_run=true;_over=false;});_tm=Timer.periodic(const Duration(milliseconds:16),(_)=>_tick());}
-  void _resetBall(){_x=.5;_y=.5;_vx=_vx>0?.008:-.008;_vy=_r.nextBool()?.006:-.006;}
+  void _resetBall(){_x=.5;_y=.5;_vx=_vx>0 ? .008 : -.008;_vy=_r.nextBool() ? .006 : -.006;}
   void _tick(){if(!_run||_over||!mounted)return;setState((){_x+=_vx;_y+=_vy;if(_y<.04||_y>.96)_vy=-_vy;_ai+=(_y-_ai)*.055;if(_x<.09){if((_y-_me).abs()<.15)_vx=_vx.abs();else{_cpu++;_resetBall();}}if(_x>.91){if((_y-_ai).abs()<.15)_vx=-_vx.abs();else{_you++;_resetBall();}}if(_you>=7||_cpu>=7){_over=true;_tm?.cancel();}});}
   void _player(double v){if(_run&&!_over)setState(()=>_me=v.clamp(.08,.92).toDouble());}
   void _restart(){_tm?.cancel();setState((){_run=false;_over=false;_you=0;_cpu=0;});}
