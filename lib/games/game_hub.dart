@@ -1,0 +1,40 @@
+
+import 'dart:async';
+import 'dart:math';
+import 'package:flutter/material.dart';
+
+const _purple=Color(0xFF8B5CF6);
+
+class NexoraGameHub extends StatefulWidget{const NexoraGameHub({super.key});@override State<NexoraGameHub> createState()=>_HubState();}
+class _HubState extends State<NexoraGameHub>{
+  String filter='ALL',q='';
+  final data=[
+    ['Snake','ARCADE',Icons.straighten_rounded,Color(0xFF22C55E),'Grow and survive'],['2048','PUZZLE',Icons.grid_4x4_rounded,Color(0xFFF59E0B),'Merge numbers'],['Tetris','ARCADE',Icons.view_module_rounded,Color(0xFF8B5CF6),'Clear lines'],['Flappy','ARCADE',Icons.flutter_dash_rounded,Color(0xFF06B6D4),'Fly through pipes'],['Breakout','ARCADE',Icons.sports_baseball_rounded,Color(0xFFEF4444),'Smash the bricks'],['Memory','PUZZLE',Icons.style_rounded,Color(0xFFEC4899),'Find every pair'],['Pong','SPORT',Icons.sports_tennis_rounded,Color(0xFF3B82F6),'Beat the AI'],['Whack-a-Mole','ARCADE',Icons.ads_click_rounded,Color(0xFFA855F7),'Tap the target'],['Minesweeper','PUZZLE',Icons.warning_amber_rounded,Color(0xFFF97316),'Find safe cells'],['Simon Says','PUZZLE',Icons.psychology_rounded,Color(0xFF14B8A6),'Remember colors'],
+  ];
+  Widget game(String n){switch(n){case'Snake':return const _Snake();case'2048':return const _Twenty48();case'Tetris':return const _Tetris();case'Flappy':return const _Flappy();case'Breakout':return const _Breakout();case'Memory':return const _Memory();case'Pong':return const _Pong();case'Whack-a-Mole':return const _Whack();case'Minesweeper':return const _Mines();default:return const _Simon();}}
+  @override Widget build(BuildContext c){
+    final list=data.where((g)=>(filter=='ALL'||g[1]==filter)&&(g[0] as String).toLowerCase().contains(q.toLowerCase())).toList();
+    return ListView(padding:const EdgeInsets.fromLTRB(14,14,14,110),children:[
+      Container(padding:const EdgeInsets.all(22),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:const LinearGradient(colors:[Color(0xFF4C1D95),Color(0xFF172554),Color(0xFF07111F)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Row(children:[Container(padding:const EdgeInsets.all(11),decoration:BoxDecoration(color:Colors.white12,borderRadius:BorderRadius.circular(15)),child:const Icon(Icons.sports_esports_rounded,size:28)),const Spacer(),const _Tag('10 GAMES')]),
+        const SizedBox(height:16),const Text('NEXORA GAME HUB',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.8,color:Colors.white70)),const SizedBox(height:5),const Text('Play. Beat. Repeat.',style:TextStyle(fontSize:29,fontWeight:FontWeight.w900)),const SizedBox(height:6),const Text('10 mini game original Nexora. Offline dan langsung main.',style:TextStyle(color:Colors.white70)),
+        const SizedBox(height:17),Row(children:[_MiniStat('ARCADE','5'),const SizedBox(width:8),_MiniStat('PUZZLE','4'),const SizedBox(width:8),_MiniStat('SPORT','1')]),
+      ])),
+      const SizedBox(height:14),TextField(onChanged:(v)=>setState(()=>q=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),hintText:'Cari game...',filled:true,fillColor:const Color(0xFF111522),border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),
+      const SizedBox(height:10),SizedBox(height:42,child:ListView(scrollDirection:Axis.horizontal,children:[for(final f in const['ALL','ARCADE','PUZZLE','SPORT'])Padding(padding:const EdgeInsets.only(right:8),child:ChoiceChip(label:Text(f),selected:filter==f,onSelected:(_)=>setState(()=>filter=f)))])),
+      const SizedBox(height:14),Row(children:[const Expanded(child:Text('All Games',style:TextStyle(fontSize:20,fontWeight:FontWeight.w900))),Text(list.length.toString()+' tersedia',style:const TextStyle(color:Colors.white54))]),const SizedBox(height:10),
+      GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:list.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:.78),itemBuilder:(_,i){
+        final g=list[i],name=g[0] as String,color=g[3] as Color;
+        return Card(clipBehavior:Clip.antiAlias,child:InkWell(onTap:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>game(name))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Expanded(child:Container(decoration:BoxDecoration(gradient:LinearGradient(colors:[color.withOpacity(.75),const Color(0xFF111522)])),child:Stack(children:[Positioned(right:-18,top:-18,child:Icon(g[2] as IconData,size:100,color:Colors.white10)),Center(child:Icon(g[2] as IconData,size:52)),Positioned(left:10,top:10,child:_Tag(g[1] as String))]))),
+          Padding(padding:const EdgeInsets.fromLTRB(12,10,12,12),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(name,style:const TextStyle(fontWeight:FontWeight.w900,fontSize:16)),const SizedBox(height:3),Text(g[4] as String,style:const TextStyle(fontSize:11,color:Colors.white60)),const SizedBox(height:9),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:()=>Navigator.push(c,MaterialPageRoute(builder:(_)=>game(name))),icon:const Icon(Icons.play_arrow_rounded,size:18),label:const Text('PLAY'))])),
+        ])));
+      }),
+    ]);
+  }
+}
+class _Tag extends StatelessWidget{final String t;const _Tag(this.t);@override Widget build(BuildContext c)=>Container(padding:const EdgeInsets.symmetric(horizontal:10,vertical:7),decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(30)),child:Text(t,style:const TextStyle(fontSize:9,fontWeight:FontWeight.w900,letterSpacing:1)));}
+class _MiniStat extends StatelessWidget{final String a,b;const _MiniStat(this.a,this.b);@override Widget build(BuildContext c)=>Expanded(child:Container(padding:const EdgeInsets.all(9),decoration:BoxDecoration(color:Colors.white10,borderRadius:BorderRadius.circular(14)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(a,style:const TextStyle(fontSize:8,color:Colors.white60)),Text(b,style:const TextStyle(fontSize:16,fontWeight:FontWeight.w900))])));}
+class _Shell extends StatelessWidget{final String title;final Widget child;final VoidCallback restart;const _Shell(this.title,this.child,this.restart);@override Widget build(BuildContext c)=>Scaffold(appBar:AppBar(title:Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),actions:[IconButton(onPressed:restart,icon:const Icon(Icons.refresh_rounded))]),body:child);}
+class _Start extends StatelessWidget{final String title,desc,info;final VoidCallback play;const _Start(this.title,this.desc,this.info,this.play);@override Widget build(BuildContext c)=>Center(child:Container(margin:const EdgeInsets.all(22),padding:const EdgeInsets.all(24),decoration:BoxDecoration(color:const Color(0xFF111522),borderRadius:BorderRadius.circular(26)),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.sports_esports_rounded,size:52),const SizedBox(height:12),Text(title,style:const TextStyle(fontSize:27,fontWeight:FontWeight.w900)),const SizedBox(height:8),Text(desc,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70)),const SizedBox(height:10),Text(info,style:const TextStyle(color:_purple,fontWeight:FontWeight.w800)),const SizedBox(height:18),FilledButton.icon(onPressed:play,icon:const Icon(Icons.play_arrow),label:const Text('START GAME'))])));}
+class _End extends StatelessWidget{final String title;final int score;final VoidCallback again;const _End(this.title,this.score,this.again);@override Widget build(BuildContext c)=>Center(child:Container(padding:const EdgeInsets.all(24),decoration:BoxDecoration(color:const Color(0xFF111522),borderRadius:BorderRadius.circular(24)),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.emoji_events_rounded,size:44),Text(title,style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900)),Text('Score '+score.toString()),const SizedBox(height:12),FilledButton(onPressed:again,child:const Text('Main Lagi'))])));}
