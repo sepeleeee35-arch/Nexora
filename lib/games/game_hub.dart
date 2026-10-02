@@ -29,6 +29,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
     _GameInfo('Neon Jump', 'ARCADE', Icons.bolt_rounded, Color(0xFFA855F7), 'Jump, dodge and chase a high score.'),
     _GameInfo('Minesweeper', 'PUZZLE', Icons.warning_amber_rounded, Color(0xFFF97316), 'Open safe cells.'),
     _GameInfo('Simon Says', 'PUZZLE', Icons.psychology_rounded, Color(0xFF14B8A6), 'Remember the color sequence.'),
+    _GameInfo('Color Stack', 'PUZZLE', Icons.view_agenda_rounded, Color(0xFF10B981), 'Susun kapsul warna tanpa memakai baut.'),
   ];
 
   Widget _gamePage(String name) {
@@ -40,6 +41,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
       case 'Breakout': return const _BreakoutGame();
       case 'Memory': return const _MemoryGame();
       case 'Pong': return const _PongGame();
+      case 'Color Stack': return const _ColorStackGame();
       case 'Neon Jump': return const NeonJumpPage();
       case 'Minesweeper': return const _MinesGame();
       default: return const _SimonGame();
@@ -81,18 +83,18 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
                   child: const Icon(Icons.sports_esports_rounded, size: 28),
                 ),
                 const Spacer(),
-                const _HubTag('10 GAMES'),
+                const _HubTag('11 GAMES'),
               ]),
               const SizedBox(height: 16),
               const Text('NEXORA GAME HUB', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.8, color: Colors.white70)),
               const SizedBox(height: 5),
               const Text('Play. Beat. Repeat.', style: TextStyle(fontSize: 29, fontWeight: FontWeight.w900)),
               const SizedBox(height: 7),
-              const Text('10 mini game original Nexora. Offline dan langsung dimainkan.', style: TextStyle(color: Colors.white70, height: 1.35)),
+              const Text('11 mini game original Nexora. Offline dan langsung dimainkan.', style: TextStyle(color: Colors.white70, height: 1.35)),
               const SizedBox(height: 17),
               Row(children: [
                 _HubStat('ARCADE', '5'), const SizedBox(width: 8),
-                _HubStat('PUZZLE', '4'), const SizedBox(width: 8),
+                _HubStat('PUZZLE', '5'), const SizedBox(width: 8),
                 _HubStat('SPORT', '1'),
               ]),
             ],
@@ -735,6 +737,490 @@ class _Badge extends StatelessWidget {
     child: Text(text, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
   );
 }
+
+
+class _ColorStackGame extends StatefulWidget {
+  const _ColorStackGame();
+
+  @override
+  State<_ColorStackGame> createState() => _ColorStackGameState();
+}
+
+class _ColorStackGameState extends State<_ColorStackGame> {
+  static const _modes = <String>['Easy', 'Normal', 'Hard', 'Pro', 'Impossible'];
+  static final Map<String, int> _savedLevels = <String, int>{
+    'Easy': 1,
+    'Normal': 1,
+    'Hard': 1,
+    'Pro': 1,
+    'Impossible': 1,
+  };
+
+  final Random _rng = Random();
+  String _mode = 'Easy';
+  int _level = 1;
+  List<List<int>> _tubes = <List<int>>[];
+  int _colors = 0;
+  int? _selected;
+  int _moves = 0;
+  List<List<List<int>>> _history = <List<List<int>>>[];
+  bool _won = false;
+
+  static const List<Color> _colorsPaint = <Color>[
+    Color(0xFFFF6B35),
+    Color(0xFF22C55E),
+    Color(0xFF06B6D4),
+    Color(0xFFEC4899),
+    Color(0xFFFACC15),
+    Color(0xFF3B82F6),
+    Color(0xFFA855F7),
+    Color(0xFFEF4444),
+    Color(0xFF14B8A6),
+    Color(0xFFF97316),
+    Color(0xFF84CC16),
+    Color(0xFF8B5CF6),
+  ];
+
+  int _modeBaseColors(String mode) {
+    switch (mode) {
+      case 'Normal':
+        return 4;
+      case 'Hard':
+        return 5;
+      case 'Pro':
+        return 6;
+      case 'Impossible':
+        return 7;
+      default:
+        return 3;
+    }
+  }
+
+  int _emptyTubesFor(String mode) {
+    switch (mode) {
+      case 'Easy':
+        return 2;
+      case 'Normal':
+        return 2;
+      case 'Hard':
+        return 2;
+      case 'Pro':
+        return 2;
+      default:
+        return 2;
+    }
+  }
+
+  int _levelColorCount() {
+    final base = _modeBaseColors(_mode);
+    // Level 2 visibly adds another color/object group, then grows gradually.
+    final growth = (_level + 1) ~/ 2;
+    return min(_colorsPaint.length, base + growth - 1);
+  }
+
+  int _scrambleCount() {
+    final modeIndex = _modes.indexOf(_mode);
+    final base = 18 + modeIndex * 10;
+    return base + (_level - 1) * (4 + modeIndex);
+  }
+
+  void _startLevel() {
+    _colors = _levelColorCount();
+    final capacity = 4;
+    final total = _colors * capacity;
+    final pool = <int>[];
+    for (int color = 0; color < _colors; color++) {
+      for (int i = 0; i < capacity; i++) {
+        pool.add(color);
+      }
+    }
+
+    final tubes = <List<int>>[];
+    for (int i = 0; i < _colors; i++) {
+      tubes.add(<int>[for (int j = 0; j < capacity; j++) pool[i * capacity + j]]);
+    }
+    final empties = _emptyTubesFor(_mode);
+    for (int i = 0; i < empties; i++) {
+      tubes.add(<int>[]);
+    }
+
+    // Scramble from a solved state using only legal pours. This keeps the
+    // puzzle reversible while making later levels increasingly mixed.
+    for (int i = 0; i < _scrambleCount(); i++) {
+      final legal = <List<int>>[];
+      for (int from = 0; from < tubes.length; from++) {
+        if (tubes[from].isEmpty) continue;
+        final color = tubes[from].last;
+        int count = 1;
+        for (int k = tubes[from].length - 2; k >= 0 && tubes[from][k] == color; k--) {
+          count++;
+        }
+        for (int to = 0; to < tubes.length; to++) {
+          if (to == from || tubes[to].length >= capacity) continue;
+          if (tubes[to].isEmpty || tubes[to].last == color) {
+            legal.add(<int>[from, to, count]);
+          }
+        }
+      }
+      if (legal.isEmpty) break;
+      final move = legal[_rng.nextInt(legal.length)];
+      final from = move[0];
+      final to = move[1];
+      final maxMove = min(move[2], capacity - tubes[to].length);
+      for (int j = 0; j < maxMove; j++) {
+        tubes[to].add(tubes[from].removeLast());
+      }
+    }
+
+    // Avoid a boring solved opening if the random scramble happened to cancel out.
+    if (_isSolved(tubes)) {
+      final a = tubes.length - 1;
+      final b = tubes.length - 2;
+      if (tubes[a].isEmpty && tubes[b].isEmpty && tubes[0].isNotEmpty) {
+        tubes[b].add(tubes[0].removeLast());
+        tubes[a].add(tubes[0].removeLast());
+      }
+    }
+
+    setState(() {
+      _tubes = tubes;
+      _selected = null;
+      _moves = 0;
+      _history = <List<List<int>>>[];
+      _won = false;
+    });
+  }
+
+  bool _isSolved(List<List<int>> tubes) {
+    for (final tube in tubes) {
+      if (tube.isEmpty) continue;
+      if (tube.length != 4) return false;
+      if (tube.any((v) => v != tube.first)) return false;
+    }
+    return true;
+  }
+
+  void _selectTube(int index) {
+    if (_won || _tubes[index].isEmpty && _selected == null) return;
+
+    if (_selected == null) {
+      if (_tubes[index].isNotEmpty) {
+        setState(() => _selected = index);
+      }
+      return;
+    }
+
+    if (_selected == index) {
+      setState(() => _selected = null);
+      return;
+    }
+
+    _pour(_selected!, index);
+  }
+
+  void _pour(int from, int to) {
+    if (from == to || _tubes[from].isEmpty || _tubes[to].length >= 4) {
+      setState(() => _selected = null);
+      return;
+    }
+
+    final source = _tubes[from];
+    final target = _tubes[to];
+    final color = source.last;
+
+    if (target.isNotEmpty && target.last != color) {
+      setState(() => _selected = null);
+      return;
+    }
+
+    int count = 1;
+    for (int i = source.length - 2; i >= 0 && source[i] == color; i--) {
+      count++;
+    }
+    count = min(count, 4 - target.length);
+
+    _history.add(_copyTubes(_tubes));
+    for (int i = 0; i < count; i++) {
+      target.add(source.removeLast());
+    }
+    _moves++;
+    _selected = null;
+    _won = _isSolved(_tubes);
+
+    if (_won) {
+      _savedLevels[_mode] = _level + 1;
+    }
+    setState(() {});
+  }
+
+  List<List<int>> _copyTubes(List<List<int>> source) {
+    return source.map((tube) => List<int>.from(tube)).toList();
+  }
+
+  void _undo() {
+    if (_history.isEmpty || _won) return;
+    final previous = _history.removeLast();
+    setState(() {
+      _tubes = _copyTubes(previous);
+      _moves = max(0, _moves - 1);
+      _selected = null;
+    });
+  }
+
+  void _nextLevel() {
+    _level++;
+    _savedLevels[_mode] = _level;
+    _startLevel();
+  }
+
+  void _changeMode(String mode) {
+    setState(() {
+      _mode = mode;
+      _level = _savedLevels[mode] ?? 1;
+      _selected = null;
+      _won = false;
+    });
+    _startLevel();
+  }
+
+  void _restart() {
+    _level = _savedLevels[_mode] ?? 1;
+    _startLevel();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _level = _savedLevels[_mode] ?? 1;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _startLevel();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tubeCount = _tubes.length;
+    final columns = tubeCount <= 7 ? tubeCount : 7;
+    final rows = tubeCount <= 7 ? 1 : 2;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Color Stack', style: TextStyle(fontWeight: FontWeight.w900)),
+        actions: [
+          IconButton(
+            tooltip: 'Restart level',
+            onPressed: _restart,
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_mode.toUpperCase(), style: const TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w900, letterSpacing: 1.4)),
+                        Text('Level ' + _level.toString(), style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+                      ],
+                    ),
+                  ),
+                  _GameBadge('MOVES ' + _moves.toString()),
+                ],
+              ),
+            ),
+            SizedBox(
+              height: 48,
+              child: ListView.separated(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                scrollDirection: Axis.horizontal,
+                itemCount: _modes.length,
+                separatorBuilder: (_, __) => const SizedBox(width: 7),
+                itemBuilder: (context, index) {
+                  final mode = _modes[index];
+                  return ChoiceChip(
+                    label: Text(mode),
+                    selected: _mode == mode,
+                    onSelected: (_) => _changeMode(mode),
+                  );
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 2, 12, 4),
+              child: Text(
+                'Pilih kapsul lalu pilih tabung tujuan. Hanya warna yang sama atau tabung kosong yang boleh menerima.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontSize: 11, color: Colors.white54, height: 1.3),
+              ),
+            ),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(10, 8, 10, 12),
+                child: Wrap(
+                  alignment: WrapAlignment.center,
+                  runSpacing: 18,
+                  spacing: 8,
+                  children: [
+                    for (int i = 0; i < tubeCount; i++)
+                      _ColorStackTube(
+                        tube: _tubes[i],
+                        selected: _selected == i,
+                        width: tubeCount <= 7 ? 48 : 42,
+                        onTap: () => _selectTube(i),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 2, 12, 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _history.isEmpty || _won ? null : _undo,
+                      icon: const Icon(Icons.undo_rounded, size: 18),
+                      label: const Text('Batal'),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: _won ? null : () {
+                        final empty = _tubes.indexWhere((t) => t.isEmpty);
+                        if (empty < 0 || _selected == null) return;
+                        _pour(_selected!, empty);
+                      },
+                      icon: const Icon(Icons.lightbulb_outline_rounded, size: 18),
+                      label: const Text('Petunjuk'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_won)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF10261D),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: Colors.greenAccent.withValues(alpha: .25)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.check_circle_rounded, color: Colors.greenAccent),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Level ' + _level.toString() + ' selesai. Level berikutnya akan lebih sulit.',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      FilledButton(
+                        onPressed: _nextLevel,
+                        child: const Text('NEXT'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ColorStackTube extends StatelessWidget {
+  final List<int> tube;
+  final bool selected;
+  final double width;
+  final VoidCallback onTap;
+
+  const _ColorStackTube({
+    required this.tube,
+    required this.selected,
+    required this.width,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 140),
+        width: width,
+        height: 172,
+        padding: const EdgeInsets.fromLTRB(6, 10, 6, 6),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: .035),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: selected ? Colors.white : Colors.white.withValues(alpha: .12),
+            width: selected ? 2.4 : 1,
+          ),
+          boxShadow: selected
+              ? <BoxShadow>[
+                  BoxShadow(color: Colors.white.withValues(alpha: .12), blurRadius: 16, spreadRadius: 2),
+                ]
+              : const <BoxShadow>[],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            for (int slot = 3; slot >= 0; slot--)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 1.5),
+                child: slot < tube.length
+                    ? Container(
+                        height: 31,
+                        width: width - 12,
+                        decoration: BoxDecoration(
+                          color: _ColorStackGameState._colorsPaint[tube[slot]],
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(color: Colors.white.withValues(alpha: .22)),
+                          boxShadow: const <BoxShadow>[
+                            BoxShadow(color: Colors.black26, blurRadius: 4, offset: Offset(0, 2)),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Icon(Icons.circle, size: 5, color: Colors.white54),
+                        ),
+                      )
+                    : Container(
+                        height: 31,
+                        width: width - 12,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .012),
+                          borderRadius: BorderRadius.circular(9),
+                          border: Border.all(color: Colors.white.withValues(alpha: .045)),
+                        ),
+                      ),
+              ),
+            Container(
+              height: 8,
+              width: width - 8,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: .18),
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 
 class _GameBadge extends StatelessWidget {
   final String text;
