@@ -49,6 +49,12 @@ jobs:
       - name: Remove generated sample test
         run: rm -f test/widget_test.dart
 
+      - name: Configure Google Sign-In build client
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        run: |
+          if [ -z "$GOOGLE_CLIENT_ID" ]; then echo "::warning::GOOGLE_CLIENT_ID GitHub secret belum diisi; APK tetap dibuild, tetapi Google login belum bisa dipakai."; fi
+
       - name: Get packages
         run: flutter pub get
 
@@ -56,7 +62,7 @@ jobs:
         run: flutter analyze
 
       - name: Build release APK
-        run: flutter build apk --release --target-platform android-arm64
+        run: flutter build apk --release --target-platform android-arm64 --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} --dart-define=GOOGLE_SERVER_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
 
       - name: Prepare direct APK
         run: cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Nexora-v1.0.0.apk
