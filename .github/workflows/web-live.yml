@@ -31,6 +31,25 @@ jobs:
       - name: Add web platform
         run: flutter create . --platforms web
 
+      - name: Configure Google Sign-In web client
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          p = Path('web/index.html')
+          s = p.read_text()
+          client = os.environ.get('GOOGLE_CLIENT_ID', '').strip()
+          if client:
+              lines = [x for x in s.splitlines() if 'google-signin-client_id' not in x]
+              s = '\\n'.join(lines) + '\\n'
+              s = s.replace('<head>', '<head>\\n    <meta name="google-signin-client_id" content="' + client + '">', 1)
+              p.write_text(s)
+          else:
+              print('GOOGLE_CLIENT_ID is not configured; web Google login will remain unavailable.')
+          PY
+
       - name: Get packages
         run: flutter pub get
 
