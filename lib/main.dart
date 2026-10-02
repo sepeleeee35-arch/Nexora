@@ -9,6 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'music/music_page.dart';
 import 'games/game_hub.dart';
 import 'music/music_service.dart';
+import 'tools/nexora_tools_page.dart';
 
 void main() => runApp(const NexoraApp());
 
@@ -79,7 +80,7 @@ class _NexoraShellState extends State<NexoraShell> {
       body = switch (tab) {
         1 => const NexoraGameHub(),
         2 => const MusicPage(),
-        3 => const ToolsPage(),
+        3 => const NexoraToolsPage(),
         4 => MarketPage(coins: coins, cart: cart, buy: null),
         _ => HomePage(
           coins: coins,
