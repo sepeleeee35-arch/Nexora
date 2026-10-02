@@ -383,158 +383,224 @@ class _Recent extends StatelessWidget {
 }
 
 
-class ArcadeGame {
-  final String title;
-  final String kind;
-  final IconData icon;
-  const ArcadeGame(this.title, this.kind, this.icon);
-}
 
-const _games = <ArcadeGame>[
-  ArcadeGame('Neon Jump', 'jump', Icons.flash_on_rounded),
-  ArcadeGame('Worm Arena', 'worm', Icons.circle_rounded),
-  ArcadeGame('Nexora Chess', 'chess', Icons.grid_4x4_rounded),
-  ArcadeGame('Road Rush', 'road', Icons.directions_car_rounded),
-  ArcadeGame('Brick Smash', 'brick', Icons.view_module_rounded),
-  ArcadeGame('Flap Orbit', 'flap', Icons.flutter_dash_rounded),
-  ArcadeGame('Maze Escape', 'maze', Icons.route_rounded),
-  ArcadeGame('Nexora 2048', '2048', Icons.add_box_rounded),
+class ArcadeGame {
+  final String title, kind, subtitle;
+  final IconData icon;
+  final int color;
+  const ArcadeGame(this.title,this.kind,this.subtitle,this.icon,this.color);
+}
+const _games=<ArcadeGame>[
+  ArcadeGame('Snake','snake','Classic • 1 player',Icons.straighten_rounded,0xFF22D3EE),
+  ArcadeGame('2048','2048','Puzzle • Merge tiles',Icons.grid_4x4_rounded,0xFFA78BFA),
+  ArcadeGame('Tetris','tetris','Arcade • Stack blocks',Icons.view_module_rounded,0xFFF472B6),
+  ArcadeGame('Flappy','flappy','Arcade • Fly & dodge',Icons.flutter_dash_rounded,0xFFFBBF24),
+  ArcadeGame('Breakout','breakout','Arcade • Smash bricks',Icons.sports_tennis_rounded,0xFF60A5FA),
+  ArcadeGame('Memory','memory','Puzzle • Match pairs',Icons.psychology_rounded,0xFF34D399),
+  ArcadeGame('Pong','pong','Classic • 1 vs bot',Icons.sports_tennis_rounded,0xFF38BDF8),
+  ArcadeGame('Whack-a-Mole','whack','Arcade • Tap fast',Icons.touch_app_rounded,0xFFF97316),
+  ArcadeGame('Minesweeper','mines','Puzzle • Clear field',Icons.warning_amber_rounded,0xFFE879F9),
+  ArcadeGame('Simon Says','simon','Memory • Follow lights',Icons.lights_rounded,0xFF4ADE80),
 ];
 
-class GamePreview extends StatelessWidget{
-  final String kind;
-  const GamePreview({required this.kind,super.key});
-  @override Widget build(BuildContext context)=>CustomPaint(painter:_GamePreviewPainter(kind),child:const SizedBox.expand());
+class GamesPage extends StatefulWidget{
+  const GamesPage({super.key});
+  @override State<GamesPage> createState()=>_GamesState();
 }
-class _GamePreviewPainter extends CustomPainter{
-  final String kind;
-  _GamePreviewPainter(this.kind);
-  @override void paint(Canvas c,Size s){
-    final p=Paint()..isAntiAlias=true;
-    p.color=const Color(0xFF0B1020);c.drawRect(Offset.zero&s,p);
-    void rr(Rect r,Color color,{double radius=8}){p.color=color;c.drawRRect(RRect.fromRectAndRadius(r,Radius.circular(radius)),p);}
-    if(kind=='jump'){
-      rr(Rect.fromLTWH(10,s.height*.72,s.width*.42,9),const Color(0xFF8B5CF6));
-      rr(Rect.fromLTWH(s.width*.58,s.height*.48,s.width*.30,9),const Color(0xFF8B5CF6));
-      p.color=const Color(0xFF22D3EE);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*.25,s.height*.42,18,18),const Radius.circular(4)),p);
-      p.color=const Color(0xFFEF4444);final spike=Path()..moveTo(s.width*.43,s.height*.72)..lineTo(s.width*.48,s.height*.58)..lineTo(s.width*.53,s.height*.72)..close();c.drawPath(spike,p);
-    }else if(kind=='worm'){
-      p.color=const Color(0xFF8B5CF6);for(int i=0;i<4;i++)c.drawCircle(Offset(s.width*.42-i*15,s.height*.56),8,p);
-      p.color=const Color(0xFF22D3EE);c.drawCircle(Offset(s.width*.42,s.height*.56),9,p);
-      p.color=const Color(0xFFEF4444);c.drawCircle(Offset(s.width*.70,s.height*.35),7,p);
-    }else if(kind=='chess'){
-      final cell=min(s.width,s.height)/8;
-      for(int r=0;r<8;r++)for(int q=0;q<8;q++){p.color=(r+q).isEven?const Color(0xFFD6D3D1):const Color(0xFF57534E);c.drawRect(Rect.fromLTWH(q*cell,r*cell,cell,cell),p);}
-      const glyphs=['♜','♞','♝','♛','♚','♝','♞','♜'];
-      for(int i=0;i<8;i++){final tp=TextPainter(text:TextSpan(text:glyphs[i],style:const TextStyle(fontSize:16,color:Colors.black87)),textDirection:TextDirection.ltr)..layout();tp.paint(c,Offset(i*cell+(cell-tp.width)/2,3));}
-    }else if(kind=='road'){
-      p.color=const Color(0xFF252936);c.drawRect(Rect.fromLTWH(s.width*.18,0,s.width*.64,s.height),p);
-      p.color=Colors.white24;p.strokeWidth=3;for(int i=1;i<3;i++)for(double y=0;y<s.height;y+=22)c.drawLine(Offset(s.width*(.18+.64*i/3),y),Offset(s.width*(.18+.64*i/3),y+10),p);
-      rr(Rect.fromLTWH(s.width*.44,s.height*.66,30,45),const Color(0xFF22D3EE),radius:6);rr(Rect.fromLTWH(s.width*.62,s.height*.22,28,42),const Color(0xFFEF4444),radius:6);
-    }else if(kind=='brick'){
-      for(int r=0;r<3;r++)for(int q=0;q<5;q++)rr(Rect.fromLTWH(8+q*(s.width-16)/5,10+r*19,(s.width-22)/5,14),const Color(0xFF8B5CF6),radius:4);
-      rr(Rect.fromLTWH(s.width*.35,s.height*.78,s.width*.30,8),Colors.white,radius:4);p.color=const Color(0xFF22D3EE);c.drawCircle(Offset(s.width*.5,s.height*.68),7,p);
-    }else if(kind=='flap'){
-      p.color=const Color(0xFFFBBF24);c.drawCircle(Offset(s.width*.34,s.height*.50),11,p);
-      rr(Rect.fromLTWH(s.width*.68,0,35,s.height*.34),const Color(0xFF16A34A),radius:4);
-      rr(Rect.fromLTWH(s.width*.68,s.height*.66,35,s.height*.34),const Color(0xFF16A34A),radius:4);
-    }else if(kind=='maze'){
-      p.color=const Color(0xFF312E81);for(int r=0;r<6;r++)for(int q=0;q<8;q++)if((r+q)%3!=1)c.drawRect(Rect.fromLTWH(q*s.width/8,r*s.height/6,s.width/8-2,s.height/6-2),p);
-      p.color=const Color(0xFF22D3EE);c.drawCircle(Offset(s.width*.18,s.height*.18),7,p);p.color=const Color(0xFF22C55E);c.drawCircle(Offset(s.width*.82,s.height*.82),7,p);
-    }else{
-      for(int i=0;i<4;i++){final vals=['2','4','8','2048'];final x=8+i*((s.width-24)/4);rr(Rect.fromLTWH(x,s.height*.35,(s.width-32)/4,34),const Color(0xFF6D28D9),radius:6);final tp=TextPainter(text:TextSpan(text:vals[i],style:TextStyle(fontSize:i==3?10:14,fontWeight:FontWeight.w900,color:Colors.white)),textDirection:TextDirection.ltr)..layout();tp.paint(c,Offset(x+((s.width-32)/4-tp.width)/2,s.height*.35+9));}
+class _GamesState extends State<GamesPage>{
+  String query='';
+  final favorites=<String>{'Snake','2048'};
+  Widget open(ArcadeGame g){
+    switch(g.kind){
+      case 'snake':return const NexoraSnakePage();
+      case '2048':return const Mini2048Page();
+      case 'tetris':return const NexoraTetrisPage();
+      case 'flappy':return const NexoraFlappyPage();
+      case 'breakout':return const NexoraBreakoutPage();
+      case 'memory':return const NexoraMemoryPage();
+      case 'pong':return const NexoraPongPage();
+      case 'whack':return const NexoraWhackPage();
+      case 'mines':return const NexoraMinesPage();
+      default:return const NexoraSimonPage();
     }
   }
-  @override bool shouldRepaint(covariant _GamePreviewPainter old)=>old.kind!=kind;
+  @override Widget build(BuildContext context){
+    final list=_games.where((g)=>g.title.toLowerCase().contains(query.toLowerCase())).toList();
+    return Container(color:const Color(0xFF070910),child:ListView(padding:const EdgeInsets.fromLTRB(14,14,14,110),children:[
+      Container(padding:const EdgeInsets.all(20),decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:const LinearGradient(begin:Alignment.topLeft,end:Alignment.bottomRight,colors:[Color(0xFF4C1D95),Color(0xFF172554),Color(0xFF0B1020)])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Row(children:[Container(width:48,height:48,decoration:BoxDecoration(color:Colors.white12,borderRadius:BorderRadius.circular(16)),child:const Icon(Icons.sports_esports_rounded,size:28)),const SizedBox(width:12),const Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('NEXORA ARCADE',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.8)),Text('GAME HUB',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900))])),Container(padding:const EdgeInsets.all(10),decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(14)),child:const Column(children:[Text('10',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),Text('GAMES',style:TextStyle(fontSize:8,fontWeight:FontWeight.w900))]))]),
+        const SizedBox(height:14),const Text('10 mini game offline dalam satu hub.',style:TextStyle(color:Colors.white70)),
+        const SizedBox(height:12),Row(children:[_HubPill(Icons.wifi_off_rounded,'OFFLINE'),const SizedBox(width:7),_HubPill(Icons.bolt_rounded,'QUICK PLAY'),const SizedBox(width:7),_HubPill(Icons.emoji_events_rounded,'HIGH SCORE')]),
+      ]),
+      const SizedBox(height:14),
+      TextField(onChanged:(v)=>setState(()=>query=v),decoration:InputDecoration(prefixIcon:const Icon(Icons.search_rounded),suffixIcon:query.isEmpty?null:IconButton(onPressed:()=>setState(()=>query=''),icon:const Icon(Icons.clear_rounded)),hintText:'Cari game...',filled:true,fillColor:const Color(0xFF111522),border:OutlineInputBorder(borderRadius:BorderRadius.circular(18),borderSide:BorderSide.none))),
+      const SizedBox(height:16),
+      Row(children:[const Expanded(child:Text('All Games',style:TextStyle(fontSize:20,fontWeight:FontWeight.w900))),Text(list.length.toString()+'/10',style:const TextStyle(color:Colors.white54,fontWeight:FontWeight.w800))]),
+      const SizedBox(height:10),
+      GridView.builder(shrinkWrap:true,physics:const NeverScrollableScrollPhysics(),itemCount:list.length,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:2,crossAxisSpacing:10,mainAxisSpacing:10,childAspectRatio:.80),itemBuilder:(_,i){
+        final g=list[i]; final fav=favorites.contains(g.title);
+        return Card(clipBehavior:Clip.antiAlias,margin:EdgeInsets.zero,child:InkWell(onTap:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>open(g))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Expanded(child:Container(width:double.infinity,decoration:BoxDecoration(gradient:LinearGradient(colors:[Color(g.color).withValues(alpha:.42),const Color(0xFF101522)])),child:Stack(children:[
+            Positioned.fill(child:CustomPaint(painter:_ArcadePreview(g.kind,g.color))),
+            Positioned(top:5,right:5,child:IconButton(visualDensity:VisualDensity.compact,onPressed:()=>setState(()=>fav?favorites.remove(g.title):favorites.add(g.title)),icon:Icon(fav?Icons.star_rounded:Icons.star_border_rounded,size:19))),
+            Positioned(left:9,bottom:8,child:Container(padding:const EdgeInsets.symmetric(horizontal:7,vertical:4),decoration:BoxDecoration(color:Colors.black54,borderRadius:BorderRadius.circular(8)),child:const Text('OFFLINE',style:TextStyle(fontSize:8,fontWeight:FontWeight.w900)))),
+          ]))),
+          Padding(padding:const EdgeInsets.fromLTRB(11,9,9,11),child:Row(children:[Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(g.title,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900)),const SizedBox(height:3),Text(g.subtitle,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:9,color:Colors.white54))])),const Icon(Icons.play_circle_fill_rounded,size:24)])),
+        ]));
+      }),
+      if(list.isEmpty)const Padding(padding:EdgeInsets.all(35),child:Center(child:Text('Game tidak ditemukan.'))),
+    ]));
+  }
+}
+class _HubPill extends StatelessWidget{
+  final IconData icon;final String text;
+  const _HubPill(this.icon,this.text);
+  @override Widget build(BuildContext context)=>Expanded(child:Container(padding:const EdgeInsets.symmetric(vertical:9),decoration:BoxDecoration(color:Colors.white10,borderRadius:BorderRadius.circular(12)),child:Row(mainAxisAlignment:MainAxisAlignment.center,children:[Icon(icon,size:14),const SizedBox(width:4),Text(text,style:const TextStyle(fontSize:8,fontWeight:FontWeight.w900))])));
+}
+class _ArcadePreview extends CustomPainter{
+  final String kind;final int color;_ArcadePreview(this.kind,this.color);
+  @override void paint(Canvas c,Size s){
+    final p=Paint()..isAntiAlias=true..color=Color(color);
+    if(kind=='snake'){for(int i=0;i<5;i++)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*.25+i*15,s.height*.48,18,18),const Radius.circular(5)),p);}
+    else if(kind=='2048'){for(int i=0;i<4;i++)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*.18+i*30,s.height*.4,26,26),const Radius.circular(6)),p);}
+    else if(kind=='tetris'){for(int i=0;i<5;i++)c.drawRect(Rect.fromLTWH(s.width*.2+i*18,s.height*.55,17,17),p);for(int i=0;i<3;i++)c.drawRect(Rect.fromLTWH(s.width*.38+i*18,s.height*.38,17,17),p);}
+    else if(kind=='flappy'){c.drawCircle(Offset(s.width*.35,s.height*.5),13,p);c.drawRect(Rect.fromLTWH(s.width*.68,0,30,s.height*.32),p);c.drawRect(Rect.fromLTWH(s.width*.68,s.height*.68,30,s.height*.32),p);}
+    else if(kind=='breakout'){for(int r=0;r<2;r++)for(int i=0;i<5;i++)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*.16+i*31,s.height*.28+r*20,27,15),const Radius.circular(4)),p);c.drawCircle(Offset(s.width*.5,s.height*.65),6,Paint()..color=Colors.white);}
+    else if(kind=='memory'){for(int r=0;r<2;r++)for(int i=0;i<3;i++)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*.25+i*32,s.height*.35+r*34,28,30),const Radius.circular(7)),p);}
+    else if(kind=='pong'){c.drawRect(Rect.fromLTWH(s.width*.22,s.height*.3,7,60),p);c.drawRect(Rect.fromLTWH(s.width*.76,s.height*.42,7,60),p);c.drawCircle(Offset(s.width*.5,s.height*.55),7,Paint()..color=Colors.white);}
+    else if(kind=='whack'){for(int i=0;i<3;i++)c.drawCircle(Offset(s.width*(.3+i*.2),s.height*.52),15,p);}
+    else if(kind=='mines'){for(int r=0;r<3;r++)for(int i=0;i<4;i++)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*.2+i*28,s.height*.25+r*28,24,24),const Radius.circular(5)),p);}
+    else{for(int i=0;i<4;i++)c.drawCircle(Offset(s.width*(.3+i*.14),s.height*.5),10,Paint()..color=i.isEven?Color(color):Colors.white24);}
+  }
+  @override bool shouldRepaint(covariant _ArcadePreview old)=>old.kind!=kind||old.color!=color;
+}
+class _ArcadeGameScaffold extends StatelessWidget{
+  final String title;final Widget child;final VoidCallback restart;
+  const _ArcadeGameScaffold({required this.title,required this.child,required this.restart});
+  @override Widget build(BuildContext context)=>Scaffold(backgroundColor:const Color(0xFF070910),appBar:AppBar(title:Text(title,style:const TextStyle(fontWeight:FontWeight.w900)),actions:[IconButton(onPressed:restart,icon:const Icon(Icons.refresh_rounded))]),body:SafeArea(child:child));
+}
+class _ArcadeStart extends StatelessWidget{
+  final String title,description;final VoidCallback button;
+  const _ArcadeStart({required this.title,required this.description,required this.button});
+  @override Widget build(BuildContext context)=>Center(child:Padding(padding:const EdgeInsets.all(24),child:Container(padding:const EdgeInsets.all(26),decoration:BoxDecoration(color:const Color(0xFF111522),borderRadius:BorderRadius.circular(26),border:Border.all(color:Colors.white12)),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.sports_esports_rounded,size:58),const SizedBox(height:14),Text(title,style:const TextStyle(fontSize:28,fontWeight:FontWeight.w900)),const SizedBox(height:8),Text(description,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white70,height:1.4)),const SizedBox(height:22),SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:button,icon:const Icon(Icons.play_arrow_rounded),label:const Text('START GAME')))]))));
+}
+class _ArcadeBadge extends StatelessWidget{
+  final String text;const _ArcadeBadge(this.text);
+  @override Widget build(BuildContext context)=>Container(padding:const EdgeInsets.symmetric(horizontal:11,vertical:8),decoration:BoxDecoration(color:Colors.white10,borderRadius:BorderRadius.circular(11)),child:Text(text,style:const TextStyle(fontSize:10,fontWeight:FontWeight.w900)));
+}
+class _ArcadeOverlay extends StatelessWidget{
+  final String title;final int score;final VoidCallback restart;
+  const _ArcadeOverlay({required this.title,required this.score,required this.restart});
+  @override Widget build(BuildContext context)=>Container(color:Colors.black54,alignment:Alignment.center,child:Container(margin:const EdgeInsets.all(28),padding:const EdgeInsets.all(26),decoration:BoxDecoration(color:const Color(0xFF111522),borderRadius:BorderRadius.circular(26)),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.emoji_events_rounded,size:48),const SizedBox(height:10),Text(title,style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900)),const SizedBox(height:6),Text('Score '+score.toString(),style:const TextStyle(color:Colors.white60)),const SizedBox(height:18),FilledButton.icon(onPressed:restart,icon:const Icon(Icons.refresh_rounded),label:const Text('MAIN LAGI'))])));
 }
 
-class GamesPage extends StatefulWidget {
-  const GamesPage({super.key});
-  @override State<GamesPage> createState() => _GamesState();
+class NexoraSnakePage extends StatefulWidget{const NexoraSnakePage({super.key});@override State<NexoraSnakePage> createState()=>_NexoraSnakeState();}
+class _NexoraSnakeState extends State<NexoraSnakePage>{
+  static const rows=18,cols=12;final rng=Random();Timer?timer;List<Point<int>> snake=[];Point<int>food=const Point(5,5),dir=const Point(1,0),next=const Point(1,0);int score=0;bool run=false,over=false,paused=false;
+  @override void initState(){super.initState();resetBoard();}
+  void resetBoard(){snake=[const Point(6,9),const Point(5,9),const Point(4,9)];placeFood();}
+  void placeFood(){do{food=Point(rng.nextInt(cols),rng.nextInt(rows));}while(snake.contains(food));}
+  void start(){timer?.cancel();setState((){resetBoard();score=0;run=true;over=false;paused=false;dir=const Point(1,0);next=const Point(1,0);});timer=Timer.periodic(const Duration(milliseconds:125),(_)=>tick());}
+  void tick(){if(!mounted||!run||over||paused)return;setState((){dir=next;final h=snake.first,n=Point(h.x+dir.x,h.y+dir.y);if(n.x<0||n.x>=cols||n.y<0||n.y>=rows||snake.contains(n)){over=true;timer?.cancel();return;}snake=[n,...snake];if(n==food){score++;placeFood();}else{snake.removeLast();}});}
+  void move(Point<int>d){if(!run||over)return;if(d.x+dir.x==0&&d.y+dir.y==0)return;next=d;}
+  void restart(){timer?.cancel();setState((){run=false;over=false;paused=false;score=0;resetBoard();});}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Snake',restart:restart,child:Stack(children:[
+    Column(children:[
+      if(!run)Expanded(child:_ArcadeStart(title:'Snake',description:'Makan titik, tumbuh lebih panjang, jangan tabrak dinding atau tubuh.',button:start)),
+      if(run)Padding(padding:const EdgeInsets.all(10),child:Row(children:[_ArcadeBadge('SCORE '+score.toString()),const Spacer(),IconButton.filledTonal(onPressed:()=>setState(()=>paused=!paused),icon:Icon(paused?Icons.play_arrow_rounded:Icons.pause_rounded))])),
+      if(run)Expanded(child:Center(child:AspectRatio(aspectRatio:cols/rows,child:CustomPaint(painter:_SnakePainter(snake,food))))),
+      if(run)Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton.filled(onPressed:()=>move(const Point(-1,0)),icon:const Icon(Icons.arrow_back_rounded)),Column(children:[IconButton.filled(onPressed:()=>move(const Point(0,-1)),icon:const Icon(Icons.arrow_upward_rounded)),IconButton.filled(onPressed:()=>move(const Point(0,1)),icon:const Icon(Icons.arrow_downward_rounded))]),IconButton.filled(onPressed:()=>move(const Point(1,0)),icon:const Icon(Icons.arrow_forward_rounded))]),
+      if(run)const SizedBox(height:8),
+    ]),if(over)Positioned.fill(child:_ArcadeOverlay(title:'GAME OVER',score:score,restart:restart)),
+  ]));
 }
-class _GamesState extends State<GamesPage> {
-  String query = '';
-  Widget page(ArcadeGame g) {
-    switch (g.kind) {
-      case 'jump': return const NeonJumpPage();
-      case 'worm': return const WormArenaPage();
-      case 'chess': return const NexoraChessPage();
-      case 'road': return const RoadRushPage();
-      case 'brick': return const BrickSmashPage();
-      case 'flap': return const FlapOrbitPage();
-      case 'maze': return const MazeEscapePage();
-      default: return const Mini2048Page();
-    }
-  }
-  @override Widget build(BuildContext context) {
-    final list = _games.where((g) => g.title.toLowerCase().contains(query.toLowerCase())).toList();
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(14,14,14,110),
-      children: [
-        Container(
-          padding: const EdgeInsets.all(22),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(26),
-            gradient: const LinearGradient(colors: [Color(0xFF6D28D9),Color(0xFF111827)]),
-          ),
-          child: const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Icon(Icons.sports_esports_rounded, size: 34),
-            SizedBox(height: 10),
-            Text('NEXORA MINI GAMES', style: TextStyle(fontSize: 11,fontWeight: FontWeight.w900,letterSpacing: 1.5)),
-            SizedBox(height: 4),
-            Text('Main langsung.', style: TextStyle(fontSize: 28,fontWeight: FontWeight.w900)),
-            SizedBox(height: 5),
-            Text('Offline. Tanpa akun, koin, toko, leaderboard, atau fitur tambahan.'),
-          ]),
-        ),
-        const SizedBox(height: 14),
-        TextField(
-          onChanged: (v) => setState(() => query = v),
-          decoration: InputDecoration(
-            prefixIcon: const Icon(Icons.search_rounded),
-            hintText: 'Cari game...',
-            filled: true, fillColor: const Color(0xFF111522),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(18),borderSide: BorderSide.none),
-          ),
-        ),
-        const SizedBox(height: 14),
-        GridView.builder(
-          shrinkWrap: true, physics: const NeverScrollableScrollPhysics(),
-          itemCount: list.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,crossAxisSpacing: 10,mainAxisSpacing: 10,childAspectRatio: .92,
-          ),
-          itemBuilder: (_,i) {
-            final g=list[i];
-            return Card(
-              clipBehavior: Clip.antiAlias,
-              child: InkWell(
-                onTap: () => Navigator.push(context,MaterialPageRoute(builder: (_) => page(g))),
-                child: Padding(
-                  padding: const EdgeInsets.all(13),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Expanded(child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(17),
-                        gradient: LinearGradient(colors: [Theme.of(context).colorScheme.primary.withOpacity(.45),const Color(0xFF151827)]),
-                      ),
-                      child: GamePreview(kind:g.kind),
-                    )),
-                    const SizedBox(height: 9),
-                    Text(g.title,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontWeight:FontWeight.w900)),
-                    const SizedBox(height:3),
-                    const Text('OFFLINE',style:TextStyle(fontSize:9,fontWeight:FontWeight.w900,color:Colors.white54)),
-                  ]),
-                ),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-}
+class _SnakePainter extends CustomPainter{final List<Point<int>> snake;final Point<int> food;_SnakePainter(this.snake,this.food);@override void paint(Canvas c,Size s){final cell=min(s.width/12,s.height/18),ox=(s.width-cell*12)/2,oy=(s.height-cell*18)/2;c.drawCircle(Offset(ox+food.x*cell+cell/2,oy+food.y*cell+cell/2),cell*.28,Paint()..color=const Color(0xFFF43F5E));for(int i=snake.length-1;i>=0;i--){final p=snake[i];c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+p.x*cell+2,oy+p.y*cell+2,cell-4,cell-4),const Radius.circular(6)),Paint()..color=i==0?const Color(0xFF22D3EE):const Color(0xFF8B5CF6));}}@override bool shouldRepaint(covariant _SnakePainter old)=>true;}
+
+class NexoraTetrisPage extends StatefulWidget{const NexoraTetrisPage({super.key});@override State<NexoraTetrisPage> createState()=>_NexoraTetrisState();}
+class _NexoraTetrisState extends State<NexoraTetrisPage>{
+  static const rows=18,cols=10;final rng=Random();Timer?timer;List<List<int>> board=[];int x=4,y=0,rot=0,score=0;List<Point<int>> shape=[];bool run=false,over=false,paused=false;
+  static const pieces=<List<Point<int>>>[[Point(0,0),Point(1,0),Point(0,1),Point(1,1)],[Point(-1,0),Point(0,0),Point(1,0),Point(2,0)],[Point(-1,0),Point(0,0),Point(0,1),Point(1,1)],[Point(-1,1),Point(0,1),Point(0,0),Point(1,0)]];
+  List<Point<int>> cells(){return shape.map((p){var a=p.x,b=p.y;for(int i=0;i<rot%4;i++){final t=a;a=-b;b=t;}return Point(x+a,y+b);}).toList();}
+  bool hit(int xx,int yy,int rr){for(final p in shape.map((q){var a=q.x,b=q.y;for(int i=0;i<rr%4;i++){final t=a;a=-b;b=t;}return Point(xx+a,yy+b);})){if(p.x<0||p.x>=cols||p.y>=rows)return true;if(p.y>=0&&board[p.y][p.x]!=0)return true;}return false;}
+  void piece(){shape=pieces[rng.nextInt(pieces.length)];x=4;y=0;rot=0;if(hit(x,y,0)){over=true;timer?.cancel();}}
+  void lock(){for(final p in cells())if(p.y>=0)board[p.y][p.x]=1;for(int r=rows-1;r>=0;r--)if(board[r].every((v)=>v!=0)){board.removeAt(r);board.insert(0,List.filled(cols,0));score+=100;r++;}piece();}
+  void drop(){if(!hit(x,y+1,rot))y++;else lock();}
+  void start(){timer?.cancel();board=List.generate(rows,(_)=>List.filled(cols,0));score=0;run=true;over=false;paused=false;piece();setState((){});timer=Timer.periodic(const Duration(milliseconds:420),(_){if(mounted&&!paused&&!over)setState(drop);});}
+  void restart(){timer?.cancel();setState((){run=false;over=false;score=0;board=List.generate(rows,(_)=>List.filled(cols,0));});}
+  void move(int dx){if(run&&!over&&!paused&&!hit(x+dx,y,rot))setState(()=>x+=dx);}
+  void rotate(){if(run&&!over&&!paused&&!hit(x,y,(rot+1)%4))setState(()=>rot=(rot+1)%4);}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Tetris',restart:restart,child:Stack(children:[Column(children:[
+    if(!run)Expanded(child:_ArcadeStart(title:'Tetris',description:'Susun blok dan bersihkan baris sebelum papan penuh.',button:start)),
+    if(run)Padding(padding:const EdgeInsets.all(10),child:Row(children:[_ArcadeBadge('SCORE '+score.toString()),const Spacer(),IconButton.filledTonal(onPressed:rotate,icon:const Icon(Icons.rotate_right_rounded)),IconButton.filledTonal(onPressed:()=>setState(()=>paused=!paused),icon:Icon(paused?Icons.play_arrow_rounded:Icons.pause_rounded))])),
+    if(run)Expanded(child:Center(child:AspectRatio(aspectRatio:cols/rows,child:CustomPaint(painter:_TetrisPainter(board,cells()))))),
+    if(run)Row(mainAxisAlignment:MainAxisAlignment.center,children:[IconButton.filled(onPressed:()=>move(-1),icon:const Icon(Icons.arrow_back_rounded)),IconButton.filled(onPressed:drop,icon:const Icon(Icons.arrow_downward_rounded)),IconButton.filled(onPressed:()=>move(1),icon:const Icon(Icons.arrow_forward_rounded))]),
+  ]),if(over)Positioned.fill(child:_ArcadeOverlay(title:'GAME OVER',score:score,restart:restart))]));}
+class _TetrisPainter extends CustomPainter{final List<List<int>> b;final List<Point<int>> active;_TetrisPainter(this.b,this.active);@override void paint(Canvas c,Size s){final cell=min(s.width/10,s.height/18),ox=(s.width-cell*10)/2,oy=(s.height-cell*18)/2;for(int y=0;y<18;y++)for(int x=0;x<10;x++)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+x*cell+1,oy+y*cell+1,cell-2,cell-2),const Radius.circular(4)),Paint()..color=b[y][x]!=0?const Color(0xFFA78BFA):const Color(0xFF111827));for(final p in active)if(p.y>=0)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+p.x*cell+1,oy+p.y*cell+1,cell-2,cell-2),const Radius.circular(4)),Paint()..color=const Color(0xFF22D3EE));}@override bool shouldRepaint(covariant _TetrisPainter old)=>true;}
+
+class NexoraFlappyPage extends StatefulWidget{const NexoraFlappyPage({super.key});@override State<NexoraFlappyPage> createState()=>_NexoraFlappyState();}
+class _NexoraFlappyState extends State<NexoraFlappyPage>{Timer?timer;double bird=.5,vy=0;int score=0;bool run=false,over=false;final rng=Random();List<double> pipes=[];
+  void start(){timer?.cancel();setState((){run=true;over=false;score=0;bird=.5;vy=0;pipes=[.9,1.5];});timer=Timer.periodic(const Duration(milliseconds:30),(_)=>tick());}
+  void tick(){if(!mounted||!run||over)return;setState((){vy+=.0015;bird+=vy;pipes=[for(final p in pipes)p-.008];if(pipes.first<-.12){pipes.removeAt(0);pipes.add(1.0+rng.nextDouble()*.5);score++;}if(bird<.03||bird>.97)end();});}
+  void end(){over=true;timer?.cancel();}
+  void flap(){if(!run){start();return;}if(!over)setState(()=>vy=-.018);}
+  void restart(){timer?.cancel();setState((){run=false;over=false;score=0;pipes=[];});}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Flappy',restart:restart,child:Stack(children:[Positioned.fill(child:GestureDetector(onTap:flap,child:CustomPaint(painter:_FlappyPainter(bird,pipes)))),Positioned(top:12,left:12,child:_ArcadeBadge('SCORE '+score.toString())),if(!run)Positioned.fill(child:_ArcadeStart(title:'Flappy',description:'Tap layar untuk terbang dan lewati celah pipa.',button:start)),if(over)Positioned.fill(child:_ArcadeOverlay(title:'GAME OVER',score:score,restart:restart))]));}
+class _FlappyPainter extends CustomPainter{final double bird;final List<double> pipes;_FlappyPainter(this.bird,this.pipes);@override void paint(Canvas c,Size s){c.drawRect(Offset.zero&s,Paint()..color=const Color(0xFF08111F));final p=Paint()..color=const Color(0xFF16A34A);for(final x in pipes){c.drawRect(Rect.fromLTWH(x*s.width,0,34,s.height*.32),p);c.drawRect(Rect.fromLTWH(x*s.width,s.height*.68,34,s.height*.32),p);}c.drawCircle(Offset(s.width*.28,bird*s.height),14,Paint()..color=const Color(0xFFFBBF24));}@override bool shouldRepaint(covariant _FlappyPainter old)=>true;}
+
+class NexoraBreakoutPage extends StatefulWidget{const NexoraBreakoutPage({super.key});@override State<NexoraBreakoutPage> createState()=>_BreakoutState();}
+class _BreakoutState extends State<NexoraBreakoutPage>{Timer?timer;double px=.5,bx=.5,by=.7,vx=.009,vy=-.009;int score=0;bool run=false,over=false;final bricks=<Point<int>>{};
+  void start(){timer?.cancel();bricks.clear();for(int r=0;r<3;r++)for(int c=0;c<7;c++)bricks.add(Point(c,r));setState((){run=true;over=false;score=0;px=.5;bx=.5;by=.7;vx=.009;vy=-.009;});timer=Timer.periodic(const Duration(milliseconds:30),(_)=>tick());}
+  void tick(){if(!mounted||!run||over)return;setState((){bx+=vx;by+=vy;if(bx<.02||bx>.98)vx=-vx;if(by<.03)vy=-vy;if(by>.94){if((bx-px).abs()<.17){vy=-vy;by=.91;}else{end();return;}}final col=(bx*7).floor().clamp(0,6),row=((by-.2)*8).floor().clamp(0,2),hit=Point<int>(col,row);if(bricks.remove(hit)){score+=10;vy=-vy;if(bricks.isEmpty)end();}});}
+  void end(){over=true;timer?.cancel();}
+  void restart(){timer?.cancel();setState((){run=false;over=false;score=0;bricks.clear();});}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Breakout',restart:restart,child:Stack(children:[GestureDetector(onHorizontalDragUpdate:(d){setState(()=>px=(px+d.delta.dx/300).clamp(.08,.92));},child:CustomPaint(size:Size.infinite,painter:_BreakoutPainter(bx,by,px,bricks))),Positioned(top:12,left:12,child:_ArcadeBadge('SCORE '+score.toString())),if(!run)Positioned.fill(child:_ArcadeStart(title:'Breakout',description:'Geser paddle kiri/kanan dan hancurkan semua brick.',button:start)),if(over)Positioned.fill(child:_ArcadeOverlay(title:bricks.isEmpty?'YOU WIN':'GAME OVER',score:score,restart:restart))]));}
+class _BreakoutPainter extends CustomPainter{final double bx,by,px;final Set<Point<int>> bricks;_BreakoutPainter(this.bx,this.by,this.px,this.bricks);@override void paint(Canvas c,Size s){c.drawRect(Offset.zero&s,Paint()..color=const Color(0xFF080C18));for(final b in bricks){final x=s.width*(.12+b.x*.11),y=s.height*.2+b.y*22;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x,y,s.width*.095,17),const Radius.circular(5)),Paint()..color=const Color(0xFF60A5FA));}c.drawCircle(Offset(bx*s.width,by*s.height),7,Paint()..color=Colors.white);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px*s.width-s.width*.12,s.height-48,s.width*.24,10),const Radius.circular(5)),Paint()..color=const Color(0xFF22D3EE));}@override bool shouldRepaint(covariant _BreakoutPainter old)=>true;}
+
+class NexoraMemoryPage extends StatefulWidget{const NexoraMemoryPage({super.key});@override State<NexoraMemoryPage> createState()=>_MemoryState();}
+class _MemoryState extends State<NexoraMemoryPage>{final base=<String>['★','★','◆','◆','●','●','▲','▲','♥','♥','✦','✦'];final rng=Random();late List<String>cards;final open=<int>{};final matched=<int>{};int moves=0;bool busy=false,started=false;
+  void start(){cards=[...base]..shuffle(rng);open.clear();matched.clear();moves=0;busy=false;started=true;setState((){});}
+  void tap(int i){if(!started||busy||matched.contains(i)||open.contains(i))return;setState(()=>open.add(i));if(open.length==2){busy=true;final a=open.toList();moves++;Future.delayed(const Duration(milliseconds:450),(){if(!mounted)return;setState((){if(cards[a[0]]==cards[a[1]])matched.addAll(a);open.clear();busy=false;});});}}
+  void restart(){setState((){started=false;open.clear();matched.clear();moves=0;busy=false;});}
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Memory',restart:restart,child:!started?_ArcadeStart(title:'Memory',description:'Buka dua kartu dan cari semua pasangan yang sama.',button:start):Column(children:[Padding(padding:const EdgeInsets.all(12),child:Row(children:[_ArcadeBadge('MOVES '+moves.toString()),const Spacer(),Text((matched.length~/2).toString()+'/6 PASANG',style:const TextStyle(fontWeight:FontWeight.w900))])),Expanded(child:GridView.builder(padding:const EdgeInsets.all(14),itemCount:12,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:10,mainAxisSpacing:10),itemBuilder:(_,i){final visible=open.contains(i)||matched.contains(i);return GestureDetector(onTap:()=>tap(i),child:Container(decoration:BoxDecoration(color:visible?const Color(0xFF1F2937):const Color(0xFF111827),borderRadius:BorderRadius.circular(16),border:Border.all(color:visible?const Color(0xFF34D399):Colors.white12)),child:Center(child:Text(visible?cards[i]:'?',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900,color:visible?const Color(0xFF34D399):Colors.white54)))));}))]));}
+
+class NexoraPongPage extends StatefulWidget{const NexoraPongPage({super.key});@override State<NexoraPongPage> createState()=>_PongState();}
+class _PongState extends State<NexoraPongPage>{Timer?timer;double player=.5,bot=.5,x=.5,y=.5,vx=.009,vy=.008;int score=0,botScore=0;bool run=false,over=false;
+  void start(){timer?.cancel();setState((){run=true;over=false;score=0;botScore=0;player=.5;bot=.5;x=.5;y=.5;vx=.009;vy=.008;});timer=Timer.periodic(const Duration(milliseconds:25),(_)=>tick());}
+  void tick(){if(!mounted||!run||over)return;setState((){x+=vx;y+=vy;bot+=(y-bot)*.08;if(y<.04||y>.96)vy=-vy;if(x<.05){if((y-player).abs()<.18){vx=-vx;x=.08;}else{botScore++;serve();}}if(x>.95){if((y-bot).abs()<.18){vx=-vx;x=.92;}else{score++;serve();}}if(score>=7||botScore>=7){over=true;timer?.cancel();}});}
+  void serve(){x=.5;y=.5;vx=-vx;}
+  void restart(){timer?.cancel();setState(()=>run=false);}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Pong',restart:restart,child:Stack(children:[GestureDetector(onVerticalDragUpdate:(d){setState(()=>player=(player+d.delta.dy/300).clamp(.12,.88));},child:CustomPaint(size:Size.infinite,painter:_PongPainter(player,bot,x,y))),Positioned(top:12,left:12,child:_ArcadeBadge(score.toString()+' : '+botScore.toString())),if(!run)Positioned.fill(child:_ArcadeStart(title:'Pong',description:'Geser vertikal untuk menggerakkan paddle. Pertama ke 7.',button:start)),if(over)Positioned.fill(child:_ArcadeOverlay(title:score>=7?'YOU WIN':'BOT WINS',score:score,restart:restart))]));}
+class _PongPainter extends CustomPainter{final double player,bot,x,y;_PongPainter(this.player,this.bot,this.x,this.y);@override void paint(Canvas c,Size s){c.drawRect(Offset.zero&s,Paint()..color=const Color(0xFF07101A));final line=Paint()..color=Colors.white12..strokeWidth=2;for(double y=0;y<s.height;y+=22)c.drawLine(Offset(s.width/2,y),Offset(s.width/2,y+10),line);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(18,player*s.height-45,9,90),const Radius.circular(5)),Paint()..color=const Color(0xFF38BDF8));c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width-27,bot*s.height-45,9,90),const Radius.circular(5)),Paint()..color=const Color(0xFFF472B6));c.drawCircle(Offset(x*s.width,y*s.height),8,Paint()..color=Colors.white);}@override bool shouldRepaint(covariant _PongPainter old)=>true;}
+
+class NexoraWhackPage extends StatefulWidget{const NexoraWhackPage({super.key});@override State<NexoraWhackPage> createState()=>_WhackState();}
+class _WhackState extends State<NexoraWhackPage>{Timer?timer;final rng=Random();int active=0,score=0,time=30;bool run=false;int?hit;
+  void start(){timer?.cancel();setState((){run=true;score=0;time=30;active=rng.nextInt(9);hit=null;});timer=Timer.periodic(const Duration(seconds:1),(_){if(!mounted)return;setState((){time--;active=rng.nextInt(9);hit=null;if(time<=0){run=false;timer?.cancel();}});});}
+  void tap(int i){if(run&&i==active){score++;hit=i;setState((){});}}
+  void restart(){timer?.cancel();setState(()=>run=false);}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Whack-a-Mole',restart:restart,child:!run?_ArcadeStart(title:'Whack-a-Mole',description:'Tap mole secepat mungkin sebelum waktu habis.',button:start):Column(children:[Padding(padding:const EdgeInsets.all(12),child:Row(children:[_ArcadeBadge('TIME '+time.toString()),const Spacer(),_ArcadeBadge('SCORE '+score.toString())])),Expanded(child:GridView.builder(padding:const EdgeInsets.all(20),itemCount:9,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:14,mainAxisSpacing:14),itemBuilder:(_,i)=>GestureDetector(onTap:()=>tap(i),child:Container(decoration:BoxDecoration(color:const Color(0xFF131A28),borderRadius:BorderRadius.circular(22)),child:Icon(i==active?Icons.pets_rounded:Icons.circle_outlined,size:44,color:i==active?const Color(0xFFF97316):Colors.white12)))))]));}
+
+class NexoraMinesPage extends StatefulWidget{const NexoraMinesPage({super.key});@override State<NexoraMinesPage> createState()=>_MinesState();}
+class _MinesState extends State<NexoraMinesPage>{static const n=8,mines=10;final rng=Random();late List<bool>mine,open,flag;bool started=false,over=false;int safe=0;
+  void start(){mine=List.filled(n*n,false);open=List.filled(n*n,false);flag=List.filled(n*n,false);safe=0;over=false;started=true;int placed=0;while(placed<mines){final i=rng.nextInt(n*n);if(!mine[i]){mine[i]=true;placed++;}}setState((){});}
+  int count(int i){final r=i~/n,c=i%n;int z=0;for(int dr=-1;dr<=1;dr++)for(int dc=-1;dc<=1;dc++){final rr=r+dr,cc=c+dc;if(rr>=0&&rr<n&&cc>=0&&cc<n&&mine[rr*n+cc])z++;}return z;}
+  void reveal(int i){if(!started||over||open[i]||flag[i])return;if(mine[i]){setState(()=>over=true);return;}if(open[i])return;setState((){open[i]=true;safe++;});if(count(i)==0){final r=i~/n,c=i%n;for(int dr=-1;dr<=1;dr++)for(int dc=-1;dc<=1;dc++){final rr=r+dr,cc=c+dc;if(rr>=0&&rr<n&&cc>=0&&cc<n)reveal(rr*n+cc);}}if(safe>=n*n-mines)setState(()=>over=true);}
+  void toggle(int i){if(started&&!over&&!open[i])setState(()=>flag[i]=!flag[i]);}
+  void restart()=>setState(()=>started=false);
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Minesweeper',restart:restart,child:!started?_ArcadeStart(title:'Minesweeper',description:'Tap untuk buka. Tahan untuk memberi flag pada ranjau.',button:start):Stack(children:[Column(children:[Padding(padding:const EdgeInsets.all(10),child:Row(children:[_ArcadeBadge('MINES '+mines.toString()),const Spacer(),Text(safe.toString()+'/'+(n*n-mines).toString(),style:const TextStyle(fontWeight:FontWeight.w900))])),Expanded(child:GridView.builder(padding:const EdgeInsets.all(12),itemCount:n*n,gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:n,crossAxisSpacing:3,mainAxisSpacing:3),itemBuilder:(_,i)=>GestureDetector(onTap:()=>reveal(i),onLongPress:()=>toggle(i),child:Container(decoration:BoxDecoration(color:open[i]?const Color(0xFF202938):const Color(0xFF111827),borderRadius:BorderRadius.circular(5)),child:Center(child:Text(flag[i]?'⚑':open[i]?(mine[i]?'✹':(count(i)==0?'':count(i).toString())):'',style:const TextStyle(fontWeight:FontWeight.w900,color:Color(0xFFA78BFA))))))))]),if(over)Positioned.fill(child:_ArcadeOverlay(title:'ROUND OVER',score:safe,restart:restart))]));}
+
+class NexoraSimonPage extends StatefulWidget{const NexoraSimonPage({super.key});@override State<NexoraSimonPage> createState()=>_SimonState();}
+class _SimonState extends State<NexoraSimonPage>{final rng=Random();final seq=<int>[];int showing=-1,input=0,score=0;bool run=false,locked=false,over=false;
+  void start(){seq.clear();score=0;over=false;run=true;nextRound();}
+  Future<void> nextRound() async{if(!mounted)return;seq.add(rng.nextInt(4));input=0;locked=true;for(final v in seq){if(!mounted)return;setState(()=>showing=v);await Future.delayed(const Duration(milliseconds:400));if(!mounted)return;setState(()=>showing=-1);await Future.delayed(const Duration(milliseconds:120));}if(mounted)setState(()=>locked=false);}
+  void tap(int i){if(!run||locked||over)return;if(seq[input]!=i){setState(()=>over=true);return;}setState(()=>input++);if(input==seq.length){score++;nextRound();}}
+  void restart()=>setState((){run=false;over=false;locked=false;seq.clear();score=0;showing=-1;});
+  @override Widget build(BuildContext context)=>_ArcadeGameScaffold(title:'Simon Says',restart:restart,child:Stack(children:[Column(children:[if(!run)Expanded(child:_ArcadeStart(title:'Simon Says',description:'Hafalkan urutan lampu lalu tekan dengan urutan yang sama.',button:start)),if(run)Padding(padding:const EdgeInsets.all(14),child:Row(children:[_ArcadeBadge('ROUND '+(score+1).toString()),const Spacer(),Text(locked?'WATCH':'YOUR TURN',style:const TextStyle(fontWeight:FontWeight.w900))])),if(run)Expanded(child:GridView.count(shrinkWrap:true,crossAxisCount:2,padding:const EdgeInsets.all(28),crossAxisSpacing:16,mainAxisSpacing:16,children:[for(int i=0;i<4;i++)GestureDetector(onTap:()=>tap(i),child:AnimatedContainer(duration:const Duration(milliseconds:100),decoration:BoxDecoration(color:[const Color(0xFFEF4444),const Color(0xFF22C55E),const Color(0xFF3B82F6),const Color(0xFFEAB308)][i].withValues(alpha:showing==i?1:.28),borderRadius:BorderRadius.circular(28)),child:const Icon(Icons.circle,size:30,color:Colors.white70))))]))]),if(over)Positioned.fill(child:_ArcadeOverlay(title:'WRONG SEQUENCE',score:score,restart:restart))]));}
 
 class _MiniScaffold extends StatelessWidget {
   final String title;
