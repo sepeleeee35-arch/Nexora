@@ -87,7 +87,7 @@ class JamendoMusicService implements MusicService {
         queryParameters: {'endpoint': path, ...all},
       );
     }
-    return Uri.parse('$_base/$path').replace(queryParameters: all);
+    return Uri.parse('$_base/$path/').replace(queryParameters: all);
   }
 
   Future<Map<String, dynamic>> _get(String path, Map<String, String> params) async {
@@ -116,22 +116,10 @@ class JamendoMusicService implements MusicService {
     }
 
     if (kIsWeb) {
-      try {
-        // Prefer the Nexora proxy so the web app keeps working without
-        // exposing a browser-side dependency on Jamendo's CORS behavior.
-        return await request(_uri(path, params));
-      } catch (_) {
-        // If the deployed proxy is temporarily unavailable, fall back to
-        // Jamendo's documented public read API. This keeps the catalog
-        // usable while the proxy recovers.
-        return await request(Uri.parse('$_base/$path').replace(
-          queryParameters: <String, String>{
-            'client_id': clientId,
-            'format': 'json',
-            ...params,
-          },
-        ));
-      }
+      // Browser builds always use the same-origin proxy. Jamendo's direct
+      // endpoint is intentionally not used here because browser CORS support
+      // can vary independently from the API itself.
+      return request(_uri(path, params));
     }
 
     return request(_uri(path, params));
@@ -161,9 +149,9 @@ class JamendoMusicService implements MusicService {
   Future<List<MusicTrack>> _query({String? search, String? tag}) async {
     final p = <String, String>{
       'limit': '100',
-      'audioformat': 'mp32',
+      'audioformat': 'mp31',
       'type': 'single albumtrack',
-      'boost': 'popularity_total',
+      'order': 'popularity_total_desc',
     };
     if (search != null && search.trim().isNotEmpty) p['search'] = search.trim();
     if (tag != null && tag.trim().isNotEmpty) p['tags'] = tag.trim();
@@ -171,12 +159,23 @@ class JamendoMusicService implements MusicService {
     try {
       final tracks = _tracks(await _get('tracks', p));
       if (tracks.isNotEmpty) return tracks;
-    } catch (_) {
-      // Retry with the broadly supported MP3 format.
-    }
+    } catch (_) {}
 
-    final fallback = Map<String, String>.from(p)..['audioformat'] = 'mp31';
-    return _tracks(await _get('tracks', fallback));
+    // Retry with only the basic documented filters if an optional filter is
+    // rejected by the API.
+    final fallback = <String, String>{
+      'limit': '100',
+      'audioformat': 'mp31',
+    };
+    if (search != null && search.trim().isNotEmpty) fallback['search'] = search.trim();
+    if (tag != null && tag.trim().isNotEmpty) fallback['tags'] = tag.trim();
+    try {
+      final tracks = _tracks(await _get('tracks', fallback));
+      if (tracks.isNotEmpty) return tracks;
+    } catch (_) {}
+
+    final mp32 = Map<String, String>.from(fallback)..['audioformat'] = 'mp32';
+    return _tracks(await _get('tracks', mp32));
   }
 
   Future<List<MusicTrack>> trending() => _query();
