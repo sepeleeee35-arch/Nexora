@@ -506,7 +506,7 @@ class _TwentyFortyEightState extends State<_TwentyFortyEightGame>{
 class _TetrisGame extends StatefulWidget { const _TetrisGame(); @override State<_TetrisGame> createState()=>_TetrisGameState(); }
 class _TetrisGameState extends State<_TetrisGame>{
   Timer? _tm;final Random _r=Random();List<List<int>> _g=List.generate(20,(_)=>List<int>.filled(10,0));
-  List<Point<int>> _p=const[Point(0,0),Point(1,0),Point(0,1),Point(1,1)];int _x=3,_y=0,_rot=0,_score=0,_type=0;bool _run=false,_over=false,_paused=false;
+  List<Point<int>> _p=const [Point(0,0),Point(1,0),Point(0,1),Point(1,1)];int _x=3,_y=0,_rot=0,_score=0,_type=0;bool _run=false,_over=false,_paused=false;
   static const pieces=<List<Point<int>>>[
     [Point(0,0),Point(1,0),Point(2,0),Point(3,0)], // I
     [Point(0,0),Point(1,0),Point(0,1),Point(1,1)], // O
@@ -549,7 +549,7 @@ class _TetrisPainter extends CustomPainter{
     for(final p in active)if(p.y>=0)_cell(c,p.x,p.y,cw,ch,_color(type+1));
   }
   void _cell(Canvas c,int x,int y,double cw,double ch,Color color){c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cw+1,y*ch+1,cw-2,ch-2),const Radius.circular(4)),Paint()..color=color);}
-  Color _color(int v)=>[Colors.cyanAccent,Colors.amber,Colors.purpleAccent,Colors.orangeAccent,Colors.blueAccent,Colors.greenAccent,Colors.redAccent][(v-1).clamp(0,6)];
+  Color _color(int v)=>[Colors.cyanAccent,Colors.amber,Colors.purpleAccent,Colors.orangeAccent,Colors.blueAccent,Colors.greenAccent,Colors.redAccent][(v-1).clamp(0,6).toInt()];
   @override bool shouldRepaint(covariant _TetrisPainter old)=>true;
 }
 
@@ -559,7 +559,7 @@ class _FlappyGameState extends State<_FlappyGame>{
   Timer? _tm;final Random _r=Random();double _bird=.5,_vy=0;int _score=0;bool _run=false,_over=false,_holding=false;List<double> _pipes=[];
   void _start(){_tm?.cancel();setState((){_run=true;_over=false;_holding=false;_score=0;_bird=.5;_vy=0;_pipes=[.9,1.5];});_tm=Timer.periodic(const Duration(milliseconds:30),(_)=>_tick());}
   void _tick(){if(!mounted||!_run||_over)return;setState((){
-    if(_holding)_vy=(_vy-.0017).clamp(-.022,.020);else _vy=(_vy+.0015).clamp(-.022,.020);
+    if(_holding)_vy=(_vy-.0017).clamp(-.022,.020).toDouble();else _vy=(_vy+.0015).clamp(-.022,.020).toDouble();
     _bird+=_vy;_pipes=[for(final p in _pipes)p-.008];
     if(_pipes.first<-.12){_pipes.removeAt(0);_pipes.add(1.0+_r.nextDouble()*.5);_score++;}
     if(_bird<.03||_bird>.97)_end();
@@ -593,7 +593,7 @@ class _BreakoutGameState extends State<_BreakoutGame>{
   void _start(){_tm?.cancel();_bricks.clear();for(int r=0;r<4;r++)for(int col=0;col<7;col++)_bricks.add(Point(col,r));setState((){_run=true;_over=false;_score=0;_px=.5;_bx=.5;_by=.72;_vx=.009;_vy=-.009;});_tm=Timer.periodic(const Duration(milliseconds:30),(_)=>_tick());}
   void _tick(){if(!mounted||!_run||_over)return;setState((){
     _bx+=_vx;_by+=_vy;
-    if(_bx<.025||_bx>.975){_vx=-_vx;_bx=_bx.clamp(.025,.975);}
+    if(_bx<.025||_bx>.975){_vx=-_vx;_bx=_bx.clamp(.025,.975).toDouble();}
     if(_by<.035)_vy=_vy.abs();
     if(_by>.91){if((_bx-_px).abs()<.18){_vy=-_vy.abs();_by=.89;}else{_end();return;}}
     final col=((_bx-.16)/.096).floor(),row=((_by-.10)/.075).floor();
@@ -604,7 +604,7 @@ class _BreakoutGameState extends State<_BreakoutGame>{
   void _restart(){_tm?.cancel();setState((){_run=false;_over=false;_score=0;_bricks.clear();});}
   @override void dispose(){_tm?.cancel();super.dispose();}
   @override Widget build(BuildContext context)=>_GameShell(title:'Breakout',restart:_restart,child:Stack(children:[
-    Positioned.fill(child:GestureDetector(behavior:HitTestBehavior.opaque,onHorizontalDragUpdate:(d)=>setState(()=>_px=(_px+d.delta.dx/260).clamp(.10,.90)),child:CustomPaint(painter:_BreakoutPainter(_bx,_by,_px,_bricks)))),
+    Positioned.fill(child:GestureDetector(behavior:HitTestBehavior.opaque,onHorizontalDragUpdate:(d)=>setState(()=>_px=(_px+d.delta.dx/260).clamp(.10,.90).toDouble()),child:CustomPaint(painter:_BreakoutPainter(_bx,_by,_px,_bricks)))),
     Positioned(top:12,left:12,child:_GameBadge('SCORE '+_score.toString())),
     if(!_run)Positioned.fill(child:_GameStart(title:'Breakout',description:'Geser jari kiri-kanan untuk menggerakkan paddle. Pantulkan bola dan hancurkan semua brick.',details:'SWIPE LEFT/RIGHT • ARCADE',start:_start)),
     if(_run)Positioned(bottom:12,left:0,right:0,child:Center(child:_GameBadge('GESER KIRI / KANAN'))),
@@ -643,7 +643,7 @@ class _PongGameState extends State<_PongGame>{
   void _start(){_tm?.cancel();setState((){_run=true;_over=false;_score=0;_botScore=0;_player=.5;_bot=.5;_x=.5;_y=.5;_vx=.009;_vy=.008;});_tm=Timer.periodic(const Duration(milliseconds:25),(_)=>_tick());}
   void _tick(){if(!mounted||!_run||_over)return;setState((){
     _x+=_vx;_y+=_vy;_bot+=(_y-_bot)*_botSpeed;
-    if(_y<.04||_y>.96){_vy=-_vy;_y=_y.clamp(.04,.96);}
+    if(_y<.04||_y>.96){_vy=-_vy;_y=_y.clamp(.04,.96).toDouble();}
     if(_x<.05){if((_y-_player).abs()<.18){_vx=_vx.abs();_x=.08;}else{_botScore++;_serve();}}
     if(_x>.95){if((_y-_bot).abs()<.18){_vx=-_vx.abs();_x=.92;}else{_score++;_serve();}}
     if(_score>=7||_botScore>=7){_over=true;_tm?.cancel();}
@@ -651,12 +651,12 @@ class _PongGameState extends State<_PongGame>{
   void _serve(){_x=.5;_y=.5;_vx=-_vx;}
   void _restart(){_tm?.cancel();setState((){_run=false;_over=false;_score=0;_botScore=0;});}
   @override void dispose(){_tm?.cancel();super.dispose();}
-  Widget _difficultyPicker(){return Wrap(alignment:WrapAlignment.center,spacing:7,children:[for(final d in const['EASY','NORMAL','HARD'])ChoiceChip(label:Text(d),selected:_difficulty==d,onSelected:(_){setState(()=>_difficulty=d);})]);}
+  Widget _difficultyPicker(){return Wrap(alignment:WrapAlignment.center,spacing:7,children:[for(final d in const ['EASY','NORMAL','HARD'])ChoiceChip(label:Text(d),selected:_difficulty==d,onSelected:(_){setState(()=>_difficulty=d);})]);}
   @override Widget build(BuildContext context)=>_GameShell(title:'Pong',restart:_restart,child:Stack(children:[
     if(!_run)Positioned.fill(child:SingleChildScrollView(padding:const EdgeInsets.all(22),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
       const SizedBox(height:60),const Text('PONG',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900)),const SizedBox(height:8),const Text('Geser paddle kamu secara vertikal. Bot menjaga sisi kanan.',textAlign:TextAlign.center,style:TextStyle(color:Colors.white70)),const SizedBox(height:18),const Text('PILIH BOT',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900)),const SizedBox(height:8),_difficultyPicker(),const SizedBox(height:20),SizedBox(width:220,child:FilledButton.icon(onPressed:_start,icon:const Icon(Icons.play_arrow_rounded),label:const Text('START GAME'))),
     ]))),
-    if(_run)Positioned.fill(child:GestureDetector(behavior:HitTestBehavior.opaque,onVerticalDragUpdate:(d)=>setState(()=>_player=(_player+d.delta.dy/300).clamp(.12,.88)),child:CustomPaint(painter:_PongPainter(_player,_bot,_x,_y)))),
+    if(_run)Positioned.fill(child:GestureDetector(behavior:HitTestBehavior.opaque,onVerticalDragUpdate:(d)=>setState(()=>_player=(_player+d.delta.dy/300).clamp(.12,.88).toDouble()),child:CustomPaint(painter:_PongPainter(_player,_bot,_x,_y)))),
     if(_run)Positioned(top:12,left:0,right:0,child:Center(child:_GameBadge(_score.toString()+'  :  '+_botScore.toString()+'  •  '+_difficulty))),
     if(_run)Positioned(bottom:12,left:0,right:0,child:Center(child:_GameBadge('GESER ATAS / BAWAH'))),
     if(_over)Positioned.fill(child:_GameOver(title:_score>=7?'YOU WIN':'BOT WINS',score:_score,restart:_restart)),
@@ -691,7 +691,7 @@ class _MinesGameState extends State<_MinesGame>{
 // 10 Simon Says
 class _SimonGame extends StatefulWidget { const _SimonGame(); @override State<_SimonGame> createState()=>_SimonGameState(); }
 class _SimonGameState extends State<_SimonGame>{
-  final Random _r=Random();final List<Color> _colors=const[Colors.red,Colors.green,Colors.blue,Colors.amber];final List<int> _seq=[];Timer? _tm;int _step=0,_flash=-1,_round=0;bool _run=false,_accept=false,_over=false;
+  final Random _r=Random();final List<Color> _colors=const [Colors.red,Colors.green,Colors.blue,Colors.amber];final List<int> _seq=[];Timer? _tm;int _step=0,_flash=-1,_round=0;bool _run=false,_accept=false,_over=false;
   void _start(){_tm?.cancel();_seq.clear();setState((){_run=true;_accept=false;_over=false;_round=0;_step=0;_flash=-1;});_next();}
   void _next(){_seq.add(_r.nextInt(4));_round=_seq.length;_step=0;_accept=false;_play(0);}
   void _play(int i){if(!mounted)return;if(i>=_seq.length){setState(()=>_accept=true);return;}setState(()=>_flash=_seq[i]);_tm=Timer(const Duration(milliseconds:320),(){if(!mounted)return;setState(()=>_flash=-1);_tm=Timer(const Duration(milliseconds:160),()=>_play(i+1));});}
@@ -706,6 +706,153 @@ class _SimonGameState extends State<_SimonGame>{
 }
 
 
+
+
+
+class _MiniScaffold extends StatelessWidget {
+  final String title;
+  final Widget child;
+  final VoidCallback restart;
+  const _MiniScaffold({required this.title, required this.child, required this.restart});
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: const Color(0xFF070910),
+    appBar: AppBar(
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
+      actions: [IconButton(onPressed: restart, tooltip: 'Restart', icon: const Icon(Icons.refresh_rounded))],
+    ),
+    body: SafeArea(child: child),
+  );
+}
+
+class _Badge extends StatelessWidget {
+  final String text;
+  const _Badge(this.text);
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+    decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
+    child: Text(text, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1)),
+  );
+}
+
+class _GameBadge extends StatelessWidget {
+  final String text;
+  const _GameBadge(this.text);
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+    decoration: BoxDecoration(color: Colors.black54, borderRadius: BorderRadius.circular(12)),
+    child: Text(text, style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+  );
+}
+
+class _Over extends StatelessWidget {
+  final String title;
+  final VoidCallback restart;
+  const _Over({required this.title, required this.restart});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      padding: const EdgeInsets.all(24),
+      margin: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: const Color(0xFF111522), borderRadius: BorderRadius.circular(24), border: Border.all(color: Colors.white12)),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(title, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
+        const SizedBox(height: 16),
+        FilledButton.icon(onPressed: restart, icon: const Icon(Icons.refresh_rounded), label: const Text('Main Lagi')),
+      ]),
+    ),
+  );
+}
+
+class _Score extends StatelessWidget {
+  final String label;
+  final String value;
+  const _Score(this.label, this.value);
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+    decoration: BoxDecoration(color: const Color(0xFF171B2A), borderRadius: BorderRadius.circular(16)),
+    child: Row(children: [
+      Expanded(child: Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800, color: Colors.white60))),
+      Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
+    ]),
+  );
+}
+
+class _GamePauseButton extends StatelessWidget {
+  final bool paused;
+  final VoidCallback onTap;
+  const _GamePauseButton({required this.paused, required this.onTap});
+  @override
+  Widget build(BuildContext context) => IconButton.filledTonal(
+    onPressed: onTap,
+    tooltip: paused ? 'Resume' : 'Pause',
+    icon: Icon(paused ? Icons.play_arrow_rounded : Icons.pause_rounded),
+  );
+}
+
+class _GameAudio {
+  final AudioPlayer player = AudioPlayer();
+  Future<void> start(double base, {double volume = .16}) async {
+    await player.setReleaseMode(ReleaseMode.loop);
+    await player.setVolume(volume);
+    await player.play(BytesSource(_gameWav(base), mimeType: 'audio/wav'));
+  }
+  Future<void> stop() async { await player.stop(); }
+  Future<void> dispose() async { await player.dispose(); }
+}
+
+Uint8List _gameWav(double base, {int seconds = 6}) {
+  const sr = 22050;
+  final count = sr * seconds, bytes = count * 2;
+  final d = ByteData(44 + bytes);
+  void w32(int o, int v) => d.setUint32(o, v, Endian.little);
+  void w16(int o, int v) => d.setUint16(o, v, Endian.little);
+  void txt(int o, String v) { for (var i = 0; i < v.length; i++) d.setUint8(o + i, v.codeUnitAt(i)); }
+  txt(0, 'RIFF'); w32(4, 36 + bytes); txt(8, 'WAVE'); txt(12, 'fmt '); w32(16, 16);
+  w16(20, 1); w16(22, 1); w32(24, sr); w32(28, sr * 2); w16(32, 2); w16(34, 16);
+  txt(36, 'data'); w32(40, bytes);
+  for (var i = 0; i < count; i++) {
+    final t = i / sr;
+    final f = base * [1, 1.25, 1.5, 1.875][(t * 2).floor() % 4];
+    final env = min(1.0, t * 8) * min(1.0, (seconds - t) * 5);
+    final v = (.17 * sin(2 * pi * f * t) + .08 * sin(2 * pi * f * 2 * t) + .05 * sin(2 * pi * base / 2 * t)) * env;
+    d.setInt16(44 + i * 2, (v * 26000).clamp(-32768, 32767).toInt(), Endian.little);
+  }
+  return d.buffer.asUint8List();
+}
+
+class _LegacyGameStart extends StatelessWidget {
+  final String title, description, extra;
+  final VoidCallback onStart;
+  const _LegacyGameStart({required this.title, required this.description, required this.extra, required this.onStart});
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      margin: const EdgeInsets.all(22),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(color: const Color(0xFF111522), borderRadius: BorderRadius.circular(26), border: Border.all(color: Colors.white12)),
+      child: Column(mainAxisSize: MainAxisSize.min, children: [
+        const Icon(Icons.sports_esports_rounded, size: 54),
+        const SizedBox(height: 14),
+        Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+        const SizedBox(height: 8),
+        Text(description, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70, height: 1.45)),
+        const SizedBox(height: 12),
+        Text(extra, textAlign: TextAlign.center, style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w800)),
+        const SizedBox(height: 22),
+        SizedBox(width: double.infinity, child: FilledButton.icon(
+          onPressed: onStart,
+          icon: const Icon(Icons.play_arrow_rounded),
+          label: const Text('START GAME'),
+          style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 15)),
+        )),
+      ]),
+    ),
+  );
+}
 
 class _OriginalGameInfo { final String name,subtitle; final IconData icon; const _OriginalGameInfo(this.name,this.subtitle,this.icon); }
 class NeonJumpPage extends StatefulWidget{const NeonJumpPage({super.key});@override State<NeonJumpPage> createState()=>_NeonJumpState();}
@@ -941,7 +1088,7 @@ class _RoadState extends State<RoadRushPage>{
   void startGame(){timer?.cancel();setState((){started=true;dead=false;paused=false;score=0;level=1;lane=1;cars=[];});audio.start(150,volume:.13);timer=Timer.periodic(const Duration(milliseconds:35),(_)=>tick());}
   void restart(){timer?.cancel();audio.stop();if(mounted)setState((){started=false;dead=false;paused=false;score=0;level=1;lane=1;cars=[];});}
   void tick(){if(!mounted||!started||dead||paused)return;setState((){for(final c in cars)c.y+=.0105+.0017*level;cars.removeWhere((c)=>c.y>1.1);if(rng.nextDouble()<.026+.006*level)cars.add(_Car(rng.nextInt(3).toDouble(),-.12));score++;level=min(5,1+score~/180);if(cars.any((c)=>(c.lane-lane).abs()<.25&&c.y>.78&&c.y<.94)){dead=true;timer?.cancel();audio.stop();}});}
-  void move(double d){if(started&&!paused)setState(()=>lane=(lane+d).clamp(0,2));}
+  void move(double d){if(started&&!paused)setState(()=>lane=(lane+d).clamp(0,2).toDouble());}
   @override void dispose(){timer?.cancel();audio.dispose();super.dispose();}
   @override Widget build(BuildContext context)=>_MiniScaffold(title:'Road Rush',restart:restart,child:Stack(children:[
     Positioned.fill(child:CustomPaint(painter:_RoadPainter(lane,cars))),
@@ -967,7 +1114,7 @@ class _BrickState extends State<BrickSmashPage>{
   void restart(){timer?.cancel();audio.stop();if(mounted)setState((){started=false;dead=false;paused=false;level=1;_resetLevel();});}
   void tick(){if(!mounted||!started||dead||paused)return;setState((){bx+=vx;by+=vy;if(bx<.03||bx>.97)vx=-vx;if(by<.03)vy=vy.abs();if(by>.82&&by<.94&&(bx-paddle).abs()<.15)vy=-vy.abs();for(int i=0;i<30;i++)if(bricks[i]){final col=i%5,row=i~/5,l=.05+col*.19,t=.1+row*.06;if(bx>l&&bx<l+.16&&by>t&&by<t+.045){bricks[i]=false;vy=-vy;break;}}if(by>1.05){dead=true;timer?.cancel();audio.stop();}else if(bricks.every((v)=>!v)){if(level<5){level++;_resetLevel();}else{dead=true;timer?.cancel();audio.stop();}}});}
   @override void dispose(){timer?.cancel();audio.dispose();super.dispose();}
-  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Brick Smash',restart:restart,child:GestureDetector(onHorizontalDragUpdate:(d){if(started&&!paused)setState(()=>paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.12,.88));},behavior:HitTestBehavior.opaque,child:Stack(children:[
+  @override Widget build(BuildContext context)=>_MiniScaffold(title:'Brick Smash',restart:restart,child:GestureDetector(onHorizontalDragUpdate:(d){if(started&&!paused)setState(()=>paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.12,.88).toDouble());},behavior:HitTestBehavior.opaque,child:Stack(children:[
     Positioned.fill(child:CustomPaint(painter:_BrickPainter(bx,by,paddle,bricks))),
     if(!started)Positioned.fill(child:Container(color:Colors.black45,child:_LegacyGameStart(title:'Brick Smash',description:'Pantulkan bola dan hancurkan semua brick.',extra:'5 LEVEL • pola brick berubah setiap level • backsound ON',onStart:startGame))),
     if(started)Positioned(top:12,left:12,child:_Badge('LEVEL '+level.toString())),
@@ -1359,7 +1506,7 @@ class _DodgeState extends State<DodgeZonePage> {
                   onHorizontalDragUpdate: (d) {
                     setState(() {
                       x = (x + d.delta.dx / constraints.maxWidth)
-                          .clamp(.08, .92);
+                          .clamp(.08, .92).toDouble();
                     });
                   },
                   child: Container(
