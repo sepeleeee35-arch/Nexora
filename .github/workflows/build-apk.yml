@@ -40,3 +40,5 @@ jobs:
           name: Nexora-APK
           path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error
+
+# Release APK build trigger.
