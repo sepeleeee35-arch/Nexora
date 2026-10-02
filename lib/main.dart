@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'google_auth_button.dart' if (dart.library.io) 'google_auth_button_stub.dart';
 import 'music/music_page.dart';
 import 'games/game_hub.dart';
 import 'music/music_service.dart';
@@ -28,12 +29,178 @@ class NexoraApp extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       ),
     ),
-    home: const NexoraShell(),
+    home: const NexoraAuthGate(),
   );
 }
 
+class NexoraAuthGate extends StatefulWidget {
+  const NexoraAuthGate({super.key});
+  @override State<NexoraAuthGate> createState() => _NexoraAuthGateState();
+}
+
+class _NexoraAuthGateState extends State<NexoraAuthGate> {
+  final GoogleSignIn _google = GoogleSignIn.instance;
+  GoogleSignInAccount? _user;
+  StreamSubscription<GoogleSignInAuthenticationEvent>? _authSub;
+  bool _initializing = true;
+  bool _busy = false;
+  String _error = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeGoogle();
+  }
+
+  Future<void> _initializeGoogle() async {
+    try {
+      await _google.initialize(
+        clientId: const String.fromEnvironment('GOOGLE_CLIENT_ID', defaultValue: ''),
+        serverClientId: const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: ''),
+      );
+      _authSub = _google.authenticationEvents.listen(
+        (event) {
+          if (!mounted) return;
+          if (event is GoogleSignInAuthenticationEventSignIn) {
+            setState(() {
+              _user = event.user;
+              _error = '';
+            });
+            nexoraActiveAccountId = event.user.id;
+          } else if (event is GoogleSignInAuthenticationEventSignOut) {
+            setState(() => _user = null);
+            nexoraActiveAccountId = null;
+          }
+        },
+        onError: (Object error) {
+          if (mounted) setState(() => _error = 'Google login: $error');
+        },
+      );
+      final existing = await _google.attemptLightweightAuthentication();
+      if (!mounted) return;
+      if (existing != null) {
+        _user = existing;
+        nexoraActiveAccountId = existing.id;
+      }
+    } catch (e) {
+      if (mounted) _error = 'Google Sign-In belum terkonfigurasi: $e';
+    } finally {
+      if (mounted) setState(() => _initializing = false);
+    }
+  }
+
+  Future<void> _signIn() async {
+    if (!_google.supportsAuthenticate()) return;
+    setState(() {
+      _busy = true;
+      _error = '';
+    });
+    try {
+      final account = await _google.authenticate();
+      if (!mounted) return;
+      setState(() => _user = account);
+      nexoraActiveAccountId = account.id;
+    } on GoogleSignInException catch (e) {
+      if (mounted) setState(() => _error = 'Google login: \${e.description ?? e.code.name}');
+    } catch (e) {
+      if (mounted) setState(() => _error = 'Google login gagal: $e');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_initializing) {
+      return const Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.hexagon_rounded, size: 64),
+              SizedBox(height: 16),
+              Text('NEXORA', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
+              SizedBox(height: 12),
+              CircularProgressIndicator(),
+            ],
+          ),
+        ),
+      );
+    }
+    if (_user != null) return NexoraShell(account: _user!);
+
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: Card(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 30, 24, 26),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 78, height: 78,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          gradient: const LinearGradient(colors: [Color(0xFF8B5CF6), Color(0xFF4F46E5)]),
+                        ),
+                        child: const Icon(Icons.hexagon_rounded, size: 48),
+                      ),
+                      const SizedBox(height: 18),
+                      const Text('Nexora', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 7),
+                      const Text(
+                        'Login dengan akun Google untuk masuk ke Nexora dan menyimpan progres game berdasarkan akun.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white70, height: 1.4),
+                      ),
+                      const SizedBox(height: 22),
+                      if (_google.supportsAuthenticate())
+                        SizedBox(
+                          width: double.infinity,
+                          child: FilledButton.icon(
+                            onPressed: _busy ? null : _signIn,
+                            icon: const Icon(Icons.login_rounded),
+                            label: Text(_busy ? 'Menghubungkan...' : 'Login dengan Google'),
+                          ),
+                        )
+                      else
+                        nexoraGoogleButton(),
+                      if (_error.isNotEmpty) ...[
+                        const SizedBox(height: 14),
+                        Text(_error, textAlign: TextAlign.center, style: const TextStyle(color: Colors.orangeAccent, fontSize: 12)),
+                      ],
+                      const SizedBox(height: 18),
+                      const Text(
+                        'Tanpa login, halaman utama tidak bisa dibuka.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white38, fontSize: 11),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class NexoraShell extends StatefulWidget {
-  const NexoraShell({super.key});
+  final GoogleSignInAccount account;
+  const NexoraShell({required this.account, super.key});
   @override State<NexoraShell> createState() => _NexoraShellState();
 }
 
@@ -46,6 +213,10 @@ class _NexoraShellState extends State<NexoraShell> {
 
   void selectPage(String value) {
     Navigator.pop(context);
+    if (value == 'Logout') {
+      unawaited(GoogleSignIn.instance.signOut());
+      return;
+    }
     if (value == 'Home' || value == 'Games' || value == 'Music' || value == 'Tools' || value == 'Market') {
       final nextTab = names.indexOf(value);
       setState(() {
@@ -65,7 +236,7 @@ class _NexoraShellState extends State<NexoraShell> {
     if (page == 'Wallet') {
       body = WalletPage(coins: coins, addCoins: () => setState(() => coins += 250));
     } else if (page == 'Profile') {
-      body = const ProfilePage();
+      body = ProfilePage(user: widget.account);
     } else if (page == 'Login') {
       body = const GoogleLoginPage();
     } else if (page == 'Notifications') {
@@ -102,7 +273,7 @@ class _NexoraShellState extends State<NexoraShell> {
     }
 
     return Scaffold(
-      drawer: NexoraDrawer(coins: coins, onSelect: selectPage),
+      drawer: NexoraDrawer(coins: coins, account: widget.account, onSelect: selectPage),
       appBar: AppBar(
         titleSpacing: 18,
         title: Row(children: [
@@ -140,8 +311,9 @@ class _NexoraShellState extends State<NexoraShell> {
 
 class NexoraDrawer extends StatelessWidget {
   final int coins;
+  final GoogleSignInAccount account;
   final ValueChanged<String> onSelect;
-  const NexoraDrawer({required this.coins, required this.onSelect, super.key});
+  const NexoraDrawer({required this.coins, required this.account, required this.onSelect, super.key});
   @override
   Widget build(BuildContext context) => Drawer(
     backgroundColor: const Color(0xFF0C0F18),
@@ -163,8 +335,8 @@ class NexoraDrawer extends StatelessWidget {
       ),
       Card(child: ListTile(
         leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
-        title: const Text('Nexora Player', style: TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text('$coins coins'),
+        title: Text(account.displayName ?? 'Nexora Player', style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(account.email),
         trailing: const Icon(Icons.chevron_right_rounded),
         onTap: () => onSelect('Profile'),
       )),
@@ -177,7 +349,8 @@ class NexoraDrawer extends StatelessWidget {
       const _Header('ACCOUNT'),
       _Item(Icons.account_balance_wallet_rounded,'Wallet & Coins',()=>onSelect('Wallet')),
       _Item(Icons.person_rounded,'Profile',()=>onSelect('Profile')),
-      _Item(Icons.login_rounded,'Login with Google',()=>onSelect('Login')),
+      _Item(Icons.verified_rounded,'Google Account',()=>onSelect('Profile')),
+      _Item(Icons.logout_rounded,'Logout',()=>onSelect('Logout')),
       _Item(Icons.notifications_rounded,'Notifications',()=>onSelect('Notifications')),
       const _Header('APP'),
       _Item(Icons.settings_rounded,'Settings',()=>onSelect('Settings')),
@@ -819,31 +992,49 @@ class WalletPage extends StatelessWidget{
   ]);
 }
 
-class ProfilePage extends StatefulWidget{
-  const ProfilePage({super.key});
-  @override State<ProfilePage> createState()=>_ProfileState();
+class ProfilePage extends StatelessWidget {
+  final GoogleSignInAccount user;
+  const ProfilePage({required this.user, super.key});
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.all(16),
+    children: [
+      const SizedBox(height: 10),
+      Center(
+        child: user.photoUrl != null
+            ? CircleAvatar(radius: 46, backgroundImage: NetworkImage(user.photoUrl!))
+            : const CircleAvatar(radius: 46, child: Icon(Icons.person_rounded, size: 46)),
+      ),
+      const SizedBox(height: 12),
+      Center(child: Text(user.displayName ?? 'Nexora Player', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900))),
+      Center(child: Text(user.email)),
+      const SizedBox(height: 20),
+      Card(child: ListTile(
+        leading: const Icon(Icons.verified_rounded),
+        title: const Text('Google Account', style: TextStyle(fontWeight: FontWeight.w800)),
+        subtitle: const Text('Akun wajib untuk memakai Nexora'),
+        trailing: const Icon(Icons.check_circle_rounded, color: Colors.greenAccent),
+      )),
+      const SizedBox(height: 18),
+      const Row(children: [
+        Expanded(child: _PStat('1', 'Level')),
+        SizedBox(width: 10),
+        Expanded(child: _PStat('0', 'Posts')),
+        SizedBox(width: 10),
+        Expanded(child: _PStat('0', 'Friends')),
+      ]),
+      const SizedBox(height: 18),
+      const _Title('Account'),
+      const Card(child: Column(children: [
+        ListTile(leading: Icon(Icons.badge_rounded), title: Text('Rookie'), subtitle: Text('Member Nexora')),
+        Divider(height: 1),
+        ListTile(leading: Icon(Icons.verified_user_rounded), title: Text('Account security')),
+      ])),
+    ],
+  );
 }
-class _ProfileState extends State<ProfilePage>{
-  GoogleSignInAccount? user;
-  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-    const SizedBox(height:10),
-    Center(child:user?.photoUrl!=null?CircleAvatar(radius:46,backgroundImage:NetworkImage(user!.photoUrl!)):const CircleAvatar(radius:46,child:Icon(Icons.person_rounded,size:46))),
-    const SizedBox(height:12),
-    Center(child:Text(user?.displayName??'Nexora Player',style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900))),
-    Center(child:Text(user?.email??'@nexora_player')),
-    const SizedBox(height:14),
-    Center(child:FilledButton.icon(
-      onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const GoogleLoginPage())),
-      icon:const Icon(Icons.account_circle_rounded),label:Text(user==null?'Login dengan Google':'Kelola akun Google'),
-    )),
-    const SizedBox(height:20),
-    const Row(children:[Expanded(child:_PStat('1','Level')),SizedBox(width:10),Expanded(child:_PStat('0','Posts')),SizedBox(width:10),Expanded(child:_PStat('0','Friends'))]),
-    const SizedBox(height:18),const _Title('Account'),const Card(child:Column(children:[
-      ListTile(leading:Icon(Icons.badge_rounded),title:Text('Rookie'),subtitle:Text('Member Nexora'),trailing:Icon(Icons.chevron_right_rounded)),
-      Divider(height:1),ListTile(leading:Icon(Icons.verified_user_rounded),title:Text('Account security'),trailing:Icon(Icons.chevron_right_rounded)),
-    ])),
-  ]);
-}
+
 
 class GoogleLoginPage extends StatefulWidget{
   const GoogleLoginPage({super.key});
