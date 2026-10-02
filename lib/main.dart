@@ -100,7 +100,7 @@ class _NexoraAuthGateState extends State<NexoraAuthGate> {
       if (!mounted) return;
       setState(() => _user = account);
       nexoraActiveAccountId = account.id;
-    } on GoogleSignInException catch (e) {
+    } on GoogleSignInException catch (_) {
       if (mounted) setState(() => _error = 'Google login: \${e.description ?? e.code.name}');
     } catch (e) {
       if (mounted) setState(() => _error = 'Google login gagal: $e');
