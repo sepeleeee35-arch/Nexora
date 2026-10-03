@@ -219,7 +219,7 @@ class _NexoraShellState extends State<NexoraShell> {
   Color themePrimary = const Color(0xFF3A86FF);
   Color themeSurface = const Color(0xFF1C2541);
   Color themeBorder = const Color(0xFF334155);
-  static const names = ['Home','Games','Music','Tools','Market'];
+  static const names = ['Home','Games','Music','Tools','Market','Tema'];
 
   void selectPage(String value) {
     Navigator.pop(context);
@@ -303,6 +303,28 @@ class _NexoraShellState extends State<NexoraShell> {
       }
     }
 
+    if (tab == 5) {
+      body = NexoraThemePage(
+        background: themeBackground,
+        primary: themePrimary,
+        surface: themeSurface,
+        border: themeBorder,
+        customBackground: customBackground,
+        onBackgroundChanged: (v) => setState(() => themeBackground = v),
+        onPrimaryChanged: (v) => setState(() => themePrimary = v),
+        onSurfaceChanged: (v) => setState(() => themeSurface = v),
+        onBorderChanged: (v) => setState(() => themeBorder = v),
+        onBackgroundImageChanged: (v) => setState(() => customBackground = v),
+        onReset: () => setState(() {
+          themeBackground = const Color(0xFF0B132B);
+          themePrimary = const Color(0xFF3A86FF);
+          themeSurface = const Color(0xFF1C2541);
+          themeBorder = const Color(0xFF334155);
+          customBackground = null;
+        }),
+      );
+    }
+
     return Theme(data: shellTheme, child: Scaffold(
       drawer: NexoraDrawer(coins: coins, account: widget.account, onSelect: selectPage),
       appBar: AppBar(
@@ -324,7 +346,18 @@ class _NexoraShellState extends State<NexoraShell> {
           IconButton(onPressed: () => setState(() => page = 'Notifications'), icon: const Icon(Icons.notifications_none_rounded)),
         ],
       ),
-      body: AnimatedSwitcher(duration: const Duration(milliseconds: 180), child: KeyedSubtree(key: ValueKey(page ?? tab), child: body)),
+      body: Container(
+        decoration: BoxDecoration(
+          color: themeBackground,
+          image: customBackground == null
+              ? null
+              : DecorationImage(image: MemoryImage(customBackground!), fit: BoxFit.cover),
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 180),
+          child: KeyedSubtree(key: ValueKey(page ?? tab), child: body),
+        ),
+      ),
       bottomNavigationBar: page == null ? NavigationBar(
         selectedIndex: tab,
         onDestinationSelected: selectTab,
