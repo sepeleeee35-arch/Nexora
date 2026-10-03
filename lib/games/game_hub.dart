@@ -14,6 +14,8 @@ String difficultyHint(NexoraDifficulty d) => switch (d) {
 };
 
 const bg = Color(0xFF05070D);
+const int nexoraMaxLevel = 1000000000;
+int nexoraLevel(int value) => value.clamp(1, nexoraMaxLevel).toInt();
 const panel = Color(0xFF0D1320);
 const purple = Color(0xFF8B5CF6);
 
@@ -357,14 +359,36 @@ class _GameIntroState extends State<_GameIntro> {
       Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:panel,borderRadius:BorderRadius.circular(20),border:Border.all(color:Colors.white10)),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
         Container(width:42,height:42,decoration:BoxDecoration(color:widget.info.color.withOpacity(.15),shape:BoxShape.circle),child:Icon(widget.info.icon,color:widget.info.color)),const SizedBox(width:12),Expanded(child:Text(instructions(widget.info.name),style:const TextStyle(height:1.45,color:Colors.white70))),
       ])),
-      const SizedBox(height:18),const Text('CHOOSE DIFFICULTY',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.5,color:Colors.white54)),const SizedBox(height:9),
-      ...NexoraDifficulty.values.map((level){final active=selected==level;return Padding(padding:const EdgeInsets.only(bottom:8),child:InkWell(borderRadius:BorderRadius.circular(18),onTap:()=>setState(()=>selected=level),child:AnimatedContainer(duration:const Duration(milliseconds:160),padding:const EdgeInsets.symmetric(horizontal:15,vertical:13),decoration:BoxDecoration(color:active?widget.info.color.withOpacity(.14):panel,borderRadius:BorderRadius.circular(18),border:Border.all(color:active?widget.info.color.withOpacity(.7):Colors.white10,width:active?1.3:1)),child:Row(children:[
-        Container(width:10,height:10,decoration:BoxDecoration(color:active?widget.info.color:Colors.white24,shape:BoxShape.circle)),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(difficultyName(level),style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:.8,color:active?Colors.white:Colors.white70)),const SizedBox(height:2),Text(difficultyHint(level),style:const TextStyle(fontSize:9,color:Colors.white38))])),if(active)Icon(Icons.check_circle_rounded,color:widget.info.color,size:21),
-      ]))));}),
-      const SizedBox(height:8),Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white.withOpacity(.035),borderRadius:BorderRadius.circular(16)),child:Row(children:[Icon(Icons.warning_amber_rounded,color:d==NexoraDifficulty.impossible?Colors.redAccent:Colors.white38,size:18),const SizedBox(width:9),Expanded(child:Text('Dipilih: ${difficultyName(d)} • ${difficultyHint(d)}',style:const TextStyle(fontSize:10,color:Colors.white54)))])),
+      const SizedBox(height:18),
+      InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () async {
+          final picked = await showModalBottomSheet<NexoraDifficulty>(context: context, backgroundColor: const Color(0xFF0A0F1A), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))), builder: (_) => _DifficultySheet(selected: selected, accent: widget.info.color));
+          if (picked != null) setState(() => selected = picked);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180), padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+          decoration: BoxDecoration(color: widget.info.color.withOpacity(.10), borderRadius: BorderRadius.circular(20), border: Border.all(color: widget.info.color.withOpacity(.45))),
+          child: Row(children: [
+            Container(width: 38, height: 38, decoration: BoxDecoration(color: widget.info.color.withOpacity(.16), borderRadius: BorderRadius.circular(13)), child: Icon(Icons.tune_rounded, color: widget.info.color, size: 20)),
+            const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('DIFFICULTY', style: TextStyle(fontSize: 8, color: Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 1.2)), const SizedBox(height: 2), Text(difficultyName(d), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)), Text(difficultyHint(d), style: const TextStyle(fontSize: 9, color: Colors.white45))])),
+            Icon(Icons.expand_more_rounded, color: widget.info.color),
+          ]),
+        ),
+      ),
       const SizedBox(height:14),SizedBox(height:56,child:FilledButton.icon(onPressed:()=>widget.onStart(selected),icon:const Icon(Icons.play_arrow_rounded),label:const Text('START GAME',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:.7)))),
     ])));
   }
+}
+
+class _DifficultySheet extends StatelessWidget {
+  final NexoraDifficulty selected; final Color accent;
+  const _DifficultySheet({required this.selected, required this.accent});
+  @override Widget build(BuildContext context) => SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(18, 18, 18, 20), child: Column(mainAxisSize: MainAxisSize.min, children: [
+    Row(children: [Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8))), const Spacer(), const Text('SELECT MODE', style: TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w900, letterSpacing: 1.3)), const Spacer(), const SizedBox(width: 36)]),
+    const SizedBox(height: 18),
+    ...NexoraDifficulty.values.map((d) => Padding(padding: const EdgeInsets.only(bottom: 7), child: ListTile(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), tileColor: d == selected ? accent.withOpacity(.14) : Colors.white.withOpacity(.035), leading: Icon(d == selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded, color: d == selected ? accent : Colors.white30), title: Text(difficultyName(d), style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(difficultyHint(d), style: const TextStyle(fontSize: 9, color: Colors.white38)), trailing: Text('${d.index + 1}/5', style: const TextStyle(fontSize: 9, color: Colors.white30, fontWeight: FontWeight.w900)), onTap: () => Navigator.pop(context, d))))
+  ])));
 }
 
 class _GamePage extends StatelessWidget {
@@ -445,18 +469,18 @@ class _Twenty extends StatefulWidget {
 }
 class _TwentyState extends State<_Twenty>{
   final random=Random(); List<int> board=List.filled(16,0),previous=List.filled(16,0);
-  int score=0,best=0,previousScore=0,pulse=0; bool gameOver=false,won=false,keepPlaying=false;
+  int score=0,best=0,previousScore=0,pulse=0,level=1; bool gameOver=false,won=false,keepPlaying=false;
   @override void initState(){super.initState();_reset();}
-  void _reset(){board=List.filled(16,0);previous=List.filled(16,0);score=0;previousScore=0;gameOver=false;won=false;keepPlaying=false;pulse++;_spawn();_spawn();}
+  void _reset(){board=List.filled(16,0);previous=List.filled(16,0);score=0;previousScore=0;level=1;gameOver=false;won=false;keepPlaying=false;pulse++;_spawn();_spawn();}
   void _spawn(){final e=<int>[for(var i=0;i<16;i++)if(board[i]==0)i];if(e.isNotEmpty){final d=nexoraDifficulty.index;board[e[random.nextInt(e.length)]]=random.nextDouble()<(0.94-d*.07)?2:4;if(d>=3&&random.nextDouble()<.10&&e.length>1){final rest=<int>[for(final i in e)if(board[i]==0)i];if(rest.isNotEmpty)board[rest[random.nextInt(rest.length)]]=2;}}}
   List<int> _merge(List<int> line){final v=line.where((x)=>x!=0).toList(),o=<int>[];var i=0;while(i<v.length){if(i+1<v.length&&v[i]==v[i+1]){final m=v[i]*2;o.add(m);score+=m;i+=2;}else{o.add(v[i]);i++;}}while(o.length<4)o.add(0);return o;}
   bool _can(){if(board.contains(0))return true;for(var y=0;y<4;y++)for(var x=0;x<4;x++){final v=board[y*4+x];if(x<3&&board[y*4+x+1]==v)return true;if(y<3&&board[(y+1)*4+x]==v)return true;}return false;}
-  void _move(int dx,int dy){if(gameOver||(won&&!keepPlaying))return;final old=List<int>.from(board),oldScore=score,next=List<int>.filled(16,0);for(var line=0;line<4;line++){final vals=<int>[];for(var pos=0;pos<4;pos++){final x=dx!=0?(dx>0?3-pos:pos):line,y=dy!=0?(dy>0?3-pos:pos):line;vals.add(board[y*4+x]);}final m=_merge(vals);for(var pos=0;pos<4;pos++){final x=dx!=0?(dx>0?3-pos:pos):line,y=dy!=0?(dy>0?3-pos:pos):line;next[y*4+x]=m[pos];}}if(next.toString()==old.toString())return;previous=old;previousScore=oldScore;board=next;_spawn();pulse++;best=max(best,score);if(board.contains(2048))won=true;if(!_can())gameOver=true;setState((){});}
+  void _move(int dx,int dy){if(gameOver||(won&&!keepPlaying))return;final old=List<int>.from(board),oldScore=score,next=List<int>.filled(16,0);for(var line=0;line<4;line++){final vals=<int>[];for(var pos=0;pos<4;pos++){final x=dx!=0?(dx>0?3-pos:pos):line,y=dy!=0?(dy>0?3-pos:pos):line;vals.add(board[y*4+x]);}final m=_merge(vals);for(var pos=0;pos<4;pos++){final x=dx!=0?(dx>0?3-pos:pos):line,y=dy!=0?(dy>0?3-pos:pos):line;next[y*4+x]=m[pos];}}if(next.toString()==old.toString())return;previous=old;previousScore=oldScore;board=next;_spawn();pulse++;best=max(best,score);level=nexoraLevel(1+score~/500);if(board.contains(2048))won=true;if(!_can())gameOver=true;setState((){});}
   Color _tile(int v){if(v==0)return Colors.white.withOpacity(.045);final t=min(1.0,log(max(2,v))/log(8192));return Color.lerp(const Color(0xFFF59E0B),const Color(0xFF7C3AED),t)!;}
   @override Widget build(BuildContext context)=>_GamePage(title:'2048',subtitle:'${difficultyName(nexoraDifficulty)} • Classic merge puzzle • swipe every direction',accent:const Color(0xFFF59E0B),reset:()=>setState(_reset),child:GestureDetector(
     behavior:HitTestBehavior.opaque,onHorizontalDragEnd:(d){final v=d.primaryVelocity??0;if(v!=0)_move(v>0?1:-1,0);},onVerticalDragEnd:(d){final v=d.primaryVelocity??0;if(v!=0)_move(0,v>0?1:-1);},
     child:_World(top:const Color(0xFF24170A),bottom:const Color(0xFF080A13),child:Column(children:[
-      _ScoreBar('SCORE $score','BEST $best',const Color(0xFFF59E0B)),Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:Container(
+      _ScoreBar('SCORE $score','LVL $level • BEST $best',const Color(0xFFF59E0B)),Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:Container(
         margin:const EdgeInsets.all(16),padding:const EdgeInsets.all(9),decoration:BoxDecoration(color:Colors.black38,borderRadius:BorderRadius.circular(25),border:Border.all(color:const Color(0xFFF59E0B).withOpacity(.22))),
         child:GridView.count(key:ValueKey(pulse),crossAxisCount:4,physics:const NeverScrollableScrollPhysics(),crossAxisSpacing:8,mainAxisSpacing:8,children:board.map((v)=>AnimatedContainer(duration:const Duration(milliseconds:120),curve:Curves.easeOutBack,
           decoration:BoxDecoration(color:_tile(v),borderRadius:BorderRadius.circular(15),boxShadow:v>0?[BoxShadow(color:_tile(v).withOpacity(.16),blurRadius:9)]:const[]),child:Center(child:Text(v==0?'':'$v',style:TextStyle(fontSize:v>=1024?18:v>=128?23:28,fontWeight:FontWeight.w900)))),
@@ -489,7 +513,7 @@ class _TetrisState extends State<_Tetris>{
   int _kind(List<List<int>>s){final k=s.expand((r)=>r).join();for(var i=0;i<7;i++)if(shapes[i].expand((r)=>r).join()==k)return i;return activeKind;}
   void _hold(){if(!running||!canHold)return;canHold=false;final old=activeKind;if(held==null){held=shapes[old].map((r)=>List<int>.from(r)).toList();_load();canHold=false;}else{final t=held!;held=shapes[old].map((r)=>List<int>.from(r)).toList();shape=t.map((r)=>List<int>.from(r)).toList();activeKind=_kind(shape);row=0;col=3;}setState((){});}
   int _ghost(){var r=row;while(_can(r+1,col,shape))r++;return r;}
-  void _lock(){for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0&&row+y>=0&&row+y<20&&col+x>=0&&col+x<10)board[(row+y)*10+col+x]=activeKind+1;var clear=0;for(var y=19;y>=0;y--){var full=true;for(var x=0;x<10;x++)if(board[y*10+x]==0){full=false;break;}if(full){for(var yy=y;yy>0;yy--)for(var x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];for(var x=0;x<10;x++)board[x]=0;clear++;y++;}}if(clear>0){lines+=clear;score+=[0,100,300,500,800][clear]*level;level=1+lines~/10;_clock();}_load();if(!_can(row,col,shape)){running=false;over=true;timer?.cancel();}setState((){});}
+  void _lock(){for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0&&row+y>=0&&row+y<20&&col+x>=0&&col+x<10)board[(row+y)*10+col+x]=activeKind+1;var clear=0;for(var y=19;y>=0;y--){var full=true;for(var x=0;x<10;x++)if(board[y*10+x]==0){full=false;break;}if(full){for(var yy=y;yy>0;yy--)for(var x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];for(var x=0;x<10;x++)board[x]=0;clear++;y++;}}if(clear>0){lines+=clear;score+=[0,100,300,500,800][clear]*level;level=nexoraLevel(1+lines~/10);_clock();}_load();if(!_can(row,col,shape)){running=false;over=true;timer?.cancel();}setState((){});}
   Widget mini(List<List<int>>?s,Color c)=>SizedBox(width:58,height:44,child:CustomPaint(painter:_MiniPiecePainter(s,c)));
   @override void dispose(){timer?.cancel();super.dispose();}
   @override Widget build(BuildContext context)=>_GamePage(title:'Tetris',subtitle:'${difficultyName(nexoraDifficulty)} • 10×20 • rotate • hold • hard drop',accent:const Color(0xFFA78BFA),reset:()=>setState(_reset),child:_World(top:const Color(0xFF17112A),bottom:const Color(0xFF070914),child:Column(children:[
@@ -510,13 +534,13 @@ class _MiniPiecePainter extends CustomPainter{
 
 class _Flappy extends StatefulWidget{const _Flappy();@override State<_Flappy> createState()=>_FlappyState();}
 class _FlappyState extends State<_Flappy>{
- Timer? timer;double birdY=.45,velocity=0,pipeX=1.15,gap=.48;int score=0,best=0;bool running=false,over=false;final random=Random();
- void _reset(){timer?.cancel();birdY=.45;velocity=0;pipeX=1.15;gap=.48;score=0;running=false;over=false;}
+ Timer? timer;double birdY=.45,velocity=0,pipeX=1.15,gap=.48;int score=0,best=0,level=1;bool running=false,over=false;final random=Random();
+ void _reset(){timer?.cancel();birdY=.45;velocity=0;pipeX=1.15;gap=.48;score=0;level=1;running=false;over=false;}
  void _flap(){if(!running){if(over)_reset();running=true;timer=Timer.periodic(const Duration(milliseconds:25),(_)=>_tick());}velocity=-.028;setState((){});}
- void _tick(){if(!mounted||!running)return;birdY+=velocity;const gravity=[.00125,.00155,.00185,.00215,.00255];const pipeSpeed=[.0072,.0098,.0125,.015,.0185];const gapBase=[.20,.18,.16,.145,.125];final d=nexoraDifficulty.index;velocity+=gravity[d];pipeX-=pipeSpeed[d];if(pipeX<-.18){pipeX=1.08;gap=(.5-gapBase[d])+random.nextDouble()*(gapBase[d]*2);score++;best=max(best,score);}final hit=birdY<.055||birdY>.90||(pipeX<.25&&pipeX>-.02&&(birdY<gap-gapBase[d]||birdY>gap+gapBase[d]));if(hit){running=false;over=true;timer?.cancel();}setState((){});}
+ void _tick(){if(!mounted||!running)return;birdY+=velocity;const gravity=[.00125,.00155,.00185,.00215,.00255];const pipeSpeed=[.0072,.0098,.0125,.015,.0185];const gapBase=[.20,.18,.16,.145,.125];final d=nexoraDifficulty.index;velocity+=gravity[d];pipeX-=pipeSpeed[d];if(pipeX<-.18){pipeX=1.08;gap=(.5-gapBase[d])+random.nextDouble()*(gapBase[d]*2);score++;level=nexoraLevel(1+score~/10);best=max(best,score);}final hit=birdY<.055||birdY>.90||(pipeX<.25&&pipeX>-.02&&(birdY<gap-gapBase[d]||birdY>gap+gapBase[d]));if(hit){running=false;over=true;timer?.cancel();}setState((){});}
  @override void dispose(){timer?.cancel();super.dispose();}
  @override Widget build(BuildContext context)=>_GamePage(title:'Flappy',subtitle:'${difficultyName(nexoraDifficulty)} • Tap flight • dodge the pipes',accent:const Color(0xFF22D3EE),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_flap,child:_World(top:const Color(0xFF49B9E9),bottom:const Color(0xFFB8E9D4),child:Stack(children:[
-  Positioned.fill(child:CustomPaint(painter:_FlappyPainter(birdY,pipeX,gap,score))),Positioned(top:14,left:0,right:0,child:Column(children:[Text('$score',style:const TextStyle(fontSize:50,fontWeight:FontWeight.w900,shadows:[Shadow(blurRadius:5)])),Text('BEST $best',style:const TextStyle(fontSize:9,color:Colors.white70,fontWeight:FontWeight.w900,letterSpacing:2))])),
+  Positioned.fill(child:CustomPaint(painter:_FlappyPainter(birdY,pipeX,gap,score))),Positioned(top:14,left:0,right:0,child:Column(children:[Text('$score',style:const TextStyle(fontSize:50,fontWeight:FontWeight.w900,shadows:[Shadow(blurRadius:5)])),Text('LVL $level  •  BEST $best',style:const TextStyle(fontSize:9,color:Colors.white70,fontWeight:FontWeight.w900,letterSpacing:2))])),
   if(!running)Center(child:Container(padding:const EdgeInsets.fromLTRB(26,21,26,19),decoration:BoxDecoration(color:Colors.black.withOpacity(.32),borderRadius:BorderRadius.circular(24),border:Border.all(color:Colors.white.withOpacity(.32))),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.flutter_dash_rounded,color:Color(0xFFFFE45C),size:54),const SizedBox(height:7),Text(over?'GAME OVER':'READY?',style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900)),const SizedBox(height:5),Text(over?'TAP TO FLY AGAIN':'TAP TO FLAP',style:const TextStyle(color:Colors.white70,fontSize:10,fontWeight:FontWeight.w900,letterSpacing:1))]))),
  ]))));}
 class _FlappyPainter extends CustomPainter{
@@ -530,10 +554,10 @@ class _BreakoutState extends State<_Breakout>{
  final random=Random();Timer? timer;List<int> bricks=[],hp=[];List<_PowerDrop> drops=[];List<_Ball> balls=[];double paddle=.5;int score=0,lives=3,level=1,combo=0;bool running=false,over=false;
  @override void initState(){super.initState();_reset();}
  void _reset(){timer?.cancel();score=0;lives=3;level=1;combo=0;paddle=.5;running=false;over=false;_makeLevel();}
- void _makeLevel(){final d=nexoraDifficulty.index;bricks=List<int>.filled(54,1);hp=List<int>.generate(54,(i)=>i<9||(d>=2&&i<18)||(d>=4&&i%3==0)?(d>=2?2:1):1);drops=[];final speed=[.0068,.0085,.0105,.013,.017][d];balls=[_Ball(.5,.82,speed,-speed*1.45)];}
+ void _makeLevel(){final d=nexoraDifficulty.index;bricks=List<int>.filled(54,1);hp=List<int>.generate(54,(i)=>i<9||(d>=2&&i<18)||(d>=4&&i%3==0)?(d>=2?2:1):1);drops=[];final base=[.0068,.0085,.0105,.013,.017][d];final speed=base*(1+min(level-1,500)*.002);balls=[_Ball(.5,.82,speed,-speed*1.45)];}
  void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();timer=Timer.periodic(const Duration(milliseconds:16),(_)=>_tick());}
  void _drop(double x,double y){if(random.nextDouble()>.20)return;const t=['wide','multi','slow','fire'];drops.add(_PowerDrop(x,y,t[random.nextInt(t.length)]));}
- void _tick(){if(!mounted||!running)return;final out=<_Ball>[];for(final b in balls){b.x+=b.vx;b.y+=b.vy;if(b.x<.018||b.x>.982){b.vx=-b.vx;b.x=b.x.clamp(.018,.982).toDouble();}if(b.y<.055){b.vy=b.vy.abs();b.y=.055;}if(b.vy>0&&b.y>.84&&b.y<.94&&(b.x-paddle).abs()<[.22,.18,.15,.12,.095][nexoraDifficulty.index]){final h=(b.x-paddle)/[.22,.18,.15,.12,.095][nexoraDifficulty.index];b.vx=(b.vx+h*.005).clamp(-.017,.017).toDouble();b.vy=-b.vy.abs();combo++;}final col=(b.x*9).floor().clamp(0,8).toInt(),row=((b.y-.08)/.060).floor().clamp(0,5).toInt(),idx=row*9+col;if(b.y>.07&&b.y<.46&&bricks[idx]!=0){hp[idx]--;if(hp[idx]<=0){bricks[idx]=0;score+=10+combo*2;combo++;_drop(b.x,b.y);}else{score+=4;}b.vy=-b.vy;}if(b.y<1.02)out.add(b);}balls=out;if(balls.isEmpty){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final speed=[.0068,.0085,.0105,.013,.017][nexoraDifficulty.index];balls=[_Ball(.5,.82,speed*(random.nextBool()?1:-1),-speed*1.45)];}}for(final d in drops)d.y+=.006;final caught=<_PowerDrop>[];drops.removeWhere((d){final hit=d.y>.84&&d.y<.95&&(d.x-paddle).abs()<.16;if(hit)caught.add(d);return hit||d.y>1.02;});for(final d in caught)_power(d.type);if(bricks.every((v)=>v==0)){level++;if(level>3){running=false;over=true;timer?.cancel();}else{_makeLevel();_clock();}}setState((){});}
+ void _tick(){if(!mounted||!running)return;final out=<_Ball>[];for(final b in balls){b.x+=b.vx;b.y+=b.vy;if(b.x<.018||b.x>.982){b.vx=-b.vx;b.x=b.x.clamp(.018,.982).toDouble();}if(b.y<.055){b.vy=b.vy.abs();b.y=.055;}if(b.vy>0&&b.y>.84&&b.y<.94&&(b.x-paddle).abs()<[.22,.18,.15,.12,.095][nexoraDifficulty.index]){final h=(b.x-paddle)/[.22,.18,.15,.12,.095][nexoraDifficulty.index];b.vx=(b.vx+h*.005).clamp(-.017,.017).toDouble();b.vy=-b.vy.abs();combo++;}final col=(b.x*9).floor().clamp(0,8).toInt(),row=((b.y-.08)/.060).floor().clamp(0,5).toInt(),idx=row*9+col;if(b.y>.07&&b.y<.46&&bricks[idx]!=0){hp[idx]--;if(hp[idx]<=0){bricks[idx]=0;score+=10+combo*2;combo++;_drop(b.x,b.y);}else{score+=4;}b.vy=-b.vy;}if(b.y<1.02)out.add(b);}balls=out;if(balls.isEmpty){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final base=[.0068,.0085,.0105,.013,.017][nexoraDifficulty.index];final speed=base*(1+min(level-1,500)*.002);balls=[_Ball(.5,.82,speed*(random.nextBool()?1:-1),-speed*1.45)];}}for(final d in drops)d.y+=.006;final caught=<_PowerDrop>[];drops.removeWhere((d){final hit=d.y>.84&&d.y<.95&&(d.x-paddle).abs()<.16;if(hit)caught.add(d);return hit||d.y>1.02;});for(final d in caught)_power(d.type);if(bricks.every((v)=>v==0)){level=nexoraLevel(level+1);_makeLevel();_clock();}setState((){});}
  void _power(String t){if(t=='wide'){paddle=paddle.clamp(.16,.84).toDouble();}else if(t=='multi'&&balls.isNotEmpty&&balls.length<3){final b=balls.first;balls.add(_Ball(b.x,b.y,-b.vx,b.vy));balls.add(_Ball(b.x,b.y,b.vx*.65,b.vy));}else if(t=='slow'){for(final b in balls){b.vx*=.72;b.vy*=.72;}}else{score+=100;for(var i=0;i<bricks.length;i++)if(bricks[i]!=0&&random.nextDouble()<.14)bricks[i]=0;}}
  @override void dispose(){timer?.cancel();super.dispose();}
  @override Widget build(BuildContext context)=>_GamePage(title:'Breakout',subtitle:'${difficultyName(nexoraDifficulty)} • Brick breaker • power-ups • 3 stages',accent:const Color(0xFFEF4444),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_start,onHorizontalDragUpdate:(d){paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.10,.90).toDouble();setState((){});},child:_World(top:const Color(0xFF210A14),bottom:const Color(0xFF070914),child:Stack(children:[
@@ -571,14 +595,14 @@ class _MemoryState extends State<_Memory> {
   late List<int> cards;
   final open = <int>[];
   final matched = <int>{};
-  int moves = 0, streak = 0, bestStreak = 0;
+  int moves = 0, streak = 0, bestStreak = 0, level = 1;
   bool locked = false;
 
   @override void initState() { super.initState(); _reset(); }
   void _reset() {
     final pairCounts=[6,8,10,12,18];final pairs=pairCounts[nexoraDifficulty.index];cards=<int>[for(var i=0;i<pairs;i++)...[i,i]]..shuffle(random);
     open.clear(); matched.clear();
-    moves = 0; streak = 0; bestStreak = 0; locked = false;
+    moves = 0; streak = 0; bestStreak = 0; level = 1; locked = false;
   }
   void _tap(int index) {
     if (locked || open.contains(index) || matched.contains(index)) return;
@@ -599,6 +623,7 @@ class _MemoryState extends State<_Memory> {
               streak = 0;
             }
             open.clear();
+            if (matched.length == cards.length) level = nexoraLevel(level + 1);
             locked = false;
           });
         });
@@ -613,7 +638,7 @@ class _MemoryState extends State<_Memory> {
     child: _World(
       top: const Color(0xFF180B1C), bottom: const Color(0xFF070914),
       child: Column(children: [
-        _ScoreBar('MOVES $moves', 'STREAK $streak', const Color(0xFFEC4899)),
+        _ScoreBar('LVL $level • MOVES $moves', 'STREAK $streak', const Color(0xFFEC4899)),
         Expanded(child: GridView.builder(
           padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
           itemCount: cards.length,
