@@ -221,6 +221,10 @@ class _NexoraShellState extends State<NexoraShell> {
   Color themePrimary = const Color(0xFF8B5CF6);
   Color themeSurface = const Color(0xFF111522);
   Color themeBorder = const Color(0xFF334155);
+  Color themeText = const Color(0xFFF8FAFC);
+  double cardOpacity = 1.0;
+  double cardBorderWidth = 0.0;
+  double cardBorderOpacity = 0.0;
   static const names = ['Home','Games','Music','Tools','Market'];
 
   @override
@@ -245,6 +249,10 @@ class _NexoraShellState extends State<NexoraShell> {
       themePrimary = Color(prefs.getInt(_prefPrefix + 'themePrimary') ?? 0xFF8B5CF6);
       themeSurface = Color(prefs.getInt(_prefPrefix + 'themeSurface') ?? 0xFF111522);
       themeBorder = Color(prefs.getInt(_prefPrefix + 'themeBorder') ?? 0xFF334155);
+      themeText = Color(prefs.getInt(_prefPrefix + 'themeText') ?? 0xFFF8FAFC);
+      cardOpacity = prefs.getDouble(_prefPrefix + 'cardOpacity') ?? 1.0;
+      cardBorderWidth = prefs.getDouble(_prefPrefix + 'cardBorderWidth') ?? 0.0;
+      cardBorderOpacity = prefs.getDouble(_prefPrefix + 'cardBorderOpacity') ?? 0.0;
     });
   }
 
@@ -257,6 +265,11 @@ class _NexoraShellState extends State<NexoraShell> {
   Future<void> _saveInt(String key, int value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_prefPrefix + key, value);
+  }
+
+  Future<void> _saveDouble(String key, double value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_prefPrefix + key, value);
   }
 
   void _setName(String value) {
@@ -285,8 +298,18 @@ class _NexoraShellState extends State<NexoraShell> {
       if (key == 'primary') themePrimary = value;
       if (key == 'surface') themeSurface = value;
       if (key == 'border') themeBorder = value;
+      if (key == 'text') themeText = value;
     });
     unawaited(_saveInt('theme' + key[0].toUpperCase() + key.substring(1), value.value));
+  }
+
+  void _setVisual(String key, double value) {
+    setState(() {
+      if (key == 'cardOpacity') cardOpacity = value;
+      if (key == 'cardBorderWidth') cardBorderWidth = value;
+      if (key == 'cardBorderOpacity') cardBorderOpacity = value;
+    });
+    unawaited(_saveDouble(key, value));
   }
 
   void _resetTheme() {
@@ -295,6 +318,10 @@ class _NexoraShellState extends State<NexoraShell> {
       themePrimary = const Color(0xFF8B5CF6);
       themeSurface = const Color(0xFF111522);
       themeBorder = const Color(0xFF334155);
+      themeText = const Color(0xFFF8FAFC);
+      cardOpacity = 1.0;
+      cardBorderWidth = 0.0;
+      cardBorderOpacity = 0.0;
       customBackground = null;
     });
     unawaited(SharedPreferences.getInstance().then((p) async {
@@ -303,6 +330,10 @@ class _NexoraShellState extends State<NexoraShell> {
       await p.setInt(_prefPrefix + 'themePrimary', themePrimary.value);
       await p.setInt(_prefPrefix + 'themeSurface', themeSurface.value);
       await p.setInt(_prefPrefix + 'themeBorder', themeBorder.value);
+      await p.setInt(_prefPrefix + 'themeText', themeText.value);
+      await p.setDouble(_prefPrefix + 'cardOpacity', cardOpacity);
+      await p.setDouble(_prefPrefix + 'cardBorderWidth', cardBorderWidth);
+      await p.setDouble(_prefPrefix + 'cardBorderOpacity', cardBorderOpacity);
     }));
   }
 
@@ -346,12 +377,17 @@ class _NexoraShellState extends State<NexoraShell> {
         primary: themePrimary,
         surface: themeSurface,
         border: themeBorder,
+        text: themeText,
+        cardOpacity: cardOpacity,
+        cardBorderWidth: cardBorderWidth,
+        cardBorderOpacity: cardBorderOpacity,
         customBackground: customBackground,
         onNameChanged: _setName,
         onAvatarChanged: _setAvatar,
         onWallpaperChanged: _setWallpaper,
         onBackgroundChanged: _setBackground,
         onColorChanged: _setColor,
+        onVisualChanged: _setVisual,
         onResetTheme: _resetTheme,
       );
     } else if (page == 'About') {
@@ -389,8 +425,24 @@ class _NexoraShellState extends State<NexoraShell> {
 
     final appTheme = Theme.of(context).copyWith(
       scaffoldBackgroundColor: themeBackground,
-      colorScheme: Theme.of(context).colorScheme.copyWith(primary: themePrimary, surface: themeSurface, outline: themeBorder),
-      cardTheme: CardThemeData(color: themeSurface, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+      colorScheme: Theme.of(context).colorScheme.copyWith(
+        primary: themePrimary,
+        surface: themeSurface,
+        outline: themeBorder,
+        onSurface: themeText,
+      ),
+      textTheme: Theme.of(context).textTheme.apply(bodyColor: themeText, displayColor: themeText),
+      cardTheme: CardThemeData(
+        color: themeSurface.withValues(alpha: cardOpacity),
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(
+            color: themeBorder.withValues(alpha: cardBorderOpacity),
+            width: cardBorderWidth,
+          ),
+        ),
+      ),
     );
     return Theme(
       data: appTheme,
@@ -628,11 +680,8 @@ class HomePage extends StatelessWidget {
         Material(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(28),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(28),
-            onTap: () => openPage('Settings'),
-            child: Ink(
-              height: 265,
+          child: Ink(
+            height: 265,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
                 gradient: gradient,
@@ -672,10 +721,16 @@ class HomePage extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            NexoraAvatar(account: account, customAvatar: customAvatar, radius: 29),
+                            GestureDetector(
+                              onTap: () => openPage('Settings'),
+                              child: NexoraAvatar(account: account, customAvatar: customAvatar, radius: 29),
+                            ),
                             const SizedBox(width: 12),
                             Expanded(
-                              child: Column(
+                              child: GestureDetector(
+                                onTap: () => openPage('Settings'),
+                                behavior: HitTestBehavior.opaque,
+                                child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text(
@@ -700,6 +755,7 @@ class HomePage extends StatelessWidget {
                                 ],
                               ),
                             ),
+                              ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
                               decoration: BoxDecoration(
@@ -750,27 +806,6 @@ class HomePage extends StatelessWidget {
                           ],
                         ),
                         const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(.18),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: Colors.white.withOpacity(.10)),
-                          ),
-                          child: const Row(
-                            children: [
-                              Icon(Icons.wallpaper_rounded, size: 18),
-                              SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  'Buka pengaturan profil & tema',
-                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
-                                ),
-                              ),
-                              Icon(Icons.arrow_forward_ios_rounded, size: 13),
-                            ],
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -1584,20 +1619,128 @@ class NotificationsPage extends StatelessWidget{
 }
 class _Notice extends StatelessWidget{final IconData icon;final String title,body;const _Notice(this.icon,this.title,this.body);@override Widget build(BuildContext context)=>Card(margin:const EdgeInsets.only(bottom:10),child:ListTile(contentPadding:const EdgeInsets.all(14),leading:CircleAvatar(child:Icon(icon)),title:Text(title,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(body)));}
 
+class _NexoraColorPickerDialog extends StatefulWidget {
+  final String title;
+  final Color initial;
+  const _NexoraColorPickerDialog({required this.title,required this.initial});
+  @override State<_NexoraColorPickerDialog> createState()=>_NexoraColorPickerState();
+}
+
+class _NexoraColorPickerState extends State<_NexoraColorPickerDialog> {
+  late HSVColor hsv;
+  @override void initState(){super.initState();hsv=HSVColor.fromColor(widget.initial);}
+  void _setHue(Offset p,Size size){setState(()=>hsv=hsv.withHue(((p.dx/size.width).clamp(0.0,1.0))*360));}
+  void _setSV(Offset p,Size size){setState(()=>hsv=hsv.withSaturation((p.dx/size.width).clamp(0.0,1.0)).withValue((1-p.dy/size.height).clamp(0.0,1.0)));}
+  @override Widget build(BuildContext context){
+    final color=hsv.toColor();
+    return AlertDialog(
+      title:Text(widget.title,style:const TextStyle(fontWeight:FontWeight.w900)),
+      content:SizedBox(width:340,child:Column(mainAxisSize:MainAxisSize.min,children:[
+        SizedBox(height:190,child:LayoutBuilder(builder:(context,c)=>GestureDetector(
+          onPanDown:(d)=>_setSV(d.localPosition,Size(c.maxWidth,190)),
+          onPanUpdate:(d)=>_setSV(d.localPosition,Size(c.maxWidth,190)),
+          child:CustomPaint(painter:_ColorSVPainter(hsv.hue),child:Stack(children:[
+            Positioned(
+              left:(hsv.saturation*c.maxWidth-9).clamp(0.0,c.maxWidth-18),
+              top:((1-hsv.value)*190-9).clamp(0.0,172),
+              child:Container(width:18,height:18,decoration:BoxDecoration(shape:BoxShape.circle,border:Border.all(color:Colors.white,width:2),boxShadow:[const BoxShadow(color:Colors.black54,blurRadius:4)])),
+            ),
+          ])),
+        ))),
+        const SizedBox(height:14),
+        SizedBox(height:26,child:LayoutBuilder(builder:(context,c)=>GestureDetector(
+          onPanDown:(d)=>_setHue(d.localPosition,Size(c.maxWidth,26)),
+          onPanUpdate:(d)=>_setHue(d.localPosition,Size(c.maxWidth,26)),
+          child:CustomPaint(painter:_HuePainter(),child:Center(child:Container(width:25,height:25,decoration:BoxDecoration(shape:BoxShape.circle,color:color,border:Border.all(color:Colors.white,width:2))))),
+        ))),
+        const SizedBox(height:15),
+        Row(children:[
+          Container(width:48,height:48,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(12),border:Border.all(color:Colors.white24))),
+          const SizedBox(width:12),
+          Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+            const Text('Pilih dengan sentuhan',style:TextStyle(fontWeight:FontWeight.w800)),
+            Text('RGB '+color.red.toString()+', '+color.green.toString()+', '+color.blue.toString(),style:const TextStyle(color:Colors.white60,fontSize:12)),
+          ])),
+        ]),
+      ])),
+      actions:[
+        TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Batal')),
+        FilledButton(onPressed:()=>Navigator.pop(context,color),child:const Text('Pilih')),
+      ],
+    );
+  }
+}
+
+class _ColorSVPainter extends CustomPainter {
+  final double hue;
+  const _ColorSVPainter(this.hue);
+  @override void paint(Canvas canvas,Size size){
+    final base=HSVColor.fromAHSV(1,hue,1,1).toColor();
+    final rect=Offset.zero&size;
+    canvas.drawRect(rect,Paint()..shader=LinearGradient(colors:[Colors.white,base]).createShader(rect));
+    canvas.drawRect(rect,Paint()..shader=const LinearGradient(begin:Alignment.topCenter,end:Alignment.bottomCenter,colors:[Colors.transparent,Colors.black]).createShader(rect));
+  }
+  @override bool shouldRepaint(covariant _ColorSVPainter old)=>old.hue!=hue;
+}
+
+class _HuePainter extends CustomPainter {
+  @override void paint(Canvas canvas,Size size){
+    final colors=List.generate(7,(i)=>HSVColor.fromAHSV(1,i*60.0,1,1).toColor());
+    final rect=Offset.zero&size;
+    canvas.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(14)),Paint()..shader=LinearGradient(colors:colors).createShader(rect));
+  }
+  @override bool shouldRepaint(covariant _HuePainter old)=>false;
+}
+
+class _VisualSlider extends StatelessWidget {
+  final String label,display;
+  final double value,min,max;
+  final ValueChanged<double> onChanged;
+  const _VisualSlider({required this.label,required this.value,required this.min,required this.max,required this.display,required this.onChanged});
+  @override Widget build(BuildContext context)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+    Row(children:[Expanded(child:Text(label,style:const TextStyle(fontWeight:FontWeight.w700,fontSize:12))),Text(display,style:const TextStyle(fontSize:12,color:Colors.white60))]),
+    Slider(value:value.clamp(min,max),min:min,max:max,onChanged:onChanged),
+  ]);
+}
+
 class SettingsPage extends StatefulWidget {
   final GoogleSignInAccount account;
   final String customName;
   final Uint8List? customAvatar;
   final int wallpaper;
-  final Color background, primary, surface, border;
+  final Color background, primary, surface, border, text;
+  final double cardOpacity, cardBorderWidth, cardBorderOpacity;
   final Uint8List? customBackground;
   final ValueChanged<String> onNameChanged;
   final ValueChanged<Uint8List?> onAvatarChanged;
   final ValueChanged<int> onWallpaperChanged;
   final ValueChanged<Uint8List?> onBackgroundChanged;
   final void Function(String key, Color value) onColorChanged;
+  final void Function(String key, double value) onVisualChanged;
   final VoidCallback onResetTheme;
-  const SettingsPage({required this.account,required this.customName,required this.customAvatar,required this.wallpaper,required this.background,required this.primary,required this.surface,required this.border,required this.customBackground,required this.onNameChanged,required this.onAvatarChanged,required this.onWallpaperChanged,required this.onBackgroundChanged,required this.onColorChanged,required this.onResetTheme,super.key});
+  const SettingsPage({
+    required this.account,
+    required this.customName,
+    required this.customAvatar,
+    required this.wallpaper,
+    required this.background,
+    required this.primary,
+    required this.surface,
+    required this.border,
+    required this.text,
+    required this.cardOpacity,
+    required this.cardBorderWidth,
+    required this.cardBorderOpacity,
+    required this.customBackground,
+    required this.onNameChanged,
+    required this.onAvatarChanged,
+    required this.onWallpaperChanged,
+    required this.onBackgroundChanged,
+    required this.onColorChanged,
+    required this.onVisualChanged,
+    required this.onResetTheme,
+    super.key,
+  });
   @override State<SettingsPage> createState()=>_SettingsState();
 }
 class _SettingsState extends State<SettingsPage> {
@@ -1624,25 +1767,27 @@ class _SettingsState extends State<SettingsPage> {
     if(value!=null&&value.trim().isNotEmpty) widget.onNameChanged(value.trim());
   }
   Future<void> _editColor(String key,String title,Color current) async {
-    final controller=TextEditingController(text:'#'+current.value.toRadixString(16).substring(2).toUpperCase());
-    final value=await showDialog<String>(context:context,builder:(_)=>AlertDialog(
-      title:Text(title),
-      content:TextField(controller:controller,maxLength:7,decoration:const InputDecoration(labelText:'HEX',hintText:'#8B5CF6')),
-      actions:[
-        TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Batal')),
-        FilledButton(onPressed:()=>Navigator.pop(context,controller.text.trim()),child:const Text('Terapkan')),
-      ],
-    ));
-    if(value==null)return;
-    final hex=value.replaceAll('#','');
-    if(RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(hex)) widget.onColorChanged(key,Color(int.parse('FF'+hex,radix:16)));
+    final value=await showDialog<Color>(
+      context:context,
+      builder:(_)=>_NexoraColorPickerDialog(title:title,initial:current),
+    );
+    if(value!=null) widget.onColorChanged(key,value);
   }
   Widget _colorRow(String key,String title,String subtitle,Color color)=>ListTile(
-    contentPadding:const EdgeInsets.symmetric(vertical:3),
-    leading:Container(width:42,height:42,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(11),border:Border.all(color:Colors.white24))),
+    contentPadding:const EdgeInsets.symmetric(vertical:4,horizontal:6),
+    leading:Container(
+      width:46,height:46,
+      decoration:BoxDecoration(
+        color:color,
+        borderRadius:BorderRadius.circular(13),
+        border:Border.all(color:Colors.white24),
+        boxShadow:[BoxShadow(color:color.withValues(alpha:.28),blurRadius:12)],
+      ),
+    ),
     title:Text(title,style:const TextStyle(fontWeight:FontWeight.w800)),
     subtitle:Text(subtitle,style:const TextStyle(fontSize:11)),
-    trailing:OutlinedButton(onPressed:()=>_editColor(key,title,color),child:Text('#'+color.value.toRadixString(16).substring(2).toUpperCase())),
+    trailing:IconButton(onPressed:()=>_editColor(key,title,color),icon:const Icon(Icons.palette_outlined)),
+    onTap:()=>_editColor(key,title,color),
   );
   @override Widget build(BuildContext context){
     final googleName=widget.account.displayName?.trim();
@@ -1692,7 +1837,24 @@ class _SettingsState extends State<SettingsPage> {
         _colorRow('surface','Warna Kartu & Panel (Surface)','Card, menu, popup',widget.surface),
         const Divider(height:1),
         _colorRow('border','Warna Border & Garis Tepi','Outline dan separator',widget.border),
+        const Divider(height:1),
+        _colorRow('text','Warna Tulisan','Semua teks yang mengikuti tema',widget.text),
       ])),
+      const SizedBox(height:10),
+      Card(
+        child:Padding(
+          padding:const EdgeInsets.fromLTRB(16,12,16,16),
+          child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+            const Text('TRANSPARANSI & KETEBALAN UI',style:TextStyle(fontWeight:FontWeight.w900)),
+            const SizedBox(height:4),
+            const Text('Atur seberapa terlihat kartu/panel dan ketebalan garisnya. Nilai 0 membuat warna kartu hilang.',style:TextStyle(color:Colors.white60,fontSize:11)),
+            const SizedBox(height:12),
+            _VisualSlider(label:'Kecerahan / transparansi kartu',value:widget.cardOpacity,min:0,max:1,display:'PERSEN',onChanged:(v)=>widget.onVisualChanged('cardOpacity',v)),
+            _VisualSlider(label:'Ketebalan border',value:widget.cardBorderWidth,min:0,max:6,display:'PX',onChanged:(v)=>widget.onVisualChanged('cardBorderWidth',v)),
+            _VisualSlider(label:'Kecerahan border',value:widget.cardBorderOpacity,min:0,max:1,display:'PERSEN',onChanged:(v)=>widget.onVisualChanged('cardBorderOpacity',v)),
+          ]),
+        ),
+      ),
       const SizedBox(height:10),
       Card(child:Column(children:[
         ListTile(leading:const Icon(Icons.image_rounded),title:const Text('Background sendiri',style:TextStyle(fontWeight:FontWeight.w900)),subtitle:const Text('Pilih gambar dari galeri/perangkat'),trailing:const Icon(Icons.chevron_right_rounded),onTap:_pickBackground),
