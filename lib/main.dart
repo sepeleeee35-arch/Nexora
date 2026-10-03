@@ -1783,6 +1783,7 @@ class SettingsPage extends StatefulWidget {
   final ValueChanged<Uint8List?> onAvatarChanged;
   final ValueChanged<int> onWallpaperChanged;
   final ValueChanged<Uint8List?> onBackgroundChanged;
+  final ValueChanged<Uint8List?> onProfileWallpaperChanged;
   final void Function(String key, Color value) onColorChanged;
   final void Function(String key, double value) onVisualChanged;
   final VoidCallback onResetTheme;
@@ -1805,6 +1806,7 @@ class SettingsPage extends StatefulWidget {
     required this.onAvatarChanged,
     required this.onWallpaperChanged,
     required this.onBackgroundChanged,
+    required this.onProfileWallpaperChanged,
     required this.onColorChanged,
     required this.onVisualChanged,
     required this.onResetTheme,
