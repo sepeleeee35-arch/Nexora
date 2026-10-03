@@ -168,11 +168,11 @@ class _TwentyState extends State<_Twenty> {
                 child:Center(child:Text(v==0?'':v.toString(),style:TextStyle(fontSize:v>=1024?21:26,fontWeight:FontWeight.w900,color:v>=128?Colors.white:Colors.white.withOpacity(.94)))))]),
           )))),
           Padding(padding:const EdgeInsets.fromLTRB(18,0,18,16),child:Row(children:[
-            Expanded(child:Row(children:[Expanded(child:Text(won?'2048 REACHED!':over?'NO MORE MOVES':'SWIPE ANY DIRECTION',textAlign:TextAlign.center,
+            Expanded(child:Text(won?'2048 REACHED!':over?'NO MORE MOVES':'SWIPE ANY DIRECTION',textAlign:TextAlign.center,
               style:TextStyle(color:won?const Color(0xFF86EFAC):Colors.white38,fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1))),
-            if(over)FilledButton(onPressed:()=>setState(reset),child:const Text('RETRY')),if(!over)IconButton(onPressed:undo,icon:const Icon(Icons.undo_rounded)),
+            if(over)FilledButton(onPressed:()=>setState(reset),child:const Text('RETRY')),
+            if(!over)IconButton(onPressed:undo,icon:const Icon(Icons.undo_rounded)),
           ])),
-        ])),
       ),
     ),
   );
@@ -203,7 +203,7 @@ class _TetrisState extends State<_Tetris>{
   late List<List<int>> shape;
   Color color=Colors.white;
   Timer? timer;
-  int row=0,col=3,score=0,lines=0,level=1;
+  int row=0,col=3,score=0,lines=0,level=1,activeKind=0;
   bool running=false,over=false;
   @override void initState(){super.initState();reset();}
   void reset(){timer?.cancel();for(int i=0;i<200;i++)board[i]=0;score=0;lines=0;level=1;running=false;over=false;current=r.nextInt(defs.length);next=r.nextInt(defs.length);_loadPiece();}
@@ -333,7 +333,7 @@ class _BreakoutState extends State<_Breakout>{
     if(bx<.025||bx>.975){vx=-vx;bx=bx.clamp(.025,.975);}
     if(by<.05){vy=vy.abs();by=.05;}
     if(by>.88&&by<.96&&(bx-paddle).abs()<.15&&vy>0){vy=-vy.abs();combo++;}
-    final col=(bx*8).floor().clamp(0,7),row=((by-.09)/.055).floor().clamp(0,5),i=row*8+col;
+    final col=((bx*8).floor().clamp(0,7)).toInt(),row=(((by-.09)/.055).floor().clamp(0,5)).toInt(),i=row*8+col;
     if(by>.08&&by<.43&&blocks[i]>0){blocks[i]=0;score+=10+combo*2;combo++;vy=-vy;if(Random().nextDouble()<.12){powerX=bx;powerY=by;}}
     if(powerY>=0){powerY+=.008;if(powerY>.90){powerY=-1;}else if((powerX-paddle).abs()<.16&&powerY>.84){lives=min(5,lives+1);powerY=-1;}}
     if(by>1.03){lives--;combo=0;bx=.5;by=.78;vx=(vx.sign==0?1:vx.sign)*.009;vy=-.014;if(lives<=0){over=true;running=false;t.cancel();}}
