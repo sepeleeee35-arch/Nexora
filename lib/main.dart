@@ -813,7 +813,6 @@ class HomePage extends StatelessWidget {
               ),
             ),
           ),
-        ),
         const SizedBox(height: 22),
         const _Title('Quick Access'),
         const SizedBox(height: 10),
