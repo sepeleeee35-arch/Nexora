@@ -53,53 +53,352 @@ class _SnakeState extends State<_Snake>{final r=Random();List<Point<int>> body=[
 class _SnakePainter extends CustomPainter{final List<Point<int>> b;final Point<int> f;_SnakePainter(this.b,this.f);void paint(Canvas c,Size s){final cell=s.width/16;final p=Paint();p.color=Colors.white.withOpacity(.025);for(int x=0;x<16;x++)for(int y=0;y<22;y++)c.drawRect(Rect.fromLTWH(x*cell,y*cell,cell-1,cell-1),p);p.color=Color(0xFFFB7185);c.drawCircle(Offset((f.x+.5)*cell,(f.y+.5)*cell),cell*.27,p);for(int i=b.length-1;i>=0;i--){p.color=i==0?Color(0xFF86EFAC):Color(0xFF22C55E).withOpacity(max(.35,1-i*.025));final q=b[i];c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(q.x*cell+2,q.y*cell+2,cell-4,cell-4),Radius.circular(cell*.25)),p);}}bool shouldRepaint(c)=>true;}
 
 
-class _Twenty extends StatefulWidget { const _Twenty(); @override State<_Twenty> createState()=>_TwentyState(); }
-class _TwentyState extends State<_Twenty>{
-  final r=Random(); List<int> board=List.filled(16,0); int score=0; bool over=false;
-  @override void initState(){super.initState();reset();}
-  void reset(){board=List.filled(16,0);score=0;over=false;_spawn();_spawn();}
-  void _spawn(){final e=[for(int i=0;i<16;i++)if(board[i]==0)i;if(e.isEmpty)return;board[e[r.nextInt(e.length)]]=r.nextDouble()<.9?2:4;}
-  void move(int dx,int dy){
-    if(over)return; final before=List<int>.from(board);
-    List<int> line(List<int> a){final v=a.where((x)=>x!=0).toList();final out=<int>[];for(int i=0;i<v.length;i++){if(i+1<v.length&&v[i]==v[i+1]){out.add(v[i]*2);score+=v[i]*2;i++;}else out.add(v[i]);}while(out.length<4)out.add(0);return out;}
-    final n=List<int>.filled(16,0);
-    for(int k=0;k<4;k++){final a=<int>[];for(int q=0;q<4;q++){final x=dx!=0?q:(dy>0?3-q:q);final y=dy!=0?q:(dx>0?3-q:q);a.add(board[y*4+x]);}final z=line(a);for(int q=0;q<4;q++){final x=dx!=0?q:(dy>0?3-q:q);final y=dy!=0?q:(dx>0?3-q:q);n[y*4+x]=z[q];}}
-    if(n.toString()!=before.toString()){board=n;_spawn();}else if(!_canMove(n))over=true;setState((){});
+
+class _GameTopBar extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color accent;
+  const _GameTopBar(this.label, this.value, this.accent);
+  @override
+  Widget build(BuildContext c) => Container(
+    margin: const EdgeInsets.fromLTRB(16, 8, 16, 10),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.white.withOpacity(.055),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: Colors.white.withOpacity(.07)),
+    ),
+    child: Row(children: [
+      Container(width: 42, height: 42,
+        decoration: BoxDecoration(color: accent.withOpacity(.14), borderRadius: BorderRadius.circular(13)),
+        child: Icon(Icons.bolt_rounded, color: accent, size: 22)),
+      const SizedBox(width: 11),
+      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Text(label, style: const TextStyle(fontSize: 9, color: Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 1.4)),
+        const SizedBox(height: 2),
+        Text(value, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+      ])),
+      Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(color: Colors.black26, borderRadius: BorderRadius.circular(12)),
+        child: const Text('NEXORA', style: TextStyle(fontSize: 9, color: Colors.white54, fontWeight: FontWeight.w900, letterSpacing: 1))),
+    ]),
+  );
+}
+
+class _Twenty extends StatefulWidget {
+  const _Twenty();
+  @override State<_Twenty> createState() => _TwentyState();
+}
+class _TwentyState extends State<_Twenty> {
+  final r = Random();
+  List<int> board = List.filled(16, 0);
+  int score = 0, best = 0;
+  bool over = false, won = false;
+  @override void initState(){super.initState(); reset();}
+  void reset(){board=List.filled(16,0);score=0;over=false;won=false;_spawn();_spawn();}
+  void _spawn(){
+    final empty=[for(int i=0;i<16;i++)if(board[i]==0)i];
+    if(empty.isEmpty)return;
+    board[empty[r.nextInt(empty.length)]]=r.nextDouble()<.9?2:4;
   }
-  bool _canMove(List<int>b){if(b.contains(0))return true;for(int y=0;y<4;y++)for(int x=0;x<4;x++){final v=b[y*4+x];if(x<3&&b[y*4+x+1]==v||y<3&&b[(y+1)*4+x]==v)return true;}return false;}
-  @override Widget build(BuildContext c)=>_Shell(title:'2048',subtitle:'Neon Merge • score $score',accent:Color(0xFFF59E0B),onReset:()=>setState(reset),child:_World(Column(children:[
-    Padding(padding:EdgeInsets.all(18),child:Row(children:[Text('2048',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),Spacer(),Text('SWIPE TO MERGE',style:TextStyle(color:Colors.white38,fontSize:10,fontWeight:FontWeight.w800))])),
-    Expanded(child:Center(child:GestureDetector(onHorizontalDragEnd:(d)=>move((d.primaryVelocity??0)>0?1:-1,0),onVerticalDragEnd:(d)=>move(0,(d.primaryVelocity??0)>0?1:-1),child:AspectRatio(aspectRatio:1,child:Container(margin:EdgeInsets.all(18),padding:EdgeInsets.all(8),decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(22)),child:GridView.count(crossAxisCount:4,physics:NeverScrollableScrollPhysics(),crossAxisSpacing:8,mainAxisSpacing:8,children:[for(final v in board)Container(decoration:BoxDecoration(color:v==0?Colors.white.withOpacity(.05):Color(0xFFF59E0B).withOpacity(min(.85,.18+v/3000)),borderRadius:BorderRadius.circular(14)),child:Center(child:Text(v==0?'':v.toString(),style:TextStyle(fontSize:24,fontWeight:FontWeight.w900))))])))))),
-    if(over)Padding(padding:EdgeInsets.all(12),child:FilledButton(onPressed:()=>setState(reset),child:Text('PLAY AGAIN'))),
-  ])));
+  List<int> _line(List<int> a){
+    final v=a.where((x)=>x!=0).toList(), out=<int>[];
+    for(int i=0;i<v.length;i++){
+      if(i+1<v.length&&v[i]==v[i+1]){final n=v[i]*2;out.add(n);score+=n;i++;if(n>=2048)won=true;}
+      else out.add(v[i]);
+    }
+    while(out.length<4)out.add(0);
+    return out;
+  }
+  void move(int dx,int dy){
+    if(over)return;
+    final before=List<int>.from(board);
+    final n=List<int>.filled(16,0);
+    for(int k=0;k<4;k++){
+      final a=<int>[];
+      for(int q=0;q<4;q++){
+        final x=dx!=0?(dx>0?3-q:q):k;
+        final y=dy!=0?(dy>0?3-q:q):k;
+        a.add(board[y*4+x]);
+      }
+      final z=_line(a);
+      for(int q=0;q<4;q++){
+        final x=dx!=0?(dx>0?3-q:q):k;
+        final y=dy!=0?(dy>0?3-q:q):k;
+        n[y*4+x]=z[q];
+      }
+    }
+    if(n.toString()!=before.toString()){board=n;_spawn();best=max(best,score);if(!_canMove(board))over=true;}
+    setState((){});
+  }
+  bool _canMove(List<int>b){
+    if(b.contains(0))return true;
+    for(int y=0;y<4;y++)for(int x=0;x<4;x++){
+      final v=b[y*4+x];
+      if(x<3&&b[y*4+x+1]==v)return true;
+      if(y<3&&b[(y+1)*4+x]==v)return true;
+    }
+    return false;
+  }
+  Color tile(int v){
+    if(v==0)return Colors.white.withOpacity(.045);
+    final t=min(1.0,log(max(2,v))/log(4096));
+    return Color.lerp(const Color(0xFFF59E0B),const Color(0xFF8B5CF6),t)!;
+  }
+  @override Widget build(BuildContext c)=>_Shell(
+    title:'2048',subtitle:'Merge Rush • plan every move',accent:const Color(0xFFF59E0B),
+    onReset:()=>setState(reset),
+    child:GestureDetector(
+      onHorizontalDragEnd:(d)=>move((d.primaryVelocity??0)>0?1:-1,0),
+      onVerticalDragEnd:(d)=>move(0,(d.primaryVelocity??0)>0?1:-1),
+      child:_World(a:const Color(0xFF20140A),b:const Color(0xFF080A13),
+        child:Column(children:[
+          _GameTopBar('SCORE  $score','BEST  $best',const Color(0xFFF59E0B)),
+          Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:Container(
+            margin:const EdgeInsets.all(18),padding:const EdgeInsets.all(9),
+            decoration:BoxDecoration(color:Colors.black.withOpacity(.28),borderRadius:BorderRadius.circular(26),
+              border:Border.all(color:const Color(0xFFF59E0B).withOpacity(.16)),
+              boxShadow:[BoxShadow(color:const Color(0xFFF59E0B).withOpacity(.08),blurRadius:30)]),
+            child:GridView.count(crossAxisCount:4,physics:const NeverScrollableScrollPhysics(),crossAxisSpacing:8,mainAxisSpacing:8,
+              children:[for(final v in board)AnimatedContainer(duration:const Duration(milliseconds:120),
+                decoration:BoxDecoration(color:tile(v),borderRadius:BorderRadius.circular(15),
+                  boxShadow:v==0?[]:[BoxShadow(color:tile(v).withOpacity(.18),blurRadius:9)]),
+                child:Center(child:Text(v==0?'':v.toString(),style:TextStyle(fontSize:v>=1024?21:26,fontWeight:FontWeight.w900,color:v>=128?Colors.white:Colors.white.withOpacity(.94)))))]),
+          )))),
+          Padding(padding:const EdgeInsets.fromLTRB(18,0,18,16),child:Row(children:[
+            Expanded(child:Text(won?'2048 REACHED!':over?'NO MORE MOVES':'SWIPE ANY DIRECTION',textAlign:TextAlign.center,
+              style:TextStyle(color:won?const Color(0xFF86EFAC):Colors.white38,fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1))),
+            if(over)FilledButton(onPressed:()=>setState(reset),child:const Text('RETRY')),
+          ])),
+        ])),
+      ),
+    ),
+  );
 }
 
-class _Tetris extends StatefulWidget { const _Tetris(); @override State<_Tetris> createState()=>_TetrisState(); }
+class _Tetromino {
+  final List<List<int>> cells;
+  final Color color;
+  const _Tetromino(this.cells,this.color);
+}
+class _Tetris extends StatefulWidget {
+  const _Tetris();
+  @override State<_Tetris> createState()=>_TetrisState();
+}
 class _TetrisState extends State<_Tetris>{
-  final board=List<int>.filled(200,0);Timer? timer;int score=0,row=0,col=4;bool running=false,over=false;
-  final pieces=<List<Point<int>>>[[Point(0,0),Point(1,0),Point(0,1),Point(1,1)],[Point(0,0),Point(1,0),Point(2,0),Point(1,1)],[Point(0,0),Point(0,1),Point(0,2),Point(1,2)],[Point(0,0),Point(1,0),Point(2,0),Point(3,0)]];
-  List<Point<int>> get shape=>pieces[(score~/100)%pieces.length];
-  bool can(int nr,int nc){for(final p in shape){final x=nc+p.x,y=nr+p.y;if(x<0||x>=10||y>=20||(y>=0&&board[y*10+x]!=0))return false;}return true;}
-  void start(){if(running)return;running=true;timer=Timer.periodic(Duration(milliseconds:420),(_)=>tick());setState((){});}
-  void tick(){if(!mounted)return;if(can(row+1,col)){row++;setState((){});return;}for(final p in shape){final x=col+p.x,y=row+p.y;if(y>=0)board[y*10+x]=1;}for(int y=19;y>=0;y--){bool full=true;for(int x=0;x<10;x++)if(board[y*10+x]==0)full=false;if(full){for(int yy=y;yy>0;yy--)for(int x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];score+=100;y++;}}row=0;col=4;if(!can(row,col)){running=false;over=true;timer?.cancel();}setState((){});}
-  void reset(){timer?.cancel();for(int i=0;i<200;i++)board[i]=0;score=0;row=0;col=4;running=false;over=false;}
+  final r=Random();
+  final board=List<int>.filled(200,0);
+  final defs=[
+    _Tetromino([[1,1,1,1]],Color(0xFF22D3EE)),
+    _Tetromino([[1,1],[1,1]],Color(0xFFFACC15)),
+    _Tetromino([[0,1,0],[1,1,1]],Color(0xFFA78BFA)),
+    _Tetromino([[1,0,0],[1,1,1]],Color(0xFF60A5FA)),
+    _Tetromino([[0,0,1],[1,1,1]],Color(0xFFFB923C)),
+    _Tetromino([[0,1,1],[1,1,0]],Color(0xFF4ADE80)),
+    _Tetromino([[1,1,0],[0,1,1]],Color(0xFFF87171)),
+  ];
+  late int current,next;
+  late List<List<int>> shape;
+  Color color=Colors.white;
+  Timer? timer;
+  int row=0,col=3,score=0,lines=0,level=1;
+  bool running=false,over=false;
+  @override void initState(){super.initState();reset();}
+  void reset(){timer?.cancel();for(int i=0;i<200;i++)board[i]=0;score=0;lines=0;level=1;running=false;over=false;current=r.nextInt(defs.length);next=r.nextInt(defs.length);_loadPiece();}
+  void _loadPiece(){shape=defs[current].cells.map((e)=>List<int>.from(e)).toList();color=defs[current].color;row=0;col=3;current=next;next=r.nextInt(defs.length);}
+  bool can(int nr,int nc,List<List<int>> s){
+    for(int y=0;y<s.length;y++)for(int x=0;x<s[y].length;x++)if(s[y][x]!=0){
+      final xx=nc+x,yy=nr+y;if(xx<0||xx>=10||yy>=20||(yy>=0&&board[yy*10+xx]!=0))return false;
+    } return true;
+  }
+  void rotate(){
+    final h=shape.length,w=shape[0].length;final out=List.generate(w,(_)=>List<int>.filled(h,0));
+    for(int y=0;y<h;y++)for(int x=0;x<w;x++)out[x][h-1-y]=shape[y][x];
+    if(can(row,col,out)){shape=out;setState((){});}
+  }
+  void start(){if(running||over)return;running=true;_clock();setState((){});}
+  void _clock(){timer?.cancel();timer=Timer.periodic(Duration(milliseconds:max(110,520-level*42)),(_)=>tick());}
+  void tick(){if(!mounted)return;if(can(row+1,col,shape)){row++;setState((){});return;}lock();}
+  void softDrop(){if(!running){start();return;}if(can(row+1,col,shape)){row++;score++;setState((){});}else lock();}
+  void lock(){
+    for(int y=0;y<shape.length;y++)for(int x=0;x<shape[y].length;x++)if(shape[y][x]!=0){
+      final yy=row+y,xx=col+x;if(yy>=0)board[yy*10+xx]=current+1;
+    }
+    int cleared=0;
+    for(int y=19;y>=0;y--){if(List.generate(10,(x)=>board[y*10+x]).every((v)=>v!=0)){
+      for(int yy=y;yy>0;yy--)for(int x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];
+      for(int x=0;x<10;x++)board[x]=0;cleared++;y++;
+    }}
+    if(cleared>0){lines+=cleared;score+=cleared*cleared*100*level;level=1+(lines~/10);_clock();}
+    _loadPiece();
+    if(!can(row,col,shape)){running=false;over=true;timer?.cancel();}
+    setState((){});
+  }
   @override void dispose(){timer?.cancel();super.dispose();}
-  @override Widget build(BuildContext c)=>_Shell(title:'Tetris',subtitle:'Drop Zone • score $score',accent:_purple,onReset:()=>setState(reset),child:_World(Column(children:[
-    Padding(padding:EdgeInsets.all(14),child:Text('DRAG TO MOVE • TAP TO ROTATE',style:TextStyle(color:Colors.white38,fontSize:10,fontWeight:FontWeight.w800,letterSpacing:1))),
-    Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){if(d.delta.dx>0&&can(row,col+1))col++;if(d.delta.dx<0&&can(row,col-1))col--;setState((){});},onTap:(){if(can(row,col))setState((){});},child:Center(child:AspectRatio(aspectRatio:.5,child:Container(margin:EdgeInsets.all(14),padding:EdgeInsets.all(5),decoration:BoxDecoration(color:Colors.black26,borderRadius:BorderRadius.circular(18),border:Border.all(color:_purple.withOpacity(.3))),child:CustomPaint(painter:_TetrisPainter(board,shape,row,col))))))),
-    Padding(padding:EdgeInsets.all(12),child:FilledButton(onPressed:over?()=>setState(reset):start,child:Text(over?'PLAY AGAIN':(running?'RUNNING':'START GAME')))),
-  ])));
+  @override Widget build(BuildContext c)=>_Shell(title:'Tetris',subtitle:'Drop Zone • level $level',accent:const Color(0xFFA78BFA),onReset:()=>setState(reset),child:
+    GestureDetector(
+      onHorizontalDragUpdate:(d){if(!running)return;if(d.delta.dx>2&&can(row,col+1,shape))col++;if(d.delta.dx<-2&&can(row,col-1,shape))col--;setState((){});},
+      onVerticalDragUpdate:(d){if(d.delta.dy>7)softDrop();},
+      onTap:rotate,
+      child:_World(a:const Color(0xFF17112A),b:const Color(0xFF070914),child:Column(children:[
+        Padding(padding:const EdgeInsets.fromLTRB(16,8,16,10),child:Row(children:[
+          Expanded(child:_GameTopBar('SCORE  $score','LINES  $lines',const Color(0xFFA78BFA))),
+          const SizedBox(width:0),
+        ])),
+        Expanded(child:Center(child:AspectRatio(aspectRatio:.52,child:Container(
+          margin:const EdgeInsets.symmetric(horizontal:22,vertical:4),padding:const EdgeInsets.all(5),
+          decoration:BoxDecoration(color:Colors.black.withOpacity(.32),borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFA78BFA).withOpacity(.22))),
+          child:CustomPaint(painter:_TetrisPainter(board,shape,row,col,color,defs[next].color)),
+        )))),
+        Padding(padding:const EdgeInsets.fromLTRB(18,5,18,14),child:Row(children:[
+          Container(padding:const EdgeInsets.symmetric(horizontal:12,vertical:10),decoration:BoxDecoration(color:Colors.white.withOpacity(.05),borderRadius:BorderRadius.circular(14)),
+            child:Text('NEXT',style:const TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900))),
+          const Spacer(),
+          FilledButton(onPressed:over?()=>setState(reset):start,child:Text(over?'PLAY AGAIN':(running?'DROP':'START'))),
+        ])),
+      ])),
+    ));
 }
-class _TetrisPainter extends CustomPainter{final List<int>b;final List<Point<int>>s;final int row,col;_TetrisPainter(this.b,this.s,this.row,this.col);void paint(Canvas c,Size z){final cell=z.width/10,p=Paint();p.color=Colors.white.withOpacity(.025);for(int y=0;y<20;y++)for(int x=0;x<10;x++)c.drawRect(Rect.fromLTWH(x*cell,y*cell,cell-1,cell-1),p);p.color=_purple;for(int y=0;y<20;y++)for(int x=0;x<10;x++)if(b[y*10+x]!=0)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+2,y*cell+2,cell-4,cell-4),Radius.circular(5)),p);p.color=Color(0xFFC4B5FD);for(final q in s){final x=col+q.x,y=row+q.y;if(y>=0)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+2,y*cell+2,cell-4,cell-4),Radius.circular(5)),p);}}bool shouldRepaint(c)=>true;}
+class _TetrisPainter extends CustomPainter{
+  final List<int>b;final List<List<int>>s;final int row,col;final Color color,next;
+  _TetrisPainter(this.b,this.s,this.row,this.col,this.color,this.next);
+  @override void paint(Canvas c,Size z){
+    final cell=z.width/10,p=Paint()..style=PaintingStyle.fill;
+    for(int y=0;y<20;y++)for(int x=0;x<10;x++){
+      p.color=Colors.white.withOpacity(.025);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+1,y*cell+1,cell-2,cell-2),const Radius.circular(4)),p);
+      final v=b[y*10+x];if(v>0){p.color=_blockColor(v);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+2,y*cell+2,cell-4,cell-4),const Radius.circular(5)),p);}
+    }
+    p.color=color;
+    for(int y=0;y<s.length;y++)for(int x=0;x<s[y].length;x++)if(s[y][x]!=0){
+      final xx=col+x,yy=row+y;if(yy>=0)c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+2,yy*cell+2,cell-4,cell-4),const Radius.circular(5)),p);
+    }
+  }
+  Color _blockColor(int v)=>[Colors.transparent,const Color(0xFF22D3EE),const Color(0xFFFACC15),const Color(0xFFA78BFA),const Color(0xFF60A5FA),const Color(0xFFFB923C),const Color(0xFF4ADE80),const Color(0xFFF87171)][v];
+  @override bool shouldRepaint(c)=>true;
+}
 
-class _Flappy extends StatefulWidget { const _Flappy(); @override State<_Flappy> createState()=>_FlappyState(); }
-class _FlappyState extends State<_Flappy>{double y=.45,vy=0,pipeX=1.05,gap=.5;Timer?timer;int score=0;bool running=false,over=false;final r=Random();void flap(){if(!running){running=true;timer=Timer.periodic(Duration(milliseconds:30),tick);}vy=-.032;setState((){});}void tick(Timer t){y+=vy;vy+=.0018;pipeX-=.012;if(pipeX<-.2){pipeX=1.05;gap=.28+r.nextDouble()*.44;score++;}if(y<.03||y>.97||(pipeX<.19&&pipeX>.02&&(y<gap-.18||y>gap+.18))){t.cancel();running=false;over=true;}if(mounted)setState((){});}void reset(){timer?.cancel();y=.45;vy=0;pipeX=1.05;gap=.5;score=0;running=false;over=false;}@override void dispose(){timer?.cancel();super.dispose();}@override Widget build(BuildContext c)=>_Shell(title:'Flappy',subtitle:'Neon Sky • score $score',accent:_cyan,onReset:()=>setState(reset),child:GestureDetector(onTap:flap,child:_World(Stack(children:[CustomPaint(size:Size.infinite,painter:_FlappyPainter(y,pipeX,gap)),if(!running)Center(child:Column(mainAxisSize:MainAxisSize.min,children:[Text(over?'CRASHED':'NEON SKY',style:TextStyle(fontSize:30,fontWeight:FontWeight.w900)),SizedBox(height:10),Text('TAP TO FLY',style:TextStyle(color:_cyan,fontWeight:FontWeight.w900,letterSpacing:2))]))])));}}
-class _FlappyPainter extends CustomPainter{final double y,x,g;_FlappyPainter(this.y,this.x,this.g);void paint(Canvas c,Size s){final p=Paint()..color=_cyan.withOpacity(.12);for(int i=0;i<12;i++)c.drawCircle(Offset((i*91)%s.width,(i*67)%s.height),2,p);p.color=Color(0xFF0EA5E9);final px=x*s.width;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px,0,48,(g-.18)*s.height),Radius.circular(12)),p);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px,(g+.18)*s.height,48,s.height),Radius.circular(12)),p);p.color=Color(0xFFFDE047);c.drawCircle(Offset(s.width*.17,y*s.height),16,p);p.color=Colors.white;c.drawCircle(Offset(s.width*.175,y*s.height-4),3,p);}bool shouldRepaint(c)=>true;}
+class _Flappy extends StatefulWidget{const _Flappy();@override State<_Flappy> createState()=>_FlappyState();}
+class _FlappyState extends State<_Flappy>{
+  double y=.45,vy=0,pipeX=1.08,gap=.48;Timer?timer;int score=0,best=0;bool running=false,over=false;final r=Random();
+  void flap(){if(!running){if(over)reset();running=true;timer=Timer.periodic(const Duration(milliseconds:28),tick);}vy=-.030;setState((){});}
+  void tick(Timer t){y+=vy;vy+=.00165;pipeX-=.0105;
+    if(pipeX<-.18){pipeX=1.05;gap=.27+r.nextDouble()*.45;score++;best=max(best,score);}
+    if(y<.035||y>.965||(pipeX<.21&&pipeX>.01&&(y<gap-.18||y>gap+.18))){running=false;over=true;t.cancel();}
+    if(mounted)setState((){});
+  }
+  void reset(){timer?.cancel();y=.45;vy=0;pipeX=1.08;gap=.48;score=0;running=false;over=false;}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext c)=>_Shell(title:'Flappy',subtitle:'Sky Dash • tap to fly',accent:const Color(0xFF22D3EE),onReset:()=>setState(reset),child:
+    GestureDetector(onTap:flap,child:_World(a:const Color(0xFF071C35),b:const Color(0xFF0C4A4E),child:Stack(children:[
+      CustomPaint(size:Size.infinite,painter:_FlappyPainter(y,pipeX,gap,score)),
+      Positioned(top:16,left:0,right:0,child:Column(children:[
+        Text('$score',style:const TextStyle(fontSize:44,fontWeight:FontWeight.w900,shadows:[Shadow(blurRadius:16)])),
+        Text('BEST $best',style:const TextStyle(fontSize:10,color:Colors.white54,fontWeight:FontWeight.w900,letterSpacing:2)),
+      ])),
+      if(!running)Center(child:Container(padding:const EdgeInsets.fromLTRB(24,20,24,18),decoration:BoxDecoration(color:Colors.black.withOpacity(.35),borderRadius:BorderRadius.circular(24),border:Border.all(color:Colors.white12)),child:Column(mainAxisSize:MainAxisSize.min,children:[
+        Icon(Icons.flutter_dash_rounded,color:const Color(0xFFFDE047),size:54),const SizedBox(height:8),
+        Text(over?'TRY AGAIN':'SKY DASH',style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900)),
+        const SizedBox(height:6),const Text('TAP • FLY • PASS THE GATES',style:TextStyle(color:Colors.white54,fontSize:10,fontWeight:FontWeight.w900,letterSpacing:1)),
+      ])),
+    ])));
+}
+class _FlappyPainter extends CustomPainter{
+  final double y,x,g;final int score;_FlappyPainter(this.y,this.x,this.g,this.score);
+  @override void paint(Canvas c,Size s){
+    final p=Paint();
+    p.color=Colors.white.withOpacity(.07);
+    for(int i=0;i<9;i++){final xx=(i*103+score*17)%s.width;c.drawCircle(Offset(xx,70+(i*61)%s.height),2,p);}
+    p.color=const Color(0xFF164E63);for(int i=0;i<5;i++)c.drawCircle(Offset(i*s.width/4,s.height*.88),s.width*.20,p);
+    final px=x*s.width,top=(g-.18)*s.height,bottom=(g+.18)*s.height;
+    p.color=const Color(0xFF0EA5E9);
+    c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px,0,54,top),const Radius.circular(12)),p);
+    c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(px,bottom,54,s.height-bottom),const Radius.circular(12)),p);
+    p.color=const Color(0xFF67E8F9);c.drawRect(Rect.fromLTWH(px-4,max(0,top-10),62,10),p);c.drawRect(Rect.fromLTWH(px-4,bottom,62,10),p);
+    final by=y*s.height;p.color=const Color(0xFFFDE047);c.drawCircle(Offset(s.width*.19,by),18,p);
+    p.color=Colors.white;c.drawCircle(Offset(s.width*.20,by-5),4,p);p.color=Colors.black;c.drawCircle(Offset(s.width*.20,by-5),2,p);
+    p.color=const Color(0xFFF59E0B);c.drawOval(Rect.fromCenter(center:Offset(s.width*.19+17,by+4),width:18,height:8),p);
+  }
+  @override bool shouldRepaint(c)=>true;
+}
 
-class _Breakout extends StatefulWidget { const _Breakout(); @override State<_Breakout> createState()=>_BreakoutState(); }
-class _BreakoutState extends State<_Breakout>{double bx=.5,by=.78,vx=.012,vy=-.014,paddle=.5;Timer?timer;int score=0,lives=3;bool running=false,over=false;final blocks=List<bool>.filled(30,true);void start(){if(running)return;running=true;timer=Timer.periodic(Duration(milliseconds:25),tick);setState((){});}void tick(Timer t){bx+=vx;by+=vy;if(bx<.03||bx>.97)vx=-vx;if(by<.05)vy=-vy;if(by>.9&&by<.96&&(bx-paddle).abs()<.16)vy=-vy.abs();final col=(bx*10).floor().clamp(0,9),row=(by*15).floor().clamp(0,2),i=row*10+col;if(by<.22&&blocks[i]){blocks[i]=false;score+=10;vy=-vy;}if(by>1){lives--;bx=.5;by=.78;if(lives<=0){over=true;running=false;t.cancel();}}if(blocks.every((v)=>!v)){over=true;running=false;t.cancel();}if(mounted)setState((){});}void reset(){timer?.cancel();for(int i=0;i<30;i++)blocks[i]=true;bx=.5;by=.78;vx=.012;vy=-.014;paddle=.5;score=0;lives=3;running=false;over=false;}@override void dispose(){timer?.cancel();super.dispose();}@override Widget build(BuildContext c)=>_Shell(title:'Breakout',subtitle:'Core Smash • score $score • lives $lives',accent:Color(0xFFEF4444),onReset:()=>setState(reset),child:GestureDetector(onHorizontalDragUpdate:(d){paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(c).width).clamp(.12,.88);setState((){});},onTap:start,child:_World(Stack(children:[CustomPaint(size:Size.infinite,painter:_BreakoutPainter(blocks,bx,by,paddle)),if(!running)Center(child:Text(over?'ROUND OVER':'DRAG PADDLE • TAP START',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)))])));}}
-class _BreakoutPainter extends CustomPainter{final List<bool>b;final double x,y,paddle;_BreakoutPainter(this.b,this.x,this.y,this.paddle);void paint(Canvas c,Size s){final p=Paint();for(int r=0;r<3;r++)for(int col=0;col<10;col++)if(b[r*10+col]){p.color=Color(0xFFEF4444).withOpacity(.45+r*.15);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(col*s.width/10+3,40+r*30,s.width/10-6,22),Radius.circular(7)),p);}p.color=Color(0xFFFCA5A5);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH((paddle-.12)*s.width,s.height*.92,.24*s.width,14),Radius.circular(8)),p);p.color=Colors.white;c.drawCircle(Offset(x*s.width,y*s.height),8,p);}bool shouldRepaint(c)=>true;}
+class _Breakout extends StatefulWidget{const _Breakout();@override State<_Breakout> createState()=>_BreakoutState();}
+class _BreakoutState extends State<_Breakout>{
+  double bx=.5,by=.78,vx=.009,vy=-.014,paddle=.5;Timer?timer;int score=0,lives=3,combo=0;bool running=false,over=false;
+  final blocks=List<int>.filled(48,1);
+  void start(){if(running||over)return;running=true;timer=Timer.periodic(const Duration(milliseconds:20),tick);setState((){});}
+  void tick(Timer t){
+    bx+=vx;by+=vy;
+    if(bx<.025||bx>.975){vx=-vx;bx=bx.clamp(.025,.975);}
+    if(by<.05){vy=vy.abs();by=.05;}
+    if(by>.88&&by<.96&&(bx-paddle).abs()<.15&&vy>0){vy=-vy.abs();combo++;}
+    final col=(bx*8).floor().clamp(0,7),row=((by-.09)/.055).floor().clamp(0,5),i=row*8+col;
+    if(by>.08&&by<.43&&blocks[i]>0){blocks[i]=0;score+=10+combo*2;combo++;vy=-vy;}
+    if(by>1.03){lives--;combo=0;bx=.5;by=.78;vx=(vx.sign==0?1:vx.sign)*.009;vy=-.014;if(lives<=0){over=true;running=false;t.cancel();}}
+    if(blocks.every((v)=>v==0)){over=true;running=false;t.cancel();}
+    if(mounted)setState((){});
+  }
+  void reset(){timer?.cancel();for(int i=0;i<48;i++)blocks[i]=1;bx=.5;by=.78;vx=.009;vy=-.014;paddle=.5;score=0;lives=3;combo=0;running=false;over=false;}
+  @override void dispose(){timer?.cancel();super.dispose();}
+  @override Widget build(BuildContext c)=>_Shell(title:'Breakout',subtitle:'Brick Rush • combo x$combo',accent:const Color(0xFFEF4444),onReset:()=>setState(reset),child:
+    GestureDetector(onTap:start,onHorizontalDragUpdate:(d){paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(c).width).clamp(.12,.88);setState((){});},
+      child:_World(a:const Color(0xFF1A0A12),b:const Color(0xFF070914),child:Stack(children:[
+        CustomPaint(size:Size.infinite,painter:_BreakoutPainter(blocks,bx,by,paddle)),
+        Positioned(top:16,left:16,right:16,child:Row(children:[
+          Text('SCORE $score',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:12)),
+          const Spacer(),Text('♥ $lives',style:const TextStyle(color:Color(0xFFFCA5A5),fontWeight:FontWeight.w900)),
+        ])),
+        if(!running)Center(child:Text(over?(lives==0?'GAME OVER':'CLEARED!'):'DRAG • TAP START',style:const TextStyle(fontSize:19,fontWeight:FontWeight.w900,letterSpacing:1))),
+      ])));
+}
+class _BreakoutPainter extends CustomPainter{
+  final List<int>b;final double x,y,paddle;_BreakoutPainter(this.b,this.x,this.y,this.paddle);
+  @override void paint(Canvas c,Size s){
+    final p=Paint();final colors=[const Color(0xFFF87171),const Color(0xFFFB923C),const Color(0xFFFACC15),const Color(0xFF4ADE80),const Color(0xFF22D3EE),const Color(0xFFA78BFA)];
+    for(int r=0;r<6;r++)for(int col=0;col<8;col++)if(b[r*8+col]>0){
+      p.color=colors[r];final rect=Rect.fromLTWH(col*s.width/8+4,55+r*31,s.width/8-8,24);
+      c.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(7)),p);
+      p.color=Colors.white.withOpacity(.18);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(rect.left+3,rect.top+3,rect.width-6,5),const Radius.circular(3)),p);
+    }
+    p.color=Colors.white.withOpacity(.92);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH((paddle-.13)*s.width,s.height*.91,.26*s.width,13),const Radius.circular(8)),p);
+    p.color=const Color(0xFFFCA5A5);c.drawCircle(Offset(x*s.width,y*s.height),8,p);
+  }
+  @override bool shouldRepaint(c)=>true;
+}
 
-class _Memory extends StatefulWidget { const _Memory(); @override State<_Memory> createState()=>_MemoryState(); }
-class _MemoryState extends State<_Memory>{final r=Random();late List<int>cards;List<int>open=[];Set<int>matched={};int moves=0;bool locked=false;@override void initState(){super.initState();reset();}void reset(){cards=[0,0,1,1,2,2,3,3,4,4,5,5]..shuffle(r);open=[];matched={};moves=0;locked=false;}void tap(int i){if(locked||open.contains(i)||matched.contains(i))return;setState((){open.add(i);if(open.length==2){locked=true;moves++;final a=open[0],b=open[1];Future.delayed(Duration(milliseconds:500),(){if(!mounted)return;setState((){if(cards[a]==cards[b])matched.addAll([a,b]);open=[];locked=false;});});}});}final icons=[Icons.bolt,Icons.star,Icons.hexagon,Icons.favorite,Icons.diamond,Icons.circle];final colors=[Color(0xFFEC4899),Color(0xFF22D3EE),Color(0xFFA78BFA),Color(0xFFF59E0B),Color(0xFF34D399),Color(0xFFFB7185)];@override Widget build(BuildContext c)=>_Shell(title:'Memory',subtitle:'Neon Match • moves $moves',accent:Color(0xFFEC4899),onReset:()=>setState(reset),child:_World(Column(children:[Padding(padding:EdgeInsets.all(16),child:Row(children:[Text('MEMORY GRID',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:1)),Spacer(),Text('6 PAIRS',style:TextStyle(color:Colors.white38,fontSize:10))])),Expanded(child:GridView.builder(padding:EdgeInsets.all(18),itemCount:cards.length,gridDelegate:SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:3,crossAxisSpacing:10,mainAxisSpacing:10),itemBuilder:(_,i){final show=open.contains(i)||matched.contains(i);return GestureDetector(onTap:()=>tap(i),child:AnimatedContainer(duration:Duration(milliseconds:180),decoration:BoxDecoration(color:show?colors[cards[i]].withOpacity(.2):Colors.white.withOpacity(.05),borderRadius:BorderRadius.circular(18),border:Border.all(color:show?colors[cards[i]].withOpacity(.7):Colors.white10)),child:Center(child:show?Icon(icons[cards[i]],color:colors[cards[i]],size:34):Icon(Icons.question_mark_rounded,color:Colors.white24,size:25))));})),if(matched.length==cards.length)Padding(padding:EdgeInsets.all(12),child:FilledButton(onPressed:()=>setState(reset),child:Text('PLAY AGAIN')))])));
+class _Memory extends StatefulWidget{const _Memory();@override State<_Memory> createState()=>_MemoryState();}
+class _MemoryState extends State<_Memory>{
+  final r=Random();late List<int>cards;List<int>open=[];Set<int>matched={};int moves=0,streak=0,bestStreak=0;bool locked=false;
+  final icons=[Icons.bolt_rounded,Icons.star_rounded,Icons.hexagon_rounded,Icons.favorite_rounded,Icons.diamond_rounded,Icons.bubble_chart_rounded,Icons.rocket_launch_rounded,Icons.local_fire_department_rounded];
+  final colors=[const Color(0xFF22D3EE),const Color(0xFFF59E0B),const Color(0xFFA78BFA),const Color(0xFFEC4899),const Color(0xFF34D399),const Color(0xFFFB7185),const Color(0xFF60A5FA),const Color(0xFFF97316)];
+  @override void initState(){super.initState();reset();}
+  void reset(){cards=[for(int i=0;i<8;i++)... [i,i]]..shuffle(r);open=[];matched={};moves=0;streak=0;bestStreak=0;locked=false;}
+  void tap(int i){
+    if(locked||open.contains(i)||matched.contains(i))return;
+    setState((){open.add(i);if(open.length==2){
+      locked=true;moves++;final a=open[0],b=open[1];
+      Future.delayed(const Duration(milliseconds:550),(){if(!mounted)return;setState((){
+        if(cards[a]==cards[b]){matched.addAll([a,b]);streak++;bestStreak=max(bestStreak,streak);}
+        else streak=0;open=[];locked=false;
+      });});
+    }});
+  }
+  @override Widget build(BuildContext c)=>_Shell(title:'Memory',subtitle:'Match Lab • remember the pattern',accent:const Color(0xFFEC4899),onReset:()=>setState(reset),child:
+    _World(a:const Color(0xFF180B1C),b:const Color(0xFF070914),child:Column(children:[
+      _GameTopBar('MOVES  $moves','STREAK  $streak',const Color(0xFFEC4899)),
+      Expanded(child:GridView.builder(
+        padding:const EdgeInsets.fromLTRB(18,4,18,18),itemCount:cards.length,
+        gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:4,crossAxisSpacing:10,mainAxisSpacing:10),
+        itemBuilder:(_,i){
+          final show=open.contains(i)||matched.contains(i),col=colors[cards[i]];
+          return GestureDetector(onTap:()=>tap(i),child:AnimatedContainer(duration:const Duration(milliseconds:180),
+            decoration:BoxDecoration(
+              gradient:show?LinearGradient(colors:[col.withOpacity(.28),col.withOpacity(.08)],begin:Alignment.topLeft,end:Alignment.bottomRight):null,
+              color:show?null:Colors.white.withOpacity(.055),borderRadius:BorderRadius.circular(18),
+              border:Border.all(color:show?col.withOpacity(.72):Colors.white.withOpacity(.08)),
+              boxShadow:show?[BoxShadow(color:col.withOpacity(.16),blurRadius:14)]:[]),
+            child:Center(child:AnimatedSwitcher(duration:const Duration(milliseconds:150),child:show?Icon(icons[cards[i]],key:ValueKey(cards[i]),color:col,size:32):const Icon(Icons.question_mark_rounded,key:ValueKey('q'),color:Colors.white24,size:24)))));
+        },
+      )),
+      if(matched.length==cards.length)Padding(padding:const EdgeInsets.fromLTRB(18,0,18,16),child:FilledButton(onPressed:()=>setState(reset),child:const Text('PLAY AGAIN'))),
+    ]));
 }
