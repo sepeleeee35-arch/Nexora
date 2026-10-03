@@ -659,7 +659,7 @@ class HomePage extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            NexoraGoogleAvatar(account: account, radius: 29),
+                            NexoraAvatar(account: account, customAvatar: customAvatar, radius: 29),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -750,7 +750,7 @@ class HomePage extends StatelessWidget {
                               SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Ketuk wallpaper untuk mengatur tampilan akun',
+                                  'Buka pengaturan profil & tema',
                                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
                                 ),
                               ),
@@ -824,11 +824,11 @@ class HomePage extends StatelessWidget {
           child: Column(
             children: [
               ListTile(
-                leading: NexoraGoogleAvatar(account: account, radius: 22),
+                leading: NexoraAvatar(account: account, customAvatar: customAvatar, radius: 22),
                 title: Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(account.email + ' • Google Account'),
                 trailing: const Icon(Icons.chevron_right_rounded),
-                onTap: () => openPage('Profile'),
+                onTap: () => openPage('Settings'),
               ),
               const Divider(height: 1),
               ListTile(
