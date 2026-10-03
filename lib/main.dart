@@ -1391,7 +1391,7 @@ class _GoogleLoginState extends State<GoogleLoginPage>{
     Center(child:Text(user==null?'Masuk untuk menyimpan profil, progres game, dan library.':'Akun Google tersambung.',textAlign:TextAlign.center)),
     const SizedBox(height:24),
     if(user!=null) Card(child:ListTile(
-      leading:GoogleUserCircleAvatar(identity:user!),
+      leading:NexoraGoogleAvatar(account:user!, radius:22),
       title:Text(user!.displayName??'Google Account',style:const TextStyle(fontWeight:FontWeight.w800)),
       subtitle:Text(user!.email),
       trailing:IconButton(onPressed:signOut,icon:const Icon(Icons.logout_rounded)),
