@@ -439,6 +439,7 @@ class _NexoraShellState extends State<NexoraShell> {
           NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront_rounded), label: 'Market'),
         ],
       ) : null,
+    ),
     );
   }
   String get _displayName {
