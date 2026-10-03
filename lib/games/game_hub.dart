@@ -92,10 +92,12 @@ class _Twenty extends StatefulWidget {
 class _TwentyState extends State<_Twenty> {
   final r = Random();
   List<int> board = List.filled(16, 0);
-  int score = 0, best = 0;
+  List<int> undoBoard = List.filled(16, 0);
+  int score = 0, best = 0, undoScore = 0;
   bool over = false, won = false;
   @override void initState(){super.initState(); reset();}
-  void reset(){board=List.filled(16,0);score=0;over=false;won=false;_spawn();_spawn();}
+  void reset(){board=List.filled(16,0);undoBoard=List.filled(16,0);score=0;undoScore=0;over=false;won=false;_spawn();_spawn();}
+  void undo(){if(undoBoard.every((v)=>v==0))return;setState((){board=List<int>.from(undoBoard);score=undoScore;undoBoard=List.filled(16,0);over=false;});}
   void _spawn(){
     final empty=[for(int i=0;i<16;i++)if(board[i]==0)i];
     if(empty.isEmpty)return;
@@ -112,7 +114,7 @@ class _TwentyState extends State<_Twenty> {
   }
   void move(int dx,int dy){
     if(over)return;
-    final before=List<int>.from(board);
+    final before=List<int>.from(board); final beforeScore=score;
     final n=List<int>.filled(16,0);
     for(int k=0;k<4;k++){
       final a=<int>[];
@@ -128,7 +130,7 @@ class _TwentyState extends State<_Twenty> {
         n[y*4+x]=z[q];
       }
     }
-    if(n.toString()!=before.toString()){board=n;_spawn();best=max(best,score);if(!_canMove(board))over=true;}
+    if(n.toString()!=before.toString()){undoBoard=before;undoScore=beforeScore;board=n;_spawn();best=max(best,score);if(!_canMove(board))over=true;}
     setState((){});
   }
   bool _canMove(List<int>b){
@@ -166,9 +168,9 @@ class _TwentyState extends State<_Twenty> {
                 child:Center(child:Text(v==0?'':v.toString(),style:TextStyle(fontSize:v>=1024?21:26,fontWeight:FontWeight.w900,color:v>=128?Colors.white:Colors.white.withOpacity(.94)))))]),
           )))),
           Padding(padding:const EdgeInsets.fromLTRB(18,0,18,16),child:Row(children:[
-            Expanded(child:Text(won?'2048 REACHED!':over?'NO MORE MOVES':'SWIPE ANY DIRECTION',textAlign:TextAlign.center,
+            Expanded(child:Row(children:[Expanded(child:Text(won?'2048 REACHED!':over?'NO MORE MOVES':'SWIPE ANY DIRECTION',textAlign:TextAlign.center,
               style:TextStyle(color:won?const Color(0xFF86EFAC):Colors.white38,fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1))),
-            if(over)FilledButton(onPressed:()=>setState(reset),child:const Text('RETRY')),
+            if(over)FilledButton(onPressed:()=>setState(reset),child:const Text('RETRY')),if(!over)IconButton(onPressed:undo,icon:const Icon(Icons.undo_rounded)),
           ])),
         ])),
       ),
@@ -205,7 +207,7 @@ class _TetrisState extends State<_Tetris>{
   bool running=false,over=false;
   @override void initState(){super.initState();reset();}
   void reset(){timer?.cancel();for(int i=0;i<200;i++)board[i]=0;score=0;lines=0;level=1;running=false;over=false;current=r.nextInt(defs.length);next=r.nextInt(defs.length);_loadPiece();}
-  void _loadPiece(){shape=defs[current].cells.map((e)=>List<int>.from(e)).toList();color=defs[current].color;row=0;col=3;current=next;next=r.nextInt(defs.length);}
+  void _loadPiece(){activeKind=current;shape=defs[activeKind].cells.map((e)=>List<int>.from(e)).toList();color=defs[activeKind].color;row=0;col=3;current=next;next=r.nextInt(defs.length);}
   bool can(int nr,int nc,List<List<int>> s){
     for(int y=0;y<s.length;y++)for(int x=0;x<s[y].length;x++)if(s[y][x]!=0){
       final xx=nc+x,yy=nr+y;if(xx<0||xx>=10||yy>=20||(yy>=0&&board[yy*10+xx]!=0))return false;
@@ -222,7 +224,7 @@ class _TetrisState extends State<_Tetris>{
   void softDrop(){if(!running){start();return;}if(can(row+1,col,shape)){row++;score++;setState((){});}else lock();}
   void lock(){
     for(int y=0;y<shape.length;y++)for(int x=0;x<shape[y].length;x++)if(shape[y][x]!=0){
-      final yy=row+y,xx=col+x;if(yy>=0)board[yy*10+xx]=current+1;
+      final yy=row+y,xx=col+x;if(yy>=0)board[yy*10+xx]=activeKind+1;
     }
     int cleared=0;
     for(int y=19;y>=0;y--){if(List.generate(10,(x)=>board[y*10+x]).every((v)=>v!=0)){
@@ -323,7 +325,7 @@ class _FlappyPainter extends CustomPainter{
 
 class _Breakout extends StatefulWidget{const _Breakout();@override State<_Breakout> createState()=>_BreakoutState();}
 class _BreakoutState extends State<_Breakout>{
-  double bx=.5,by=.78,vx=.009,vy=-.014,paddle=.5;Timer?timer;int score=0,lives=3,combo=0;bool running=false,over=false;
+  double bx=.5,by=.78,vx=.009,vy=-.014,paddle=.5,powerX=-1,powerY=-1;Timer?timer;int score=0,lives=3,combo=0;bool running=false,over=false;
   final blocks=List<int>.filled(48,1);
   void start(){if(running||over)return;running=true;timer=Timer.periodic(const Duration(milliseconds:20),tick);setState((){});}
   void tick(Timer t){
@@ -332,7 +334,8 @@ class _BreakoutState extends State<_Breakout>{
     if(by<.05){vy=vy.abs();by=.05;}
     if(by>.88&&by<.96&&(bx-paddle).abs()<.15&&vy>0){vy=-vy.abs();combo++;}
     final col=(bx*8).floor().clamp(0,7),row=((by-.09)/.055).floor().clamp(0,5),i=row*8+col;
-    if(by>.08&&by<.43&&blocks[i]>0){blocks[i]=0;score+=10+combo*2;combo++;vy=-vy;}
+    if(by>.08&&by<.43&&blocks[i]>0){blocks[i]=0;score+=10+combo*2;combo++;vy=-vy;if(Random().nextDouble()<.12){powerX=bx;powerY=by;}}
+    if(powerY>=0){powerY+=.008;if(powerY>.90){powerY=-1;}else if((powerX-paddle).abs()<.16&&powerY>.84){lives=min(5,lives+1);powerY=-1;}}
     if(by>1.03){lives--;combo=0;bx=.5;by=.78;vx=(vx.sign==0?1:vx.sign)*.009;vy=-.014;if(lives<=0){over=true;running=false;t.cancel();}}
     if(blocks.every((v)=>v==0)){over=true;running=false;t.cancel();}
     if(mounted)setState((){});
@@ -342,7 +345,7 @@ class _BreakoutState extends State<_Breakout>{
   @override Widget build(BuildContext c)=>_Shell(title:'Breakout',subtitle:'Brick Rush • combo x$combo',accent:const Color(0xFFEF4444),onReset:()=>setState(reset),child:
     GestureDetector(onTap:start,onHorizontalDragUpdate:(d){paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(c).width).clamp(.12,.88);setState((){});},
       child:_World(a:const Color(0xFF1A0A12),b:const Color(0xFF070914),child:Stack(children:[
-        CustomPaint(size:Size.infinite,painter:_BreakoutPainter(blocks,bx,by,paddle)),
+        CustomPaint(size:Size.infinite,painter:_BreakoutPainter(blocks,bx,by,paddle,powerX,powerY)),
         Positioned(top:16,left:16,right:16,child:Row(children:[
           Text('SCORE $score',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:12)),
           const Spacer(),Text('♥ $lives',style:const TextStyle(color:Color(0xFFFCA5A5),fontWeight:FontWeight.w900)),
@@ -351,7 +354,7 @@ class _BreakoutState extends State<_Breakout>{
       ])));
 }
 class _BreakoutPainter extends CustomPainter{
-  final List<int>b;final double x,y,paddle;_BreakoutPainter(this.b,this.x,this.y,this.paddle);
+  final List<int>b;final double x,y,paddle,powerX,powerY;_BreakoutPainter(this.b,this.x,this.y,this.paddle,this.powerX,this.powerY);
   @override void paint(Canvas c,Size s){
     final p=Paint();final colors=[const Color(0xFFF87171),const Color(0xFFFB923C),const Color(0xFFFACC15),const Color(0xFF4ADE80),const Color(0xFF22D3EE),const Color(0xFFA78BFA)];
     for(int r=0;r<6;r++)for(int col=0;col<8;col++)if(b[r*8+col]>0){
@@ -361,6 +364,7 @@ class _BreakoutPainter extends CustomPainter{
     }
     p.color=Colors.white.withOpacity(.92);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH((paddle-.13)*s.width,s.height*.91,.26*s.width,13),const Radius.circular(8)),p);
     p.color=const Color(0xFFFCA5A5);c.drawCircle(Offset(x*s.width,y*s.height),8,p);
+    if(powerY>=0){p.color=const Color(0xFF4ADE80);c.drawCircle(Offset(powerX*s.width,powerY*s.height),11,p);p.color=Colors.black54;c.drawCircle(Offset(powerX*s.width,powerY*s.height),4,p);}
   }
   @override bool shouldRepaint(c)=>true;
 }
