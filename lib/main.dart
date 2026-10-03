@@ -217,6 +217,7 @@ class _NexoraShellState extends State<NexoraShell> {
   String customName = '';
   Uint8List? customAvatar;
   Uint8List? customBackground;
+  Uint8List? customProfileWallpaper;
   Color themeBackground = const Color(0xFF080A10);
   Color themePrimary = const Color(0xFF8B5CF6);
   Color themeSurface = const Color(0xFF111522);
@@ -239,11 +240,13 @@ class _NexoraShellState extends State<NexoraShell> {
     final prefs = await SharedPreferences.getInstance();
     final avatar = prefs.getString(_prefPrefix + 'avatar');
     final background = prefs.getString(_prefPrefix + 'background');
+    final profileWallpaper = prefs.getString(_prefPrefix + 'profileWallpaper');
     if (!mounted) return;
     setState(() {
       customName = prefs.getString(_prefPrefix + 'name') ?? '';
       customAvatar = avatar == null ? null : base64Decode(avatar);
       customBackground = background == null ? null : base64Decode(background);
+      customProfileWallpaper = profileWallpaper == null ? null : base64Decode(profileWallpaper);
       wallpaper = prefs.getInt(_prefPrefix + 'wallpaper') ?? 0;
       themeBackground = Color(prefs.getInt(_prefPrefix + 'themeBg') ?? 0xFF080A10);
       themePrimary = Color(prefs.getInt(_prefPrefix + 'themePrimary') ?? 0xFF8B5CF6);
@@ -285,6 +288,11 @@ class _NexoraShellState extends State<NexoraShell> {
   void _setBackground(Uint8List? value) {
     setState(() => customBackground = value);
     unawaited(_saveBytes('background', value));
+  }
+
+  void _setProfileWallpaper(Uint8List? value) {
+    setState(() => customProfileWallpaper = value);
+    unawaited(_saveBytes('profileWallpaper', value));
   }
 
   void _setWallpaper(int value) {
@@ -382,10 +390,12 @@ class _NexoraShellState extends State<NexoraShell> {
         cardBorderWidth: cardBorderWidth,
         cardBorderOpacity: cardBorderOpacity,
         customBackground: customBackground,
+        customProfileWallpaper: customProfileWallpaper,
         onNameChanged: _setName,
         onAvatarChanged: _setAvatar,
         onWallpaperChanged: _setWallpaper,
         onBackgroundChanged: _setBackground,
+        onProfileWallpaperChanged: _setProfileWallpaper,
         onColorChanged: _setColor,
         onVisualChanged: _setVisual,
         onResetTheme: _resetTheme,
@@ -402,6 +412,7 @@ class _NexoraShellState extends State<NexoraShell> {
           account: widget.account,
           displayName: _displayName,
           customAvatar: customAvatar,
+          customProfileWallpaper: customProfileWallpaper,
           coins: coins,
           wallpaper: wallpaper,
           openTab: selectTab,
@@ -656,6 +667,7 @@ class HomePage extends StatelessWidget {
   final int wallpaper;
   final String displayName;
   final Uint8List? customAvatar;
+  final Uint8List? customProfileWallpaper;
   final ValueChanged<int> openTab;
   final ValueChanged<String> openPage;
 
@@ -665,6 +677,7 @@ class HomePage extends StatelessWidget {
     required this.wallpaper,
     required this.displayName,
     required this.customAvatar,
+    required this.customProfileWallpaper,
     required this.openTab,
     required this.openPage,
     super.key,
@@ -684,7 +697,12 @@ class HomePage extends StatelessWidget {
             height: 265,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(28),
-                gradient: gradient,
+                gradient: customProfileWallpaper == null ? gradient : null,
+                image: customProfileWallpaper == null ? null : DecorationImage(
+                  image: MemoryImage(customProfileWallpaper!),
+                  fit: BoxFit.cover,
+                  colorFilter: ColorFilter.mode(Colors.black.withOpacity(.20), BlendMode.darken),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(.28),
@@ -1627,15 +1645,48 @@ class _NexoraColorPickerDialog extends StatefulWidget {
 
 class _NexoraColorPickerState extends State<_NexoraColorPickerDialog> {
   late HSVColor hsv;
-  @override void initState(){super.initState();hsv=HSVColor.fromColor(widget.initial);}
+  late TextEditingController hexController;
+
+  @override
+  void initState(){
+    super.initState();
+    hsv=HSVColor.fromColor(widget.initial);
+    hexController=TextEditingController(text:_hex(widget.initial));
+  }
+
+  String _hex(Color c)=>'#'+c.value.toRadixString(16).padLeft(8,'0').substring(2).toUpperCase();
+
+  void _setColor(Color c){
+    setState(() {
+      hsv=HSVColor.fromColor(c);
+      hexController.text=_hex(c);
+      hexController.selection=TextSelection.collapsed(offset:hexController.text.length);
+    });
+  }
+
+  void _applyHex(){
+    var value=hexController.text.trim().replaceFirst('#','');
+    if(value.length==6) value='FF'+value;
+    if(value.length!=8) return;
+    final parsed=int.tryParse(value,radix:16);
+    if(parsed==null) return;
+    _setColor(Color(parsed));
+  }
+
   void _setHue(Offset p,Size size){setState(()=>hsv=hsv.withHue(((p.dx/size.width).clamp(0.0,1.0)).toDouble()*360));}
   void _setSV(Offset p,Size size){setState(()=>hsv=hsv.withSaturation((p.dx/size.width).clamp(0.0,1.0).toDouble()).withValue((1-p.dy/size.height).clamp(0.0,1.0).toDouble()));}
+
+  @override
+  void dispose(){hexController.dispose();super.dispose();}
+
   @override Widget build(BuildContext context){
     final color=hsv.toColor();
     return AlertDialog(
       title:Text(widget.title,style:const TextStyle(fontWeight:FontWeight.w900)),
-      content:SizedBox(width:340,child:Column(mainAxisSize:MainAxisSize.min,children:[
+      content:SizedBox(width:340,child:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,children:[
         SizedBox(height:190,child:LayoutBuilder(builder:(context,c)=>GestureDetector(
+          behavior:HitTestBehavior.opaque,
+          onTapDown:(d)=>_setSV(d.localPosition,Size(c.maxWidth,190)),
           onPanDown:(d)=>_setSV(d.localPosition,Size(c.maxWidth,190)),
           onPanUpdate:(d)=>_setSV(d.localPosition,Size(c.maxWidth,190)),
           child:CustomPaint(painter:_ColorSVPainter(hsv.hue),child:Stack(children:[
@@ -1648,6 +1699,8 @@ class _NexoraColorPickerState extends State<_NexoraColorPickerDialog> {
         ))),
         const SizedBox(height:14),
         SizedBox(height:26,child:LayoutBuilder(builder:(context,c)=>GestureDetector(
+          behavior:HitTestBehavior.opaque,
+          onTapDown:(d)=>_setHue(d.localPosition,Size(c.maxWidth,26)),
           onPanDown:(d)=>_setHue(d.localPosition,Size(c.maxWidth,26)),
           onPanUpdate:(d)=>_setHue(d.localPosition,Size(c.maxWidth,26)),
           child:CustomPaint(painter:_HuePainter(),child:Center(child:Container(width:25,height:25,decoration:BoxDecoration(shape:BoxShape.circle,color:color,border:Border.all(color:Colors.white,width:2))))),
@@ -1661,10 +1714,25 @@ class _NexoraColorPickerState extends State<_NexoraColorPickerDialog> {
             Text('RGB '+color.red.toString()+', '+color.green.toString()+', '+color.blue.toString(),style:const TextStyle(color:Colors.white60,fontSize:12)),
           ])),
         ]),
-      ])),
+        const SizedBox(height:12),
+        TextField(
+          controller:hexController,
+          textCapitalization:TextCapitalization.characters,
+          decoration:const InputDecoration(
+            labelText:'Kode warna',
+            hintText:'#8B5CF6',
+            prefixIcon:Icon(Icons.tag_rounded),
+            border:OutlineInputBorder(),
+          ),
+          onSubmitted:(_)=>_applyHex(),
+          onChanged:(_){},
+        ),
+        const SizedBox(height:6),
+        Align(alignment:Alignment.centerLeft,child:Text('Bisa pilih dengan picker atau masukkan kode HEX.',style:const TextStyle(color:Colors.white60,fontSize:11))),
+      ]))),
       actions:[
         TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Batal')),
-        FilledButton(onPressed:()=>Navigator.pop(context,color),child:const Text('Pilih')),
+        FilledButton(onPressed:()=>{_applyHex(),Navigator.pop(context,hsv.toColor())},child:const Text('Pilih')),
       ],
     );
   }
@@ -1710,6 +1778,7 @@ class SettingsPage extends StatefulWidget {
   final Color background, primary, surface, border, text;
   final double cardOpacity, cardBorderWidth, cardBorderOpacity;
   final Uint8List? customBackground;
+  final Uint8List? customProfileWallpaper;
   final ValueChanged<String> onNameChanged;
   final ValueChanged<Uint8List?> onAvatarChanged;
   final ValueChanged<int> onWallpaperChanged;
@@ -1731,6 +1800,7 @@ class SettingsPage extends StatefulWidget {
     required this.cardBorderWidth,
     required this.cardBorderOpacity,
     required this.customBackground,
+    required this.customProfileWallpaper,
     required this.onNameChanged,
     required this.onAvatarChanged,
     required this.onWallpaperChanged,
@@ -1752,6 +1822,11 @@ class _SettingsState extends State<SettingsPage> {
   Future<void> _pickBackground() async {
     final file=await _picker.pickImage(source:ImageSource.gallery,imageQuality:82,maxWidth:1800,maxHeight:1800);
     if(file!=null) widget.onBackgroundChanged(await file.readAsBytes());
+  }
+
+  Future<void> _pickProfileWallpaper() async {
+    final file=await _picker.pickImage(source:ImageSource.gallery,imageQuality:82,maxWidth:1800,maxHeight:1200);
+    if(file!=null) widget.onProfileWallpaperChanged(await file.readAsBytes());
   }
   Future<void> _editName() async {
     final controller=TextEditingController(text:widget.customName);
@@ -1812,7 +1887,9 @@ class _SettingsState extends State<SettingsPage> {
         ])),
       ]))),
       const SizedBox(height:18),
-      const _Title('WALLPAPER PROFIL'),
+      const _Title('CART PROFIL PENGGUNA'),
+      const SizedBox(height:5),
+      const Text('Wallpaper khusus untuk kartu profil pengguna di Home. Bisa pakai gambar sendiri atau style bawaan.',style:TextStyle(color:Colors.white60,fontSize:12)),
       const SizedBox(height:8),
       Card(child:Padding(padding:const EdgeInsets.all(14),child:SizedBox(height:84,child:ListView.separated(
         scrollDirection:Axis.horizontal,itemCount:_nexoraWallpapers.length,separatorBuilder:(_,__)=>const SizedBox(width:10),
@@ -1823,6 +1900,20 @@ class _SettingsState extends State<SettingsPage> {
           child:Text('Style '+(index+1).toString(),style:const TextStyle(fontSize:10,fontWeight:FontWeight.w900)),
         )),
       )))),
+      const SizedBox(height:10),
+      Card(child:ListTile(
+        leading:const Icon(Icons.wallpaper_rounded),
+        title:const Text('Wallpaper custom kartu profil',style:TextStyle(fontWeight:FontWeight.w900)),
+        subtitle:Text(widget.customProfileWallpaper == null ? 'Belum ada wallpaper custom' : 'Wallpaper custom sedang digunakan'),
+        trailing:const Icon(Icons.chevron_right_rounded),
+        onTap:_pickProfileWallpaper,
+      )),
+      if(widget.customProfileWallpaper!=null)
+        Card(child:ListTile(
+          leading:const Icon(Icons.delete_outline_rounded),
+          title:const Text('Hapus wallpaper kartu profil'),
+          onTap:()=>widget.onProfileWallpaperChanged(null),
+        )),
       const SizedBox(height:18),
       const _Title('CUSTOM TEMA NEXORA'),
       const SizedBox(height:5),
