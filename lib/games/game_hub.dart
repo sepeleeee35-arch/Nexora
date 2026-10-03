@@ -617,7 +617,7 @@ class _MemoryState extends State<_Memory> {
         Expanded(child: GridView.builder(
           padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
           itemCount: cards.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: cards.length>24?.82:1),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: cards.length > 24 ? .82 : 1.0),
           itemBuilder: (_, i) {
             final show = open.contains(i) || matched.contains(i);
             final color = colors[cards[i]];
