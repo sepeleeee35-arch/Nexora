@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 
 String? nexoraActiveAccountId;
 
-const bg = Color(0xFF060811);
-const panel = Color(0xFF101522);
+const bg = Color(0xFF05070D);
+const panel = Color(0xFF0D1320);
 const purple = Color(0xFF8B5CF6);
 
 class NexoraGameHub extends StatefulWidget {
@@ -79,7 +79,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
                   const SizedBox(height: 4),
                   const Text('Play. Beat. Repeat.', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: -.8)),
                   const SizedBox(height: 7),
-                  const Text('Five original mini-games with fast sessions, themed worlds and touch-first controls.', style: TextStyle(color: Colors.white60, height: 1.35)),
+                  const Text('Five polished mini-games • instant play • touch-first controls.', style: TextStyle(color: Colors.white60, height: 1.35)),
                   const SizedBox(height: 18),
                   Row(children: const [
                     _MiniStat('5', 'GAMES'),
@@ -129,7 +129,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
               physics: const NeverScrollableScrollPhysics(),
               itemCount: visible.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, crossAxisSpacing: 11, mainAxisSpacing: 11, childAspectRatio: .82,
+                crossAxisCount: 2, crossAxisSpacing: 11, mainAxisSpacing: 11, childAspectRatio: .78,
               ),
               itemBuilder: (_, i) {
                 final game = visible[i];
@@ -189,6 +189,7 @@ class _GameCard extends StatelessWidget {
     borderRadius: BorderRadius.circular(24),
     child: Container(
       decoration: BoxDecoration(
+        boxShadow: [BoxShadow(color: game.color.withOpacity(.08), blurRadius: 20, offset: const Offset(0, 8))],
         borderRadius: BorderRadius.circular(24),
         gradient: LinearGradient(colors: [game.color.withOpacity(.20), panel], begin: Alignment.topLeft, end: Alignment.bottomRight),
         border: Border.all(color: game.color.withOpacity(.25)),
@@ -204,7 +205,7 @@ class _GameCard extends StatelessWidget {
               child: Icon(game.icon, color: game.color, size: 27),
             ),
             const Spacer(),
-            Text(game.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900)),
+            Text(game.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -.3)),
             const SizedBox(height: 3),
             Text(game.subtitle, maxLines: 2, style: const TextStyle(fontSize: 11, color: Colors.white54, height: 1.25)),
             const SizedBox(height: 11),
@@ -422,7 +423,7 @@ class _TwentyState extends State<_Twenty> {
                 onPressed: previous.every((v) => v == 0) ? null : () => setState(() { board = List<int>.from(previous); score = previousScore; gameOver = false; previous = List.filled(16, 0); }),
                 icon: const Icon(Icons.undo_rounded),
               ),
-              if (gameOver) FilledButton(onPressed: () => setState(_reset), child: const Text('RETRY')),
+              if (gameOver) FilledButton.icon(onPressed: () => setState(_reset), icon: const Icon(Icons.refresh_rounded, size: 17), label: const Text('RETRY')),
             ]),
           ),
         ]),
@@ -577,7 +578,7 @@ class _TetrisState extends State<_Tetris> {
           Padding(
             padding: const EdgeInsets.fromLTRB(18, 6, 18, 15),
             child: Row(children: [
-              Text('NEXT $next', style: const TextStyle(fontSize: 10, color: Colors.white38, fontWeight: FontWeight.w900)),
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('NEXT', style: TextStyle(fontSize: 9, color: Colors.white38, fontWeight: FontWeight.w900)), const SizedBox(height: 2), Text('PIECE ${next + 1}', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900))]),
               const Spacer(),
               FilledButton(onPressed: over ? () => setState(_reset) : _start, child: Text(over ? 'PLAY AGAIN' : (running ? 'DROP' : 'START'))),
             ]),
@@ -694,7 +695,7 @@ class _FlappyState extends State<_Flappy> {
               const SizedBox(height: 8),
               Text(over ? 'TRY AGAIN' : 'SKY DASH', style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
               const SizedBox(height: 6),
-              const Text('TAP • FLY • PASS THE GATES', style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
+              const Text('TAP TO FLAP • AVOID THE GATES', style: TextStyle(color: Colors.white54, fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1)),
             ]),
           )),
         ]),
@@ -807,7 +808,7 @@ class _BreakoutState extends State<_Breakout> {
             const Spacer(),
             Text('LIVES $lives', style: const TextStyle(color: Color(0xFFFCA5A5), fontWeight: FontWeight.w900, fontSize: 12)),
           ])),
-          if (!running) Center(child: Text(over ? (lives <= 0 ? 'GAME OVER' : 'CLEARED!') : 'DRAG • TAP TO START', style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w900, letterSpacing: 1))),
+          if (!running) Center(child: Container(padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 15), decoration: BoxDecoration(color: Colors.black45, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.white10)), child: Text(over ? (lives <= 0 ? 'GAME OVER' : 'LEVEL CLEAR') : 'DRAG PADDLE • TAP TO START', textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w900, letterSpacing: .8)))),
         ]),
       ),
     ),
