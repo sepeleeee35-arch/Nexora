@@ -755,6 +755,7 @@ class HomePage extends StatelessWidget {
                                 ],
                               ),
                             ),
+                          ),
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
                               decoration: BoxDecoration(
