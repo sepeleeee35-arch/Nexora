@@ -209,6 +209,7 @@ class _NexoraShellState extends State<NexoraShell> {
   String? page;
   int coins = 1250;
   int cart = 0;
+  int wallpaper = 0;
   static const names = ['Home','Games','Music','Tools','Market'];
 
   void selectPage(String value) {
@@ -242,7 +243,11 @@ class _NexoraShellState extends State<NexoraShell> {
     } else if (page == 'Notifications') {
       body = const NotificationsPage();
     } else if (page == 'Settings') {
-      body = const SettingsPage();
+      body = SettingsPage(
+        account: widget.account,
+        wallpaper: wallpaper,
+        onWallpaperChanged: (value) => setState(() => wallpaper = value),
+      );
     } else if (page == 'About') {
       body = const AboutPage();
     } else {
@@ -252,7 +257,9 @@ class _NexoraShellState extends State<NexoraShell> {
         3 => const NexoraToolsPage(),
         4 => MarketPage(coins: coins, cart: cart, buy: null),
         _ => HomePage(
+          account: widget.account,
           coins: coins,
+          wallpaper: wallpaper,
           openTab: selectTab,
           openPage: (v) => setState(() => page = v),
         ),
@@ -448,75 +455,349 @@ class _Score extends StatelessWidget {
 }
 
 class HomePage extends StatelessWidget {
-  final int coins; final ValueChanged<int> openTab; final ValueChanged<String> openPage;
-  const HomePage({required this.coins,required this.openTab,required this.openPage,super.key});
+  final GoogleSignInAccount account;
+  final int coins;
+  final int wallpaper;
+  final ValueChanged<int> openTab;
+  final ValueChanged<String> openPage;
+
+  const HomePage({
+    required this.account,
+    required this.coins,
+    required this.wallpaper,
+    required this.openTab,
+    required this.openPage,
+    super.key,
+  });
+
+  String get accountName {
+    final name = account.displayName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    return account.email.split('@').first;
+  }
+
   @override
-  Widget build(BuildContext context) => ListView(padding: const EdgeInsets.all(16), children: [
-    Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        gradient: const LinearGradient(colors: [Color(0xFF35206D),Color(0xFF151B38),Color(0xFF10131F)]),
-      ),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Row(children: [
-          Expanded(child: Text('Welcome back!',style:TextStyle(fontSize:26,fontWeight:FontWeight.w900))),
-          CircleAvatar(child: Icon(Icons.person_rounded)),
-        ]),
-        const SizedBox(height:8),
-        const Text('Game, music, community, dan marketplace dalam satu aplikasi.'),
-        const SizedBox(height:18),
-        Row(children: [
-          Expanded(child:_Stat(Icons.monetization_on_rounded,'Coins',coins.toString())),
-          const SizedBox(width:10),
-          const Expanded(child:_Stat(Icons.emoji_events_rounded,'Rank','Rookie')),
-        ]),
-      ]),
+  Widget build(BuildContext context) {
+    final gradient = _nexoraWallpaperGradient(wallpaper);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 24),
+      children: [
+        Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(28),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(28),
+            onTap: () => openPage('Settings'),
+            child: Ink(
+              height: 265,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(28),
+                gradient: gradient,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(.28),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    right: -45,
+                    top: -55,
+                    child: _GlowOrb(size: 180, color: Colors.white.withOpacity(.13)),
+                  ),
+                  Positioned(
+                    left: -55,
+                    bottom: -85,
+                    child: _GlowOrb(size: 190, color: Colors.white.withOpacity(.08)),
+                  ),
+                  Positioned(
+                    right: 18,
+                    bottom: 18,
+                    child: Icon(
+                      Icons.auto_awesome_rounded,
+                      size: 86,
+                      color: Colors.white.withOpacity(.07),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(18),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            GoogleUserCircleAvatar(identity: account, radius: 29),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'SELAMAT DATANG KEMBALI',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1.2,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    accountName,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontSize: 23,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.black.withOpacity(.18),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: Colors.white.withOpacity(.12)),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.circle, size: 8, color: Colors.greenAccent),
+                                  SizedBox(width: 5),
+                                  Text(
+                                    'ONLINE',
+                                    style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 17),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ProfileMiniStat(
+                                icon: Icons.monetization_on_rounded,
+                                label: 'COINS',
+                                value: _compactNumber(coins),
+                              ),
+                            ),
+                            const SizedBox(width: 9),
+                            const Expanded(
+                              child: _ProfileMiniStat(
+                                icon: Icons.bolt_rounded,
+                                label: 'LEVEL',
+                                value: '1',
+                              ),
+                            ),
+                            const SizedBox(width: 9),
+                            const Expanded(
+                              child: _ProfileMiniStat(
+                                icon: Icons.local_fire_department_rounded,
+                                label: 'STREAK',
+                                value: '0 HARI',
+                              ),
+                            ),
+                          ],
+                        ),
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(.18),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: Colors.white.withOpacity(.10)),
+                          ),
+                          child: const Row(
+                            children: [
+                              Icon(Icons.wallpaper_rounded, size: 18),
+                              SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Ketuk wallpaper untuk mengatur tampilan akun',
+                                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+                                ),
+                              ),
+                              Icon(Icons.arrow_forward_ios_rounded, size: 13),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 22),
+        const _Title('Quick Access'),
+        const SizedBox(height: 10),
+        GridView.count(
+          crossAxisCount: 2,
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
+          childAspectRatio: 1.55,
+          children: [
+            _Quick(Icons.sports_esports_rounded, 'Game Hub', 'Play now', () => openTab(1)),
+            _Quick(Icons.music_note_rounded, 'Music', 'Library', () => openTab(2)),
+            _Quick(Icons.build_rounded, 'Tools', 'Utilities', () => openTab(3)),
+            _Quick(Icons.storefront_rounded, 'Market', 'Browse', () => openTab(4)),
+          ],
+        ),
+        const SizedBox(height: 22),
+        const _Title('Featured'),
+        const SizedBox(height: 10),
+        Container(
+          height: 150,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF162A45), Color(0xFF321B52)],
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'NEXORA ARCADE',
+                style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.5),
+              ),
+              const SizedBox(height: 5),
+              const Text('Tap Rush', style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
+              const Text('Kejar skor tertinggi dalam waktu terbatas.'),
+              const Spacer(),
+              FilledButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NexoraGameHub()),
+                ),
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: const Text('Play'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 22),
+        _Title('Your Account', 'Profile', () => openPage('Profile')),
+        const SizedBox(height: 10),
+        Card(
+          child: Column(
+            children: [
+              ListTile(
+                leading: GoogleUserCircleAvatar(identity: account, radius: 22),
+                title: Text(accountName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: Text(account.email + ' • Google Account'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => openPage('Profile'),
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Icon(Icons.account_balance_wallet_rounded),
+                title: const Text('Wallet'),
+                subtitle: Text('$coins coins tersedia'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => openPage('Wallet'),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 18),
+        const _Title('Recent'),
+        const _Recent(Icons.sports_esports_rounded, 'Tap Rush', 'Mini game tersedia sekarang'),
+        const _Recent(Icons.music_note_rounded, 'Nexora Music', 'Player dan library'),
+        const _Recent(Icons.build_rounded, 'Nexora Tools', 'Media & utility tools'),
+      ],
+    );
+  }
+}
+
+class _GlowOrb extends StatelessWidget {
+  final double size;
+  final Color color;
+  const _GlowOrb({required this.size, required this.color});
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: color,
     ),
-    const SizedBox(height:22),
-    const _Title('Quick Access'),
-    const SizedBox(height:10),
-    GridView.count(
-      crossAxisCount:2, shrinkWrap:true, physics:const NeverScrollableScrollPhysics(),
-      crossAxisSpacing:10, mainAxisSpacing:10, childAspectRatio:1.55,
-      children:[
-        _Quick(Icons.sports_esports_rounded,'Game Hub','Play now',()=>openTab(1)),
-        _Quick(Icons.music_note_rounded,'Music','Library',()=>openTab(2)),
-        _Quick(Icons.build_rounded,'Tools','Utilities',()=>openTab(3)),
-        _Quick(Icons.storefront_rounded,'Market','Browse',()=>openTab(4)),
+  );
+}
+
+class _ProfileMiniStat extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ProfileMiniStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 10),
+    decoration: BoxDecoration(
+      color: Colors.black.withOpacity(.18),
+      borderRadius: BorderRadius.circular(17),
+      border: Border.all(color: Colors.white.withOpacity(.10)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 17, color: Colors.white70),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, color: Colors.white60),
+        ),
+        const SizedBox(height: 1),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+        ),
       ],
     ),
-    const SizedBox(height:22),
-    const _Title('Featured'),
-    const SizedBox(height:10),
-    Container(
-      height:150, padding:const EdgeInsets.all(20),
-      decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),gradient:const LinearGradient(colors:[Color(0xFF162A45),Color(0xFF321B52)])),
-      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        const Text('NEXORA ARCADE',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.5)),
-        const SizedBox(height:5), const Text('Tap Rush',style:TextStyle(fontSize:25,fontWeight:FontWeight.w900)),
-        const Text('Kejar skor tertinggi dalam waktu terbatas.'),
-        const Spacer(),
-        FilledButton.icon(
-          onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const NexoraGameHub())),
-          icon:const Icon(Icons.play_arrow_rounded),label:const Text('Play'),
-        ),
-      ]),
-    ),
-    const SizedBox(height:22),
-    _Title('Your Account','Profile',()=>openPage('Profile')),
-    const SizedBox(height:10),
-    Card(child:Column(children:[
-      ListTile(leading:const CircleAvatar(child:Icon(Icons.person_rounded)),title:const Text('Nexora Player',style:TextStyle(fontWeight:FontWeight.bold)),subtitle:const Text('Rookie • Level 1'),trailing:const Icon(Icons.chevron_right_rounded),onTap:()=>openPage('Profile')),
-      const Divider(height:1),
-      ListTile(leading:const Icon(Icons.account_balance_wallet_rounded),title:const Text('Wallet'),subtitle:Text('$coins coins tersedia'),trailing:const Icon(Icons.chevron_right_rounded),onTap:()=>openPage('Wallet')),
-    ])),
-    const SizedBox(height:18),
-    const _Title('Recent'),
-    const _Recent(Icons.sports_esports_rounded,'Tap Rush','Mini game tersedia sekarang'),
-    const _Recent(Icons.music_note_rounded,'Nexora Music','Player dan library'),
-    const _Recent(Icons.build_rounded,'Nexora Tools','Media & utility tools'),
-  ]);
+  );
+}
+
+const List<List<Color>> _nexoraWallpapers = [
+  [Color(0xFF075985), Color(0xFF1D4ED8), Color(0xFF312E81)],
+  [Color(0xFF581C87), Color(0xFF7C3AED), Color(0xFF1E1B4B)],
+  [Color(0xFF064E3B), Color(0xFF0F766E), Color(0xFF164E63)],
+  [Color(0xFF7C2D12), Color(0xFFB45309), Color(0xFF431407)],
+];
+
+LinearGradient _nexoraWallpaperGradient(int index) {
+  final colors = _nexoraWallpapers[index % _nexoraWallpapers.length];
+  return LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: colors,
+  );
+}
+
+String _compactNumber(int value) {
+  if (value >= 1000000) return (value / 1000000).toStringAsFixed(1) + 'M';
+  if (value >= 1000) return (value / 1000).toStringAsFixed(value % 1000 == 0 ? 0 : 1) + 'K';
+  return value.toString();
 }
 
 class _Title extends StatelessWidget {
@@ -1121,23 +1402,177 @@ class NotificationsPage extends StatelessWidget{
 }
 class _Notice extends StatelessWidget{final IconData icon;final String title,body;const _Notice(this.icon,this.title,this.body);@override Widget build(BuildContext context)=>Card(margin:const EdgeInsets.only(bottom:10),child:ListTile(contentPadding:const EdgeInsets.all(14),leading:CircleAvatar(child:Icon(icon)),title:Text(title,style:const TextStyle(fontWeight:FontWeight.w800)),subtitle:Text(body)));}
 
-class SettingsPage extends StatefulWidget{const SettingsPage({super.key});@override State<SettingsPage> createState()=>_SettingsState();}
-class _SettingsState extends State<SettingsPage>{
-  bool notifications=true,sound=true,animations=true;
-  @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
-    const _Title('Preferences'),const SizedBox(height:8),Card(child:Column(children:[
-      SwitchListTile(value:notifications,onChanged:(v)=>setState(()=>notifications=v),title:const Text('Notifications'),subtitle:const Text('Notifikasi Nexora')),
-      const Divider(height:1),
-      SwitchListTile(value:sound,onChanged:(v)=>setState(()=>sound=v),title:const Text('Sound'),subtitle:const Text('Suara aplikasi dan game')),
-      const Divider(height:1),
-      SwitchListTile(value:animations,onChanged:(v)=>setState(()=>animations=v),title:const Text('Animations'),subtitle:const Text('Animasi antarmuka')),
-    ])),
-    const SizedBox(height:18),const _Title('Security'),const Card(child:Column(children:[
-      ListTile(leading:Icon(Icons.lock_rounded),title:Text('Password & Login'),trailing:Icon(Icons.chevron_right_rounded)),
-      Divider(height:1),ListTile(leading:Icon(Icons.privacy_tip_rounded),title:Text('Privacy'),trailing:Icon(Icons.chevron_right_rounded)),
-    ])),
-  ]);
+class SettingsPage extends StatefulWidget {
+  final GoogleSignInAccount account;
+  final int wallpaper;
+  final ValueChanged<int> onWallpaperChanged;
+
+  const SettingsPage({
+    required this.account,
+    required this.wallpaper,
+    required this.onWallpaperChanged,
+    super.key,
+  });
+
+  @override
+  State<SettingsPage> createState() => _SettingsState();
 }
+
+class _SettingsState extends State<SettingsPage> {
+  bool notifications = true, sound = true, animations = true;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
+    children: [
+      const _Title('Account'),
+      const SizedBox(height: 8),
+      Card(
+        child: ListTile(
+          contentPadding: const EdgeInsets.all(14),
+          leading: GoogleUserCircleAvatar(identity: widget.account, radius: 29),
+          title: Text(
+            widget.account.displayName?.trim().isNotEmpty == true
+                ? widget.account.displayName!
+                : widget.account.email.split('@').first,
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          subtitle: Text(widget.account.email),
+          trailing: const Icon(Icons.verified_rounded, color: Colors.greenAccent),
+        ),
+      ),
+      const SizedBox(height: 16),
+      const _Title('Profile Wallpaper'),
+      const SizedBox(height: 8),
+      Card(
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Pilih wallpaper kartu profil',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Wallpaper ini langsung mengubah kartu akun di Beranda.',
+                style: TextStyle(color: Colors.white60, fontSize: 12),
+              ),
+              const SizedBox(height: 13),
+              SizedBox(
+                height: 82,
+                child: ListView.separated(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _nexoraWallpapers.length,
+                  separatorBuilder: (_, __) => const SizedBox(width: 10),
+                  itemBuilder: (_, index) => GestureDetector(
+                    onTap: () => widget.onWallpaperChanged(index),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      width: 112,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(17),
+                        gradient: _nexoraWallpaperGradient(index),
+                        border: Border.all(
+                          color: widget.wallpaper == index
+                              ? Colors.white
+                              : Colors.white.withOpacity(.12),
+                          width: widget.wallpaper == index ? 2.5 : 1,
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Positioned(
+                            right: 8,
+                            top: 8,
+                            child: Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 27,
+                              color: Colors.white.withOpacity(.25),
+                            ),
+                          ),
+                          Align(
+                            alignment: Alignment.bottomLeft,
+                            child: Padding(
+                              padding: const EdgeInsets.all(9),
+                              child: Text(
+                                'Style ' + (index + 1).toString(),
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+                              ),
+                            ),
+                          ),
+                          if (widget.wallpaper == index)
+                            const Positioned(
+                              right: 7,
+                              bottom: 7,
+                              child: CircleAvatar(
+                                radius: 10,
+                                child: Icon(Icons.check_rounded, size: 13),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      const SizedBox(height: 18),
+      const _Title('Preferences'),
+      const SizedBox(height: 8),
+      Card(
+        child: Column(
+          children: [
+            SwitchListTile(
+              value: notifications,
+              onChanged: (v) => setState(() => notifications = v),
+              title: const Text('Notifications'),
+              subtitle: const Text('Notifikasi Nexora'),
+            ),
+            const Divider(height: 1),
+            SwitchListTile(
+              value: sound,
+              onChanged: (v) => setState(() => sound = v),
+              title: const Text('Sound'),
+              subtitle: const Text('Suara aplikasi dan game'),
+            ),
+            const Divider(height: 1),
+            SwitchListTile(
+              value: animations,
+              onChanged: (v) => setState(() => animations = v),
+              title: const Text('Animations'),
+              subtitle: const Text('Animasi antarmuka'),
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 18),
+      const _Title('Security'),
+      const Card(
+        child: Column(
+          children: [
+            ListTile(
+              leading: Icon(Icons.lock_rounded),
+              title: Text('Password & Login'),
+              trailing: Icon(Icons.chevron_right_rounded),
+            ),
+            Divider(height: 1),
+            ListTile(
+              leading: Icon(Icons.privacy_tip_rounded),
+              title: Text('Privacy'),
+              trailing: Icon(Icons.chevron_right_rounded),
+            ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
+
 class AboutPage extends StatelessWidget{
   const AboutPage({super.key});
   @override Widget build(BuildContext context)=>Center(child:Padding(padding:const EdgeInsets.all(28),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
