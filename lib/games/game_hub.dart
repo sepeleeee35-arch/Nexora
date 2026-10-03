@@ -371,7 +371,7 @@ class _GameIntroState extends State<_GameIntro> {
           decoration: BoxDecoration(color: widget.info.color.withOpacity(.10), borderRadius: BorderRadius.circular(20), border: Border.all(color: widget.info.color.withOpacity(.45))),
           child: Row(children: [
             Container(width: 38, height: 38, decoration: BoxDecoration(color: widget.info.color.withOpacity(.16), borderRadius: BorderRadius.circular(13)), child: Icon(Icons.tune_rounded, color: widget.info.color, size: 20)),
-            const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('DIFFICULTY', style: TextStyle(fontSize: 8, color: Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 1.2)), const SizedBox(height: 2), Text(difficultyName(d), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)), Text(difficultyHint(d), style: const TextStyle(fontSize: 9, color: Colors.white45))])),
+            const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('DIFFICULTY', style: TextStyle(fontSize: 8, color: Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 1.2)), const SizedBox(height: 2), Text(difficultyName(d), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)), Text(difficultyHint(d), style: const TextStyle(fontSize: 9, color: Colors.white54))])),
             Icon(Icons.expand_more_rounded, color: widget.info.color),
           ]),
         ),
