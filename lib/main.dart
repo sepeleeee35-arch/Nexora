@@ -1629,8 +1629,8 @@ class _NexoraColorPickerDialog extends StatefulWidget {
 class _NexoraColorPickerState extends State<_NexoraColorPickerDialog> {
   late HSVColor hsv;
   @override void initState(){super.initState();hsv=HSVColor.fromColor(widget.initial);}
-  void _setHue(Offset p,Size size){setState(()=>hsv=hsv.withHue(((p.dx/size.width).clamp(0.0,1.0))*360));}
-  void _setSV(Offset p,Size size){setState(()=>hsv=hsv.withSaturation((p.dx/size.width).clamp(0.0,1.0)).withValue((1-p.dy/size.height).clamp(0.0,1.0)));}
+  void _setHue(Offset p,Size size){setState(()=>hsv=hsv.withHue(((p.dx/size.width).clamp(0.0,1.0)).toDouble()*360));}
+  void _setSV(Offset p,Size size){setState(()=>hsv=hsv.withSaturation((p.dx/size.width).clamp(0.0,1.0).toDouble()).withValue((1-p.dy/size.height).clamp(0.0,1.0).toDouble()));}
   @override Widget build(BuildContext context){
     final color=hsv.toColor();
     return AlertDialog(
@@ -1641,8 +1641,8 @@ class _NexoraColorPickerState extends State<_NexoraColorPickerDialog> {
           onPanUpdate:(d)=>_setSV(d.localPosition,Size(c.maxWidth,190)),
           child:CustomPaint(painter:_ColorSVPainter(hsv.hue),child:Stack(children:[
             Positioned(
-              left:(hsv.saturation*c.maxWidth-9).clamp(0.0,c.maxWidth-18),
-              top:((1-hsv.value)*190-9).clamp(0.0,172),
+              left:(hsv.saturation*c.maxWidth-9).clamp(0.0,c.maxWidth-18).toDouble(),
+              top:((1-hsv.value)*190-9).clamp(0.0,172).toDouble(),
               child:Container(width:18,height:18,decoration:BoxDecoration(shape:BoxShape.circle,border:Border.all(color:Colors.white,width:2),boxShadow:[const BoxShadow(color:Colors.black54,blurRadius:4)])),
             ),
           ])),
@@ -1699,7 +1699,7 @@ class _VisualSlider extends StatelessWidget {
   const _VisualSlider({required this.label,required this.value,required this.min,required this.max,required this.display,required this.onChanged});
   @override Widget build(BuildContext context)=>Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
     Row(children:[Expanded(child:Text(label,style:const TextStyle(fontWeight:FontWeight.w700,fontSize:12))),Text(display,style:const TextStyle(fontSize:12,color:Colors.white60))]),
-    Slider(value:value.clamp(min,max),min:min,max:max,onChanged:onChanged),
+    Slider(value:value.clamp(min,max).toDouble(),min:min,max:max,onChanged:onChanged),
   ]);
 }
 
@@ -1849,9 +1849,9 @@ class _SettingsState extends State<SettingsPage> {
             const SizedBox(height:4),
             const Text('Atur seberapa terlihat kartu/panel dan ketebalan garisnya. Nilai 0 membuat warna kartu hilang.',style:TextStyle(color:Colors.white60,fontSize:11)),
             const SizedBox(height:12),
-            _VisualSlider(label:'Kecerahan / transparansi kartu',value:widget.cardOpacity,min:0,max:1,display:'PERSEN',onChanged:(v)=>widget.onVisualChanged('cardOpacity',v)),
-            _VisualSlider(label:'Ketebalan border',value:widget.cardBorderWidth,min:0,max:6,display:'PX',onChanged:(v)=>widget.onVisualChanged('cardBorderWidth',v)),
-            _VisualSlider(label:'Kecerahan border',value:widget.cardBorderOpacity,min:0,max:1,display:'PERSEN',onChanged:(v)=>widget.onVisualChanged('cardBorderOpacity',v)),
+            _VisualSlider(label:'Kecerahan / transparansi kartu',value:widget.cardOpacity,min:0,max:1,display:(widget.cardOpacity*100).round().toString()+'%',onChanged:(v)=>widget.onVisualChanged('cardOpacity',v)),
+            _VisualSlider(label:'Ketebalan border',value:widget.cardBorderWidth,min:0,max:6,display:widget.cardBorderWidth.toStringAsFixed(1)+' px',onChanged:(v)=>widget.onVisualChanged('cardBorderWidth',v)),
+            _VisualSlider(label:'Kecerahan border',value:widget.cardBorderOpacity,min:0,max:1,display:(widget.cardBorderOpacity*100).round().toString()+'%',onChanged:(v)=>widget.onVisualChanged('cardBorderOpacity',v)),
           ]),
         ),
       ),
