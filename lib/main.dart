@@ -252,7 +252,7 @@ class _NexoraShellState extends State<NexoraShell> {
       body = const AboutPage();
     } else {
       body = switch (tab) {
-        1 => const NexoraGameHub(),
+        1 => const ReactionRushPage(),
         2 => const MusicPage(),
         3 => const NexoraToolsPage(),
         4 => MarketPage(coins: coins, cart: cart, buy: null),
@@ -530,7 +530,7 @@ class HomePage extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            GoogleUserCircleAvatar(identity: account, radius: 29),
+                            NexoraGoogleAvatar(account: account, radius: 29),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -680,7 +680,7 @@ class HomePage extends StatelessWidget {
               FilledButton.icon(
                 onPressed: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const NexoraGameHub()),
+                  MaterialPageRoute(builder: (_) => const ReactionRushPage()),
                 ),
                 icon: const Icon(Icons.play_arrow_rounded),
                 label: const Text('Play'),
@@ -695,7 +695,7 @@ class HomePage extends StatelessWidget {
           child: Column(
             children: [
               ListTile(
-                leading: GoogleUserCircleAvatar(identity: account, radius: 22),
+                leading: NexoraGoogleAvatar(account: account, radius: 22),
                 title: Text(accountName, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(account.email + ' • Google Account'),
                 trailing: const Icon(Icons.chevron_right_rounded),
@@ -718,6 +718,32 @@ class HomePage extends StatelessWidget {
         const _Recent(Icons.music_note_rounded, 'Nexora Music', 'Player dan library'),
         const _Recent(Icons.build_rounded, 'Nexora Tools', 'Media & utility tools'),
       ],
+    );
+  }
+}
+
+class NexoraGoogleAvatar extends StatelessWidget {
+  final GoogleSignInAccount account;
+  final double radius;
+
+  const NexoraGoogleAvatar({
+    required this.account,
+    required this.radius,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final photo = account.photoUrl;
+    if (photo != null && photo.isNotEmpty) {
+      return CircleAvatar(
+        radius: radius,
+        backgroundImage: NetworkImage(photo),
+      );
+    }
+    return CircleAvatar(
+      radius: radius,
+      child: Icon(Icons.person_rounded, size: radius),
     );
   }
 }
@@ -1430,7 +1456,7 @@ class _SettingsState extends State<SettingsPage> {
       Card(
         child: ListTile(
           contentPadding: const EdgeInsets.all(14),
-          leading: GoogleUserCircleAvatar(identity: widget.account, radius: 29),
+          leading: NexoraGoogleAvatar(account: widget.account, radius: 29),
           title: Text(
             widget.account.displayName?.trim().isNotEmpty == true
                 ? widget.account.displayName!
