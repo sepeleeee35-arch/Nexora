@@ -4,6 +4,15 @@ import 'package:flutter/material.dart';
 
 String? nexoraActiveAccountId;
 
+enum NexoraDifficulty { easy, normal, hard, pro, impossible }
+NexoraDifficulty nexoraDifficulty = NexoraDifficulty.normal;
+String difficultyName(NexoraDifficulty d) => switch (d) {
+  NexoraDifficulty.easy => 'EASY', NexoraDifficulty.normal => 'NORMAL', NexoraDifficulty.hard => 'HARD', NexoraDifficulty.pro => 'PRO', NexoraDifficulty.impossible => 'IMPOSSIBLE',
+};
+String difficultyHint(NexoraDifficulty d) => switch (d) {
+  NexoraDifficulty.easy => 'Relaxed pace • forgiving gameplay', NexoraDifficulty.normal => 'Balanced challenge • classic feel', NexoraDifficulty.hard => 'Faster • tighter timing • fewer mistakes', NexoraDifficulty.pro => 'Expert pace • serious precision required', NexoraDifficulty.impossible => 'Extreme mode • brutally unforgiving',
+};
+
 const bg = Color(0xFF05070D);
 const panel = Color(0xFF0D1320);
 const purple = Color(0xFF8B5CF6);
@@ -27,14 +36,20 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
   ];
 
   Widget openGame(String name) {
-    switch (name) {
-      case '2048': return const _Twenty();
-      case 'Tetris': return const _Tetris();
-      case 'Flappy': return const _Flappy();
-      case 'Breakout': return const _Breakout();
-      case 'Memory': return const _Memory();
-      default: return const _Twenty();
-    }
+    final info = games.firstWhere((g) => g.name == name, orElse: () => games.first);
+    return _GameIntro(info: info, onStart: (difficulty) {
+      nexoraDifficulty = difficulty;
+      Widget game;
+      switch (name) {
+        case '2048': game = const _Twenty(); break;
+        case 'Tetris': game = const _Tetris(); break;
+        case 'Flappy': game = const _Flappy(); break;
+        case 'Breakout': game = const _Breakout(); break;
+        case 'Memory': game = const _Memory(); break;
+        default: game = const _Twenty();
+      }
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => game));
+    });
   }
 
   @override
@@ -296,8 +311,7 @@ class _GameCardArt extends CustomPainter {
     for(var y=0;y<9;y++)for(var x=0;x<10;x++){p.color=Colors.white.withOpacity(.035);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+x*cell+1,oy+y*cell+1,cell-2,cell-2),const Radius.circular(3)),p);}
     const blocks=[[3,0,Color(0xFF22D3EE)],[4,0,Color(0xFF22D3EE)],[5,0,Color(0xFF22D3EE)],[5,1,Color(0xFFFACC15)],[5,2,Color(0xFFFACC15)],[4,2,Color(0xFFFACC15)],[3,2,Color(0xFFA78BFA)],[3,3,Color(0xFFA78BFA)],[4,3,Color(0xFFA78BFA)],[5,3,Color(0xFFA78BFA)],[6,3,Color(0xFFA78BFA)],[6,4,Color(0xFF4ADE80)],[7,4,Color(0xFF4ADE80)],[7,5,Color(0xFF4ADE80)],[8,5,Color(0xFF4ADE80)]];
     for(final b in blocks){p.color=b[2] as Color;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+(b[0] as int)*cell+2,oy+(b[1] as int)*cell+2,cell-4,cell-4),const Radius.circular(4)),p);}
-  }
-  void _drawFlappy(Canvas c,Size s,Paint p){
+  }  void _drawFlappy(Canvas c,Size s,Paint p){
     p.color=Colors.white.withOpacity(.14);for(var i=0;i<4;i++)c.drawOval(Rect.fromLTWH(i*s.width*.28-20,s.height*(.18+i*.12),70,18),p);
     final px=s.width*.63,top=s.height*.17,bottom=s.height*.62;
     p.color=const Color(0xFF58C95A);c.drawRect(Rect.fromLTWH(px,0,34,top),p);c.drawRect(Rect.fromLTWH(px,bottom,34,s.height*.82-bottom),p);
@@ -314,6 +328,43 @@ class _GameCardArt extends CustomPainter {
     final w=s.width*.15,h=s.height*.20;for(var y=0;y<3;y++)for(var x=0;x<4;x++){final show=(x+y)%3==0;final rr=Rect.fromLTWH(s.width*.18+x*s.width*.17,s.height*.18+y*s.height*.23,w,h);p.color=show?accent.withOpacity(.25):Colors.white.withOpacity(.07);c.drawRRect(RRect.fromRectAndRadius(rr,const Radius.circular(8)),p);if(show){p.color=accent;c.drawCircle(rr.center,7,p);}else{p.color=Colors.white24;c.drawCircle(rr.center,5,p);}}
   }
   @override bool shouldRepaint(covariant _GameCardArt old)=>false;
+}
+
+class _GameIntro extends StatefulWidget {
+  final _GameInfo info; final ValueChanged<NexoraDifficulty> onStart;
+  const _GameIntro({required this.info, required this.onStart});
+  @override State<_GameIntro> createState() => _GameIntroState();
+}
+class _GameIntroState extends State<_GameIntro> {
+  NexoraDifficulty selected = NexoraDifficulty.normal;
+  String instructions(String name) => switch (name) {
+    '2048' => 'Geser papan untuk menggabungkan angka yang sama. Gabungkan terus sampai mencapai 2048. Rencanakan ruang kosongmu dan jangan biarkan papan penuh.',
+    'Tetris' => 'Geser dan putar balok yang jatuh. Susun tanpa celah untuk membuat garis penuh. Gunakan HOLD dan hard drop untuk mengontrol permainan.',
+    'Flappy' => 'Ketuk layar untuk membuat burung terbang naik. Lewati celah pipa tanpa menabrak. Setiap pipa yang dilewati menambah skor.',
+    'Breakout' => 'Geser paddle untuk memantulkan bola dan hancurkan semua brick. Jaga nyawa, manfaatkan power-up, dan pertahankan combo setinggi mungkin.',
+    _ => 'Buka dua kartu untuk mencari pasangan yang sama. Ingat posisi kartu, bangun streak, dan selesaikan papan dengan gerakan sesedikit mungkin.',
+  };
+  @override Widget build(BuildContext context) {
+    final d=selected;
+    return Scaffold(backgroundColor:bg,body:SafeArea(child:ListView(padding:const EdgeInsets.fromLTRB(18,18,18,28),children:[
+      Row(children:[IconButton(onPressed:()=>Navigator.pop(context),icon:const Icon(Icons.arrow_back_rounded)),const Spacer(),_Badge('GAME BRIEFING')]),
+      const SizedBox(height:10),
+      Container(height:170,decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:LinearGradient(colors:[widget.info.color.withOpacity(.38),const Color(0xFF0A0F1D)],begin:Alignment.topLeft,end:Alignment.bottomRight),border:Border.all(color:widget.info.color.withOpacity(.42)),boxShadow:[BoxShadow(color:widget.info.color.withOpacity(.12),blurRadius:28)]),child:Stack(children:[
+        Positioned.fill(child:CustomPaint(painter:_GameCardArt(widget.info.name,widget.info.color))),
+        Positioned(left:18,bottom:16,child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(widget.info.category,style:const TextStyle(fontSize:9,fontWeight:FontWeight.w900,letterSpacing:1.6,color:Colors.white60)),const SizedBox(height:3),Text(widget.info.name,style:const TextStyle(fontSize:32,fontWeight:FontWeight.w900))])),
+      ])),
+      const SizedBox(height:16),const Text('HOW TO PLAY',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.5,color:Colors.white54)),const SizedBox(height:7),
+      Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:panel,borderRadius:BorderRadius.circular(20),border:Border.all(color:Colors.white10)),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Container(width:42,height:42,decoration:BoxDecoration(color:widget.info.color.withOpacity(.15),shape:BoxShape.circle),child:Icon(widget.info.icon,color:widget.info.color)),const SizedBox(width:12),Expanded(child:Text(instructions(widget.info.name),style:const TextStyle(height:1.45,color:Colors.white70))),
+      ])),
+      const SizedBox(height:18),const Text('CHOOSE DIFFICULTY',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.5,color:Colors.white54)),const SizedBox(height:9),
+      ...NexoraDifficulty.values.map((level){final active=selected==level;return Padding(padding:const EdgeInsets.only(bottom:8),child:InkWell(borderRadius:BorderRadius.circular(18),onTap:()=>setState(()=>selected=level),child:AnimatedContainer(duration:const Duration(milliseconds:160),padding:const EdgeInsets.symmetric(horizontal:15,vertical:13),decoration:BoxDecoration(color:active?widget.info.color.withOpacity(.14):panel,borderRadius:BorderRadius.circular(18),border:Border.all(color:active?widget.info.color.withOpacity(.7):Colors.white10,width:active?1.3:1)),child:Row(children:[
+        Container(width:10,height:10,decoration:BoxDecoration(color:active?widget.info.color:Colors.white24,shape:BoxShape.circle)),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(difficultyName(level),style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:.8,color:active?Colors.white:Colors.white70)),const SizedBox(height:2),Text(difficultyHint(level),style:const TextStyle(fontSize:9,color:Colors.white38))])),if(active)Icon(Icons.check_circle_rounded,color:widget.info.color,size:21),
+      ]))));}),
+      const SizedBox(height:8),Container(padding:const EdgeInsets.all(13),decoration:BoxDecoration(color:Colors.white.withOpacity(.035),borderRadius:BorderRadius.circular(16)),child:Row(children:[Icon(Icons.warning_amber_rounded,color:d==NexoraDifficulty.impossible?Colors.redAccent:Colors.white38,size:18),const SizedBox(width:9),Expanded(child:Text('Dipilih: ${difficultyName(d)} • ${difficultyHint(d)}',style:const TextStyle(fontSize:10,color:Colors.white54)))])),
+      const SizedBox(height:14),SizedBox(height:56,child:FilledButton.icon(onPressed:()=>widget.onStart(selected),icon:const Icon(Icons.play_arrow_rounded),label:const Text('START GAME',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:.7)))),
+    ])));
+  }
 }
 
 class _GamePage extends StatelessWidget {
@@ -397,12 +448,12 @@ class _TwentyState extends State<_Twenty>{
   int score=0,best=0,previousScore=0,pulse=0; bool gameOver=false,won=false,keepPlaying=false;
   @override void initState(){super.initState();_reset();}
   void _reset(){board=List.filled(16,0);previous=List.filled(16,0);score=0;previousScore=0;gameOver=false;won=false;keepPlaying=false;pulse++;_spawn();_spawn();}
-  void _spawn(){final e=<int>[for(var i=0;i<16;i++)if(board[i]==0)i];if(e.isNotEmpty)board[e[random.nextInt(e.length)]]=random.nextDouble()<.9?2:4;}
+  void _spawn(){final e=<int>[for(var i=0;i<16;i++)if(board[i]==0)i];if(e.isNotEmpty){final d=nexoraDifficulty.index;board[e[random.nextInt(e.length)]]=random.nextDouble()<(0.94-d*.07)?2:4;if(d>=3&&random.nextDouble()<.10&&e.length>1){final rest=<int>[for(final i in e)if(board[i]==0)i];if(rest.isNotEmpty)board[rest[random.nextInt(rest.length)]]=2;}}}
   List<int> _merge(List<int> line){final v=line.where((x)=>x!=0).toList(),o=<int>[];var i=0;while(i<v.length){if(i+1<v.length&&v[i]==v[i+1]){final m=v[i]*2;o.add(m);score+=m;i+=2;}else{o.add(v[i]);i++;}}while(o.length<4)o.add(0);return o;}
   bool _can(){if(board.contains(0))return true;for(var y=0;y<4;y++)for(var x=0;x<4;x++){final v=board[y*4+x];if(x<3&&board[y*4+x+1]==v)return true;if(y<3&&board[(y+1)*4+x]==v)return true;}return false;}
   void _move(int dx,int dy){if(gameOver||(won&&!keepPlaying))return;final old=List<int>.from(board),oldScore=score,next=List<int>.filled(16,0);for(var line=0;line<4;line++){final vals=<int>[];for(var pos=0;pos<4;pos++){final x=dx!=0?(dx>0?3-pos:pos):line,y=dy!=0?(dy>0?3-pos:pos):line;vals.add(board[y*4+x]);}final m=_merge(vals);for(var pos=0;pos<4;pos++){final x=dx!=0?(dx>0?3-pos:pos):line,y=dy!=0?(dy>0?3-pos:pos):line;next[y*4+x]=m[pos];}}if(next.toString()==old.toString())return;previous=old;previousScore=oldScore;board=next;_spawn();pulse++;best=max(best,score);if(board.contains(2048))won=true;if(!_can())gameOver=true;setState((){});}
   Color _tile(int v){if(v==0)return Colors.white.withOpacity(.045);final t=min(1.0,log(max(2,v))/log(8192));return Color.lerp(const Color(0xFFF59E0B),const Color(0xFF7C3AED),t)!;}
-  @override Widget build(BuildContext context)=>_GamePage(title:'2048',subtitle:'Classic merge puzzle • swipe every direction',accent:const Color(0xFFF59E0B),reset:()=>setState(_reset),child:GestureDetector(
+  @override Widget build(BuildContext context)=>_GamePage(title:'2048',subtitle:'${difficultyName(nexoraDifficulty)} • Classic merge puzzle • swipe every direction',accent:const Color(0xFFF59E0B),reset:()=>setState(_reset),child:GestureDetector(
     behavior:HitTestBehavior.opaque,onHorizontalDragEnd:(d){final v=d.primaryVelocity??0;if(v!=0)_move(v>0?1:-1,0);},onVerticalDragEnd:(d){final v=d.primaryVelocity??0;if(v!=0)_move(0,v>0?1:-1);},
     child:_World(top:const Color(0xFF24170A),bottom:const Color(0xFF080A13),child:Column(children:[
       _ScoreBar('SCORE $score','BEST $best',const Color(0xFFF59E0B)),Expanded(child:Center(child:AspectRatio(aspectRatio:1,child:Container(
@@ -429,7 +480,7 @@ class _TetrisState extends State<_Tetris>{
   void _reset(){timer?.cancel();for(var i=0;i<200;i++)board[i]=0;current=random.nextInt(7);next=random.nextInt(7);held=null;score=0;lines=0;level=1;running=false;over=false;canHold=true;_load();}
   void _load(){activeKind=current;shape=shapes[activeKind].map((r)=>List<int>.from(r)).toList();row=0;col=3;current=next;next=random.nextInt(7);canHold=true;}
   bool _can(int r,int c,List<List<int>>s){for(var y=0;y<s.length;y++)for(var x=0;x<s[y].length;x++){if(s[y][x]==0)continue;final xx=c+x,yy=r+y;if(xx<0||xx>=10||yy>=20)return false;if(yy>=0&&board[yy*10+xx]!=0)return false;}return true;}
-  void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();timer=Timer.periodic(Duration(milliseconds:max(100,560-level*42)),(_)=>_tick());}
+  void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();const speeds=[620,520,400,285,165];final base=speeds[nexoraDifficulty.index];timer=Timer.periodic(Duration(milliseconds:max(70,base-level*42)),(_)=>_tick());}
   void _tick(){if(!mounted||!running)return;if(_can(row+1,col,shape)){row++;setState((){});}else{_lock();}}
   void _move(int d){if(!running){_start();return;}if(_can(row,col+d,shape)){col+=d;setState((){});}}
   void _soft(){if(!running){_start();return;}if(_can(row+1,col,shape)){row++;score++;setState((){});}else{_lock();}}
@@ -441,7 +492,7 @@ class _TetrisState extends State<_Tetris>{
   void _lock(){for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0&&row+y>=0&&row+y<20&&col+x>=0&&col+x<10)board[(row+y)*10+col+x]=activeKind+1;var clear=0;for(var y=19;y>=0;y--){var full=true;for(var x=0;x<10;x++)if(board[y*10+x]==0){full=false;break;}if(full){for(var yy=y;yy>0;yy--)for(var x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];for(var x=0;x<10;x++)board[x]=0;clear++;y++;}}if(clear>0){lines+=clear;score+=[0,100,300,500,800][clear]*level;level=1+lines~/10;_clock();}_load();if(!_can(row,col,shape)){running=false;over=true;timer?.cancel();}setState((){});}
   Widget mini(List<List<int>>?s,Color c)=>SizedBox(width:58,height:44,child:CustomPaint(painter:_MiniPiecePainter(s,c)));
   @override void dispose(){timer?.cancel();super.dispose();}
-  @override Widget build(BuildContext context)=>_GamePage(title:'Tetris',subtitle:'Classic 10×20 • rotate • hold • hard drop',accent:const Color(0xFFA78BFA),reset:()=>setState(_reset),child:_World(top:const Color(0xFF17112A),bottom:const Color(0xFF070914),child:Column(children:[
+  @override Widget build(BuildContext context)=>_GamePage(title:'Tetris',subtitle:'${difficultyName(nexoraDifficulty)} • 10×20 • rotate • hold • hard drop',accent:const Color(0xFFA78BFA),reset:()=>setState(_reset),child:_World(top:const Color(0xFF17112A),bottom:const Color(0xFF070914),child:Column(children:[
     _ScoreBar('SCORE $score','LINES $lines • LVL $level',const Color(0xFFA78BFA)),Expanded(child:Row(children:[
       Expanded(child:GestureDetector(onTap:_rotate,onDoubleTap:_hard,onHorizontalDragUpdate:(d){if(d.delta.dx>3)_move(1);if(d.delta.dx< -3)_move(-1);},onVerticalDragUpdate:(d){if(d.delta.dy>7)_soft();},child:Center(child:AspectRatio(aspectRatio:.50,child:Container(margin:const EdgeInsets.only(left:10,right:4),padding:const EdgeInsets.all(5),decoration:BoxDecoration(color:Colors.black38,borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFA78BFA).withOpacity(.22))),child:CustomPaint(painter:_TetrisPainter(board,shape,row,col,_ghost(),colors[activeKind+1]),child:const SizedBox.expand())))))),
       SizedBox(width:84,child:Padding(padding:const EdgeInsets.only(right:8),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[const Text('NEXT',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(shapes[next],colors[next+1]),const SizedBox(height:8),const Text('HOLD',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(held,held==null?Colors.white12:colors[_kind(held!)+1]),const SizedBox(height:12),FilledButton(onPressed:over?()=>setState(_reset):_start,child:Text(over?'AGAIN':running?'DROP':'START')),TextButton(onPressed:running?_hold:null,child:const Text('HOLD'))]))),
@@ -462,9 +513,9 @@ class _FlappyState extends State<_Flappy>{
  Timer? timer;double birdY=.45,velocity=0,pipeX=1.15,gap=.48;int score=0,best=0;bool running=false,over=false;final random=Random();
  void _reset(){timer?.cancel();birdY=.45;velocity=0;pipeX=1.15;gap=.48;score=0;running=false;over=false;}
  void _flap(){if(!running){if(over)_reset();running=true;timer=Timer.periodic(const Duration(milliseconds:25),(_)=>_tick());}velocity=-.028;setState((){});}
- void _tick(){if(!mounted||!running)return;birdY+=velocity;velocity+=.00155;pipeX-=.0098;if(pipeX<-.18){pipeX=1.08;gap=.28+random.nextDouble()*.40;score++;best=max(best,score);}final hit=birdY<.055||birdY>.90||(pipeX<.25&&pipeX>-.02&&(birdY<gap-.16||birdY>gap+.16));if(hit){running=false;over=true;timer?.cancel();}setState((){});}
+ void _tick(){if(!mounted||!running)return;birdY+=velocity;const gravity=[.00125,.00155,.00185,.00215,.00255];const pipeSpeed=[.0072,.0098,.0125,.015,.0185];const gapBase=[.20,.18,.16,.145,.125];final d=nexoraDifficulty.index;velocity+=gravity[d];pipeX-=pipeSpeed[d];if(pipeX<-.18){pipeX=1.08;gap=(.5-gapBase[d])+random.nextDouble()*(gapBase[d]*2);score++;best=max(best,score);}final hit=birdY<.055||birdY>.90||(pipeX<.25&&pipeX>-.02&&(birdY<gap-gapBase[d]||birdY>gap+gapBase[d]));if(hit){running=false;over=true;timer?.cancel();}setState((){});}
  @override void dispose(){timer?.cancel();super.dispose();}
- @override Widget build(BuildContext context)=>_GamePage(title:'Flappy',subtitle:'Classic tap flight • dodge the pipes',accent:const Color(0xFF22D3EE),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_flap,child:_World(top:const Color(0xFF49B9E9),bottom:const Color(0xFFB8E9D4),child:Stack(children:[
+ @override Widget build(BuildContext context)=>_GamePage(title:'Flappy',subtitle:'${difficultyName(nexoraDifficulty)} • Tap flight • dodge the pipes',accent:const Color(0xFF22D3EE),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_flap,child:_World(top:const Color(0xFF49B9E9),bottom:const Color(0xFFB8E9D4),child:Stack(children:[
   Positioned.fill(child:CustomPaint(painter:_FlappyPainter(birdY,pipeX,gap,score))),Positioned(top:14,left:0,right:0,child:Column(children:[Text('$score',style:const TextStyle(fontSize:50,fontWeight:FontWeight.w900,shadows:[Shadow(blurRadius:5)])),Text('BEST $best',style:const TextStyle(fontSize:9,color:Colors.white70,fontWeight:FontWeight.w900,letterSpacing:2))])),
   if(!running)Center(child:Container(padding:const EdgeInsets.fromLTRB(26,21,26,19),decoration:BoxDecoration(color:Colors.black.withOpacity(.32),borderRadius:BorderRadius.circular(24),border:Border.all(color:Colors.white.withOpacity(.32))),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.flutter_dash_rounded,color:Color(0xFFFFE45C),size:54),const SizedBox(height:7),Text(over?'GAME OVER':'READY?',style:const TextStyle(fontSize:25,fontWeight:FontWeight.w900)),const SizedBox(height:5),Text(over?'TAP TO FLY AGAIN':'TAP TO FLAP',style:const TextStyle(color:Colors.white70,fontSize:10,fontWeight:FontWeight.w900,letterSpacing:1))]))),
  ]))));}
@@ -479,13 +530,13 @@ class _BreakoutState extends State<_Breakout>{
  final random=Random();Timer? timer;List<int> bricks=[],hp=[];List<_PowerDrop> drops=[];List<_Ball> balls=[];double paddle=.5;int score=0,lives=3,level=1,combo=0;bool running=false,over=false;
  @override void initState(){super.initState();_reset();}
  void _reset(){timer?.cancel();score=0;lives=3;level=1;combo=0;paddle=.5;running=false;over=false;_makeLevel();}
- void _makeLevel(){bricks=List<int>.filled(54,1);hp=List<int>.generate(54,(i)=>i<9?2:1);drops=[];balls=[_Ball(.5,.82,.0085,-.012)];}
+ void _makeLevel(){final d=nexoraDifficulty.index;bricks=List<int>.filled(54,1);hp=List<int>.generate(54,(i)=>i<9||(d>=2&&i<18)||(d>=4&&i%3==0)?(d>=2?2:1):1);drops=[];final speed=[.0068,.0085,.0105,.013,.017][d];balls=[_Ball(.5,.82,speed,-speed*1.45)];}
  void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();timer=Timer.periodic(const Duration(milliseconds:16),(_)=>_tick());}
  void _drop(double x,double y){if(random.nextDouble()>.20)return;const t=['wide','multi','slow','fire'];drops.add(_PowerDrop(x,y,t[random.nextInt(t.length)]));}
- void _tick(){if(!mounted||!running)return;final out=<_Ball>[];for(final b in balls){b.x+=b.vx;b.y+=b.vy;if(b.x<.018||b.x>.982){b.vx=-b.vx;b.x=b.x.clamp(.018,.982).toDouble();}if(b.y<.055){b.vy=b.vy.abs();b.y=.055;}if(b.vy>0&&b.y>.84&&b.y<.94&&(b.x-paddle).abs()<.15){final h=(b.x-paddle)/.15;b.vx=(b.vx+h*.005).clamp(-.017,.017).toDouble();b.vy=-b.vy.abs();combo++;}final col=(b.x*9).floor().clamp(0,8).toInt(),row=((b.y-.08)/.060).floor().clamp(0,5).toInt(),idx=row*9+col;if(b.y>.07&&b.y<.46&&bricks[idx]!=0){hp[idx]--;if(hp[idx]<=0){bricks[idx]=0;score+=10+combo*2;combo++;_drop(b.x,b.y);}else{score+=4;}b.vy=-b.vy;}if(b.y<1.02)out.add(b);}balls=out;if(balls.isEmpty){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{balls=[_Ball(.5,.82,.0085*(random.nextBool()?1:-1),-.012)];}}for(final d in drops)d.y+=.006;final caught=<_PowerDrop>[];drops.removeWhere((d){final hit=d.y>.84&&d.y<.95&&(d.x-paddle).abs()<.16;if(hit)caught.add(d);return hit||d.y>1.02;});for(final d in caught)_power(d.type);if(bricks.every((v)=>v==0)){level++;if(level>3){running=false;over=true;timer?.cancel();}else{_makeLevel();_clock();}}setState((){});}
+ void _tick(){if(!mounted||!running)return;final out=<_Ball>[];for(final b in balls){b.x+=b.vx;b.y+=b.vy;if(b.x<.018||b.x>.982){b.vx=-b.vx;b.x=b.x.clamp(.018,.982).toDouble();}if(b.y<.055){b.vy=b.vy.abs();b.y=.055;}if(b.vy>0&&b.y>.84&&b.y<.94&&(b.x-paddle).abs()<[.22,.18,.15,.12,.095][nexoraDifficulty.index]){final h=(b.x-paddle)/[.22,.18,.15,.12,.095][nexoraDifficulty.index];b.vx=(b.vx+h*.005).clamp(-.017,.017).toDouble();b.vy=-b.vy.abs();combo++;}final col=(b.x*9).floor().clamp(0,8).toInt(),row=((b.y-.08)/.060).floor().clamp(0,5).toInt(),idx=row*9+col;if(b.y>.07&&b.y<.46&&bricks[idx]!=0){hp[idx]--;if(hp[idx]<=0){bricks[idx]=0;score+=10+combo*2;combo++;_drop(b.x,b.y);}else{score+=4;}b.vy=-b.vy;}if(b.y<1.02)out.add(b);}balls=out;if(balls.isEmpty){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final speed=[.0068,.0085,.0105,.013,.017][nexoraDifficulty.index];balls=[_Ball(.5,.82,speed*(random.nextBool()?1:-1),-speed*1.45)];}}for(final d in drops)d.y+=.006;final caught=<_PowerDrop>[];drops.removeWhere((d){final hit=d.y>.84&&d.y<.95&&(d.x-paddle).abs()<.16;if(hit)caught.add(d);return hit||d.y>1.02;});for(final d in caught)_power(d.type);if(bricks.every((v)=>v==0)){level++;if(level>3){running=false;over=true;timer?.cancel();}else{_makeLevel();_clock();}}setState((){});}
  void _power(String t){if(t=='wide'){paddle=paddle.clamp(.16,.84).toDouble();}else if(t=='multi'&&balls.isNotEmpty&&balls.length<3){final b=balls.first;balls.add(_Ball(b.x,b.y,-b.vx,b.vy));balls.add(_Ball(b.x,b.y,b.vx*.65,b.vy));}else if(t=='slow'){for(final b in balls){b.vx*=.72;b.vy*=.72;}}else{score+=100;for(var i=0;i<bricks.length;i++)if(bricks[i]!=0&&random.nextDouble()<.14)bricks[i]=0;}}
  @override void dispose(){timer?.cancel();super.dispose();}
- @override Widget build(BuildContext context)=>_GamePage(title:'Breakout',subtitle:'Classic brick breaker • power-ups • 3 stages',accent:const Color(0xFFEF4444),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_start,onHorizontalDragUpdate:(d){paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.10,.90).toDouble();setState((){});},child:_World(top:const Color(0xFF210A14),bottom:const Color(0xFF070914),child:Stack(children:[
+ @override Widget build(BuildContext context)=>_GamePage(title:'Breakout',subtitle:'${difficultyName(nexoraDifficulty)} • Brick breaker • power-ups • 3 stages',accent:const Color(0xFFEF4444),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_start,onHorizontalDragUpdate:(d){paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.10,.90).toDouble();setState((){});},child:_World(top:const Color(0xFF210A14),bottom:const Color(0xFF070914),child:Stack(children:[
   Positioned.fill(child:CustomPaint(painter:_BreakoutPainter(bricks,hp,balls,drops,paddle))),Positioned(top:14,left:16,right:16,child:Row(children:[Text('SCORE $score',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:12)),const Spacer(),Text('LV $level  •  ♥ $lives',style:const TextStyle(color:Color(0xFFFCA5A5),fontWeight:FontWeight.w900,fontSize:12))])),
   if(!running)Center(child:Container(padding:const EdgeInsets.symmetric(horizontal:22,vertical:16),decoration:BoxDecoration(color:Colors.black54,borderRadius:BorderRadius.circular(22),border:Border.all(color:Colors.white12)),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.sports_baseball_rounded,color:Color(0xFFFF6B6B),size:48),const SizedBox(height:5),Text(over?(lives<=0?'GAME OVER':'ARCADE CLEAR'):'TAP TO LAUNCH',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)),const SizedBox(height:4),Text(over?'PLAY AGAIN':'DRAG THE PADDLE',style:const TextStyle(color:Colors.white54,fontSize:9,fontWeight:FontWeight.w900,letterSpacing:1))]))),
  ]))));}
@@ -493,7 +544,7 @@ class _Ball{double x,y,vx,vy;_Ball(this.x,this.y,this.vx,this.vy);}
 class _PowerDrop{double x,y;final String type;_PowerDrop(this.x,this.y,this.type);}
 class _BreakoutPainter extends CustomPainter{
  final List<int> bricks,hp;final List<_Ball> balls;final List<_PowerDrop> drops;final double paddle;const _BreakoutPainter(this.bricks,this.hp,this.balls,this.drops,this.paddle);
- @override void paint(Canvas canvas,Size size){final p=Paint();const cs=[Color(0xFFF87171),Color(0xFFFB923C),Color(0xFFFACC15),Color(0xFF4ADE80),Color(0xFF22D3EE),Color(0xFFA78BFA)];for(var r=0;r<6;r++)for(var col=0;col<9;col++){final i=r*9+col;if(bricks[i]==0)continue;final rect=Rect.fromLTWH(col*size.width/9+4,58+r*30,size.width/9-8,23);p.color=hp[i]>1?cs[r].withOpacity(.55):cs[r];canvas.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(7)),p);p.color=Colors.white.withOpacity(.18);canvas.drawRect(Rect.fromLTWH(rect.left+3,rect.top+3,rect.width-6,4),p);}p.color=Colors.white;canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH((paddle-.14)*size.width,size.height*.91,.28*size.width,13),const Radius.circular(8)),p);for(final b in balls){p.color=const Color(0xFFFFD5D5);canvas.drawCircle(Offset(b.x*size.width,b.y*size.height),7,p);}for(final d in drops){final x=d.x*size.width,y=d.y*size.height;p.color=d.type=='multi'?const Color(0xFF22D3EE):d.type=='wide'?const Color(0xFF4ADE80):d.type=='slow'?const Color(0xFFA78BFA):const Color(0xFFFF6B35);canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center:Offset(x,y),width:24,height:24),const Radius.circular(7)),p);final label=d.type=='multi'?'×':d.type=='wide'?'W':d.type=='slow'?'S':'F';TextPainter(text:TextSpan(text:label,style:const TextStyle(fontSize:13,fontWeight:FontWeight.w900,color:Colors.black54)),textDirection:TextDirection.ltr)..layout()..paint(canvas,Offset(x-5,y-8));}}
+ @override void paint(Canvas canvas,Size size){final p=Paint();const cs=[Color(0xFFF87171),Color(0xFFFB923C),Color(0xFFFACC15),Color(0xFF4ADE80),Color(0xFF22D3EE),Color(0xFFA78BFA)];for(var r=0;r<6;r++)for(var col=0;col<9;col++){final i=r*9+col;if(bricks[i]==0)continue;final rect=Rect.fromLTWH(col*size.width/9+4,58+r*30,size.width/9-8,23);p.color=hp[i]>1?cs[r].withOpacity(.55):cs[r];canvas.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(7)),p);p.color=Colors.white.withOpacity(.18);canvas.drawRect(Rect.fromLTWH(rect.left+3,rect.top+3,rect.width-6,4),p);}p.color=Colors.white;canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH((paddle-[.22,.18,.15,.12,.095][nexoraDifficulty.index])*size.width,size.height*.91,[.44,.36,.30,.24,.19][nexoraDifficulty.index]*size.width,13),const Radius.circular(8)),p);for(final b in balls){p.color=const Color(0xFFFFD5D5);canvas.drawCircle(Offset(b.x*size.width,b.y*size.height),7,p);}for(final d in drops){final x=d.x*size.width,y=d.y*size.height;p.color=d.type=='multi'?const Color(0xFF22D3EE):d.type=='wide'?const Color(0xFF4ADE80):d.type=='slow'?const Color(0xFFA78BFA):const Color(0xFFFF6B35);canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center:Offset(x,y),width:24,height:24),const Radius.circular(7)),p);final label=d.type=='multi'?'×':d.type=='wide'?'W':d.type=='slow'?'S':'F';TextPainter(text:TextSpan(text:label,style:const TextStyle(fontSize:13,fontWeight:FontWeight.w900,color:Colors.black54)),textDirection:TextDirection.ltr)..layout()..paint(canvas,Offset(x-5,y-8));}}
  @override bool shouldRepaint(covariant _BreakoutPainter old)=>true;
 }
 
@@ -506,10 +557,16 @@ class _MemoryState extends State<_Memory> {
   final icons = const [
     Icons.bolt_rounded, Icons.star_rounded, Icons.hexagon_rounded, Icons.favorite_rounded,
     Icons.diamond_rounded, Icons.bubble_chart_rounded, Icons.rocket_launch_rounded, Icons.local_fire_department_rounded,
+    Icons.brightness_7_rounded, Icons.ac_unit_rounded, Icons.music_note_rounded, Icons.flash_on_rounded,
+    Icons.public_rounded, Icons.emoji_events_rounded, Icons.pets_rounded, Icons.sailing_rounded,
+    Icons.auto_awesome_rounded, Icons.sports_esports_rounded,
   ];
   final colors = const [
     Color(0xFF22D3EE), Color(0xFFF59E0B), Color(0xFFA78BFA), Color(0xFFEC4899),
     Color(0xFF34D399), Color(0xFFFB7185), Color(0xFF60A5FA), Color(0xFFF97316),
+    Color(0xFF38BDF8), Color(0xFF67E8F9), Color(0xFFC084FC), Color(0xFFF472B6),
+    Color(0xFF2DD4BF), Color(0xFFFBBF24), Color(0xFF818CF8), Color(0xFFFB7185),
+    Color(0xFFA3E635), Color(0xFFE879F9),
   ];
   late List<int> cards;
   final open = <int>[];
@@ -519,7 +576,7 @@ class _MemoryState extends State<_Memory> {
 
   @override void initState() { super.initState(); _reset(); }
   void _reset() {
-    cards = <int>[for (var i = 0; i < 8; i++) ...[i, i]]..shuffle(random);
+    final pairCounts=[6,8,10,12,18];final pairs=pairCounts[nexoraDifficulty.index];cards=<int>[for(var i=0;i<pairs;i++)...[i,i]]..shuffle(random);
     open.clear(); matched.clear();
     moves = 0; streak = 0; bestStreak = 0; locked = false;
   }
@@ -551,7 +608,7 @@ class _MemoryState extends State<_Memory> {
 
   @override
   Widget build(BuildContext context) => _GamePage(
-    title: 'Memory', subtitle: 'Match Lab • build your streak', accent: const Color(0xFFEC4899),
+    title: 'Memory', subtitle: '${difficultyName(nexoraDifficulty)} • Match Lab • build your streak', accent: const Color(0xFFEC4899),
     reset: () => setState(_reset),
     child: _World(
       top: const Color(0xFF180B1C), bottom: const Color(0xFF070914),
@@ -560,7 +617,7 @@ class _MemoryState extends State<_Memory> {
         Expanded(child: GridView.builder(
           padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
           itemCount: cards.length,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 4, crossAxisSpacing: 10, mainAxisSpacing: 10, childAspectRatio: cards.length>24?.82:1),
           itemBuilder: (_, i) {
             final show = open.contains(i) || matched.contains(i);
             final color = colors[cards[i]];
