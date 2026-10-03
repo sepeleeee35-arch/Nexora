@@ -2,8 +2,12 @@
 // ignore_for_file: unused_element, deprecated_member_use, curly_braces_in_flow_control_structures, prefer_interpolation_to_compose_strings, camel_case_types
 import 'dart:async';
 import 'dart:math';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'google_auth_button.dart' if (dart.library.io) 'google_auth_button_stub.dart';
 import 'music/music_page.dart';
 import 'games/game_hub.dart';
@@ -210,7 +214,97 @@ class _NexoraShellState extends State<NexoraShell> {
   int coins = 1250;
   int cart = 0;
   int wallpaper = 0;
+  String customName = '';
+  Uint8List? customAvatar;
+  Uint8List? customBackground;
+  Color themeBackground = const Color(0xFF080A10);
+  Color themePrimary = const Color(0xFF8B5CF6);
+  Color themeSurface = const Color(0xFF111522);
+  Color themeBorder = const Color(0xFF334155);
   static const names = ['Home','Games','Music','Tools','Market'];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences();
+  }
+
+  String get _prefPrefix => 'nexora_' + widget.account.id + '_';
+
+  Future<void> _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    final avatar = prefs.getString(_prefPrefix + 'avatar');
+    final background = prefs.getString(_prefPrefix + 'background');
+    if (!mounted) return;
+    setState(() {
+      customName = prefs.getString(_prefPrefix + 'name') ?? '';
+      customAvatar = avatar == null ? null : base64Decode(avatar);
+      customBackground = background == null ? null : base64Decode(background);
+      wallpaper = prefs.getInt(_prefPrefix + 'wallpaper') ?? 0;
+      themeBackground = Color(prefs.getInt(_prefPrefix + 'themeBg') ?? 0xFF080A10);
+      themePrimary = Color(prefs.getInt(_prefPrefix + 'themePrimary') ?? 0xFF8B5CF6);
+      themeSurface = Color(prefs.getInt(_prefPrefix + 'themeSurface') ?? 0xFF111522);
+      themeBorder = Color(prefs.getInt(_prefPrefix + 'themeBorder') ?? 0xFF334155);
+    });
+  }
+
+  Future<void> _saveBytes(String key, Uint8List? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value == null) { await prefs.remove(_prefPrefix + key); }
+    else { await prefs.setString(_prefPrefix + key, base64Encode(value)); }
+  }
+
+  Future<void> _saveInt(String key, int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_prefPrefix + key, value);
+  }
+
+  void _setName(String value) {
+    setState(() => customName = value.trim());
+    unawaited(SharedPreferences.getInstance().then((p) => p.setString(_prefPrefix + 'name', customName)));
+  }
+
+  void _setAvatar(Uint8List? value) {
+    setState(() => customAvatar = value);
+    unawaited(_saveBytes('avatar', value));
+  }
+
+  void _setBackground(Uint8List? value) {
+    setState(() => customBackground = value);
+    unawaited(_saveBytes('background', value));
+  }
+
+  void _setWallpaper(int value) {
+    setState(() => wallpaper = value);
+    unawaited(_saveInt('wallpaper', value));
+  }
+
+  void _setColor(String key, Color value) {
+    setState(() {
+      if (key == 'bg') themeBackground = value;
+      if (key == 'primary') themePrimary = value;
+      if (key == 'surface') themeSurface = value;
+      if (key == 'border') themeBorder = value;
+    });
+    unawaited(_saveInt('theme' + key[0].toUpperCase() + key.substring(1), value.value));
+  }
+
+  void _resetTheme() {
+    setState(() {
+      themeBackground = const Color(0xFF080A10);
+      themePrimary = const Color(0xFF8B5CF6);
+      themeSurface = const Color(0xFF111522);
+      themeBorder = const Color(0xFF334155);
+      customBackground = null;
+    });
+    unawaited(SharedPreferences.getInstance().then((p) async {
+      await p.remove(_prefPrefix + 'background');
+      await p.setInt(_prefPrefix + 'themeBg', themeBackground.value);
+      await p.setInt(_prefPrefix + 'themePrimary', themePrimary.value);
+      await p.setInt(_prefPrefix + 'themeSurface', themeSurface.value);
+      await p.setInt(_prefPrefix + 'themeBorder', themeBorder.value);
+    }));
+  }
 
   void selectPage(String value) {
     Navigator.pop(context);
@@ -245,19 +339,33 @@ class _NexoraShellState extends State<NexoraShell> {
     } else if (page == 'Settings') {
       body = SettingsPage(
         account: widget.account,
+        customName: _displayName,
+        customAvatar: customAvatar,
         wallpaper: wallpaper,
-        onWallpaperChanged: (value) => setState(() => wallpaper = value),
+        background: themeBackground,
+        primary: themePrimary,
+        surface: themeSurface,
+        border: themeBorder,
+        customBackground: customBackground,
+        onNameChanged: _setName,
+        onAvatarChanged: _setAvatar,
+        onWallpaperChanged: _setWallpaper,
+        onBackgroundChanged: _setBackground,
+        onColorChanged: _setColor,
+        onResetTheme: _resetTheme,
       );
     } else if (page == 'About') {
       body = const AboutPage();
     } else {
       body = switch (tab) {
-        1 => const ReactionRushPage(),
+        1 => const NexoraGameHub(),
         2 => const MusicPage(),
         3 => const NexoraToolsPage(),
         4 => MarketPage(coins: coins, cart: cart, buy: null),
         _ => HomePage(
           account: widget.account,
+          displayName: _displayName,
+          customAvatar: customAvatar,
           coins: coins,
           wallpaper: wallpaper,
           openTab: selectTab,
@@ -279,8 +387,18 @@ class _NexoraShellState extends State<NexoraShell> {
       }
     }
 
-    return Scaffold(
-      drawer: NexoraDrawer(coins: coins, account: widget.account, onSelect: selectPage),
+    final appTheme = Theme.of(context).copyWith(
+      scaffoldBackgroundColor: themeBackground,
+      colorScheme: Theme.of(context).colorScheme.copyWith(primary: themePrimary, surface: themeSurface, outline: themeBorder),
+      cardTheme: CardThemeData(color: themeSurface, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18))),
+    );
+    return Theme(
+      data: appTheme,
+      child: Scaffold(
+      drawer: NexoraDrawer(
+        coins: coins, account: widget.account, displayName: _displayName,
+        customAvatar: customAvatar, onSelect: selectPage,
+      ),
       appBar: AppBar(
         titleSpacing: 18,
         title: Row(children: [
@@ -300,7 +418,13 @@ class _NexoraShellState extends State<NexoraShell> {
           IconButton(onPressed: () => setState(() => page = 'Notifications'), icon: const Icon(Icons.notifications_none_rounded)),
         ],
       ),
-      body: AnimatedSwitcher(duration: const Duration(milliseconds: 180), child: KeyedSubtree(key: ValueKey(page ?? tab), child: body)),
+      body: Container(
+        decoration: BoxDecoration(
+          color: themeBackground,
+          image: customBackground == null ? null : DecorationImage(image: MemoryImage(customBackground!), fit: BoxFit.cover),
+        ),
+        child: AnimatedSwitcher(duration: const Duration(milliseconds: 180), child: KeyedSubtree(key: ValueKey(page ?? tab), child: body)),
+      ),
       bottomNavigationBar: page == null ? NavigationBar(
         selectedIndex: tab,
         onDestinationSelected: selectTab,
@@ -313,6 +437,13 @@ class _NexoraShellState extends State<NexoraShell> {
         ],
       ) : null,
     );
+  }
+  String get _displayName {
+    final custom = customName.trim();
+    if (custom.isNotEmpty) return custom;
+    final google = widget.account.displayName?.trim();
+    if (google != null && google.isNotEmpty) return google;
+    return widget.account.email.split('@').first;
   }
 }
 
@@ -341,11 +472,11 @@ class NexoraDrawer extends StatelessWidget {
         ]),
       ),
       Card(child: ListTile(
-        leading: const CircleAvatar(child: Icon(Icons.person_rounded)),
-        title: Text(account.displayName ?? 'Nexora Player', style: const TextStyle(fontWeight: FontWeight.bold)),
+        leading: NexoraAvatar(account: account, customAvatar: customAvatar, radius: 24),
+        title: Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(account.email),
         trailing: const Icon(Icons.chevron_right_rounded),
-        onTap: () => onSelect('Profile'),
+        onTap: () => onSelect('Settings'),
       )),
       const _Header('MAIN'),
       _Item(Icons.home_rounded,'Home',()=>onSelect('Home')),
@@ -458,6 +589,8 @@ class HomePage extends StatelessWidget {
   final GoogleSignInAccount account;
   final int coins;
   final int wallpaper;
+  final String displayName;
+  final Uint8List? customAvatar;
   final ValueChanged<int> openTab;
   final ValueChanged<String> openPage;
 
@@ -465,16 +598,12 @@ class HomePage extends StatelessWidget {
     required this.account,
     required this.coins,
     required this.wallpaper,
+    required this.displayName,
+    required this.customAvatar,
     required this.openTab,
     required this.openPage,
     super.key,
   });
-
-  String get accountName {
-    final name = account.displayName?.trim();
-    if (name != null && name.isNotEmpty) return name;
-    return account.email.split('@').first;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -547,7 +676,7 @@ class HomePage extends StatelessWidget {
                                   ),
                                   const SizedBox(height: 3),
                                   Text(
-                                    accountName,
+                                    displayName,
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
@@ -696,7 +825,7 @@ class HomePage extends StatelessWidget {
             children: [
               ListTile(
                 leading: NexoraGoogleAvatar(account: account, radius: 22),
-                title: Text(accountName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                title: Text(displayName, style: const TextStyle(fontWeight: FontWeight.bold)),
                 subtitle: Text(account.email + ' • Google Account'),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () => openPage('Profile'),
@@ -745,6 +874,20 @@ class NexoraGoogleAvatar extends StatelessWidget {
       radius: radius,
       child: Icon(Icons.person_rounded, size: radius),
     );
+  }
+}
+
+class NexoraAvatar extends StatelessWidget {
+  final GoogleSignInAccount account;
+  final Uint8List? customAvatar;
+  final double radius;
+  const NexoraAvatar({required this.account, required this.customAvatar, required this.radius, super.key});
+  @override
+  Widget build(BuildContext context) {
+    if (customAvatar != null) return CircleAvatar(radius: radius, backgroundImage: MemoryImage(customAvatar!));
+    final photo = account.photoUrl;
+    if (photo != null && photo.isNotEmpty) return CircleAvatar(radius: radius, backgroundImage: NetworkImage(photo));
+    return CircleAvatar(radius: radius, child: Icon(Icons.person_rounded, size: radius));
   }
 }
 
@@ -1391,7 +1534,7 @@ class _GoogleLoginState extends State<GoogleLoginPage>{
     Center(child:Text(user==null?'Masuk untuk menyimpan profil, progres game, dan library.':'Akun Google tersambung.',textAlign:TextAlign.center)),
     const SizedBox(height:24),
     if(user!=null) Card(child:ListTile(
-      leading:NexoraGoogleAvatar(account:user!, radius:22),
+      leading:NexoraAvatar(account:user!, customAvatar:null, radius:22),
       title:Text(user!.displayName??'Google Account',style:const TextStyle(fontWeight:FontWeight.w800)),
       subtitle:Text(user!.email),
       trailing:IconButton(onPressed:signOut,icon:const Icon(Icons.logout_rounded)),
@@ -1430,174 +1573,134 @@ class _Notice extends StatelessWidget{final IconData icon;final String title,bod
 
 class SettingsPage extends StatefulWidget {
   final GoogleSignInAccount account;
+  final String customName;
+  final Uint8List? customAvatar;
   final int wallpaper;
+  final Color background, primary, surface, border;
+  final Uint8List? customBackground;
+  final ValueChanged<String> onNameChanged;
+  final ValueChanged<Uint8List?> onAvatarChanged;
   final ValueChanged<int> onWallpaperChanged;
-
-  const SettingsPage({
-    required this.account,
-    required this.wallpaper,
-    required this.onWallpaperChanged,
-    super.key,
-  });
-
-  @override
-  State<SettingsPage> createState() => _SettingsState();
+  final ValueChanged<Uint8List?> onBackgroundChanged;
+  final void Function(String key, Color value) onColorChanged;
+  final VoidCallback onResetTheme;
+  const SettingsPage({required this.account,required this.customName,required this.customAvatar,required this.wallpaper,required this.background,required this.primary,required this.surface,required this.border,required this.customBackground,required this.onNameChanged,required this.onAvatarChanged,required this.onWallpaperChanged,required this.onBackgroundChanged,required this.onColorChanged,required this.onResetTheme,super.key});
+  @override State<SettingsPage> createState()=>_SettingsState();
 }
-
 class _SettingsState extends State<SettingsPage> {
-  bool notifications = true, sound = true, animations = true;
-
-  @override
-  Widget build(BuildContext context) => ListView(
-    padding: const EdgeInsets.fromLTRB(16, 16, 16, 28),
-    children: [
-      const _Title('Account'),
-      const SizedBox(height: 8),
-      Card(
-        child: ListTile(
-          contentPadding: const EdgeInsets.all(14),
-          leading: NexoraGoogleAvatar(account: widget.account, radius: 29),
-          title: Text(
-            widget.account.displayName?.trim().isNotEmpty == true
-                ? widget.account.displayName!
-                : widget.account.email.split('@').first,
-            style: const TextStyle(fontWeight: FontWeight.w900),
-          ),
-          subtitle: Text(widget.account.email),
-          trailing: const Icon(Icons.verified_rounded, color: Colors.greenAccent),
-        ),
-      ),
-      const SizedBox(height: 16),
-      const _Title('Profile Wallpaper'),
-      const SizedBox(height: 8),
-      Card(
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Pilih wallpaper kartu profil',
-                style: TextStyle(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Wallpaper ini langsung mengubah kartu akun di Beranda.',
-                style: TextStyle(color: Colors.white60, fontSize: 12),
-              ),
-              const SizedBox(height: 13),
-              SizedBox(
-                height: 82,
-                child: ListView.separated(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _nexoraWallpapers.length,
-                  separatorBuilder: (_, __) => const SizedBox(width: 10),
-                  itemBuilder: (_, index) => GestureDetector(
-                    onTap: () => widget.onWallpaperChanged(index),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      width: 112,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(17),
-                        gradient: _nexoraWallpaperGradient(index),
-                        border: Border.all(
-                          color: widget.wallpaper == index
-                              ? Colors.white
-                              : Colors.white.withOpacity(.12),
-                          width: widget.wallpaper == index ? 2.5 : 1,
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            right: 8,
-                            top: 8,
-                            child: Icon(
-                              Icons.auto_awesome_rounded,
-                              size: 27,
-                              color: Colors.white.withOpacity(.25),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.bottomLeft,
-                            child: Padding(
-                              padding: const EdgeInsets.all(9),
-                              child: Text(
-                                'Style ' + (index + 1).toString(),
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
-                              ),
-                            ),
-                          ),
-                          if (widget.wallpaper == index)
-                            const Positioned(
-                              right: 7,
-                              bottom: 7,
-                              child: CircleAvatar(
-                                radius: 10,
-                                child: Icon(Icons.check_rounded, size: 13),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      const SizedBox(height: 18),
-      const _Title('Preferences'),
-      const SizedBox(height: 8),
-      Card(
-        child: Column(
-          children: [
-            SwitchListTile(
-              value: notifications,
-              onChanged: (v) => setState(() => notifications = v),
-              title: const Text('Notifications'),
-              subtitle: const Text('Notifikasi Nexora'),
-            ),
-            const Divider(height: 1),
-            SwitchListTile(
-              value: sound,
-              onChanged: (v) => setState(() => sound = v),
-              title: const Text('Sound'),
-              subtitle: const Text('Suara aplikasi dan game'),
-            ),
-            const Divider(height: 1),
-            SwitchListTile(
-              value: animations,
-              onChanged: (v) => setState(() => animations = v),
-              title: const Text('Animations'),
-              subtitle: const Text('Animasi antarmuka'),
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 18),
-      const _Title('Security'),
-      const Card(
-        child: Column(
-          children: [
-            ListTile(
-              leading: Icon(Icons.lock_rounded),
-              title: Text('Password & Login'),
-              trailing: Icon(Icons.chevron_right_rounded),
-            ),
-            Divider(height: 1),
-            ListTile(
-              leading: Icon(Icons.privacy_tip_rounded),
-              title: Text('Privacy'),
-              trailing: Icon(Icons.chevron_right_rounded),
-            ),
-          ],
-        ),
-      ),
-    ],
+  final ImagePicker _picker=ImagePicker();
+  bool notifications=true,sound=true,animations=true;
+  Future<void> _pickAvatar() async {
+    final file=await _picker.pickImage(source:ImageSource.gallery,imageQuality:88,maxWidth:900,maxHeight:900);
+    if(file!=null) widget.onAvatarChanged(await file.readAsBytes());
+  }
+  Future<void> _pickBackground() async {
+    final file=await _picker.pickImage(source:ImageSource.gallery,imageQuality:82,maxWidth:1800,maxHeight:1800);
+    if(file!=null) widget.onBackgroundChanged(await file.readAsBytes());
+  }
+  Future<void> _editName() async {
+    final controller=TextEditingController(text:widget.customName);
+    final value=await showDialog<String>(context:context,builder:(_)=>AlertDialog(
+      title:const Text('Nama Nexora'),
+      content:TextField(controller:controller,autofocus:true,maxLength:24,decoration:const InputDecoration(labelText:'Nama tampilan')),
+      actions:[
+        TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Batal')),
+        FilledButton(onPressed:()=>Navigator.pop(context,controller.text.trim()),child:const Text('Simpan')),
+      ],
+    ));
+    if(value!=null&&value.trim().isNotEmpty) widget.onNameChanged(value.trim());
+  }
+  Future<void> _editColor(String key,String title,Color current) async {
+    final controller=TextEditingController(text:'#'+current.value.toRadixString(16).substring(2).toUpperCase());
+    final value=await showDialog<String>(context:context,builder:(_)=>AlertDialog(
+      title:Text(title),
+      content:TextField(controller:controller,maxLength:7,decoration:const InputDecoration(labelText:'HEX',hintText:'#8B5CF6')),
+      actions:[
+        TextButton(onPressed:()=>Navigator.pop(context),child:const Text('Batal')),
+        FilledButton(onPressed:()=>Navigator.pop(context,controller.text.trim()),child:const Text('Terapkan')),
+      ],
+    ));
+    if(value==null)return;
+    final hex=value.replaceAll('#','');
+    if(RegExp(r'^[0-9a-fA-F]{6}$').hasMatch(hex)) widget.onColorChanged(key,Color(int.parse('FF'+hex,radix:16)));
+  }
+  Widget _colorRow(String key,String title,String subtitle,Color color)=>ListTile(
+    contentPadding:const EdgeInsets.symmetric(vertical:3),
+    leading:Container(width:42,height:42,decoration:BoxDecoration(color:color,borderRadius:BorderRadius.circular(11),border:Border.all(color:Colors.white24))),
+    title:Text(title,style:const TextStyle(fontWeight:FontWeight.w800)),
+    subtitle:Text(subtitle,style:const TextStyle(fontSize:11)),
+    trailing:OutlinedButton(onPressed:()=>_editColor(key,title,color),child:Text('#'+color.value.toRadixString(16).substring(2).toUpperCase())),
   );
+  @override Widget build(BuildContext context){
+    final googleName=widget.account.displayName?.trim();
+    final shownName=widget.customName.trim().isNotEmpty?widget.customName:(googleName!=null&&googleName.isNotEmpty?googleName:widget.account.email.split('@').first);
+    return ListView(padding:const EdgeInsets.fromLTRB(16,16,16,32),children:[
+      const _Title('PENGATURAN AKUN'),
+      const SizedBox(height:8),
+      Card(child:Padding(padding:const EdgeInsets.all(16),child:Row(children:[
+        GestureDetector(onTap:_pickAvatar,child:Stack(children:[
+          NexoraAvatar(account:widget.account,customAvatar:widget.customAvatar,radius:40),
+          Positioned(right:0,bottom:0,child:CircleAvatar(radius:15,backgroundColor:Theme.of(context).colorScheme.primary,child:const Icon(Icons.camera_alt_rounded,size:15))),
+        ])),
+        const SizedBox(width:14),
+        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Text(shownName,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)),
+          const SizedBox(height:3),
+          Text(widget.account.email,maxLines:1,overflow:TextOverflow.ellipsis,style:const TextStyle(color:Colors.white60,fontSize:12)),
+          const SizedBox(height:10),
+          Wrap(spacing:8,children:[
+            OutlinedButton.icon(onPressed:_editName,icon:const Icon(Icons.edit_rounded,size:16),label:const Text('Ubah nama')),
+            if(widget.customName.trim().isNotEmpty) OutlinedButton(onPressed:()=>widget.onNameChanged(''),child:const Text('Nama Google')),
+          ]),
+        ])),
+      ]))),
+      const SizedBox(height:18),
+      const _Title('WALLPAPER PROFIL'),
+      const SizedBox(height:8),
+      Card(child:Padding(padding:const EdgeInsets.all(14),child:SizedBox(height:84,child:ListView.separated(
+        scrollDirection:Axis.horizontal,itemCount:_nexoraWallpapers.length,separatorBuilder:(_,__)=>const SizedBox(width:10),
+        itemBuilder:(_,index)=>GestureDetector(onTap:()=>widget.onWallpaperChanged(index),child:Container(
+          width:116,
+          decoration:BoxDecoration(borderRadius:BorderRadius.circular(17),gradient:_nexoraWallpaperGradient(index),border:Border.all(color:widget.wallpaper==index?Colors.white:Colors.white24,width:widget.wallpaper==index?2.5:1)),
+          alignment:Alignment.bottomLeft,padding:const EdgeInsets.all(9),
+          child:Text('Style '+(index+1).toString(),style:const TextStyle(fontSize:10,fontWeight:FontWeight.w900)),
+        )),
+      )))),
+      const SizedBox(height:18),
+      const _Title('CUSTOM TEMA NEXORA'),
+      const SizedBox(height:5),
+      const Text('Custom warna seperti panel tema: ubah 4 warna utama dan gunakan background sendiri.',style:TextStyle(color:Colors.white60,fontSize:12)),
+      const SizedBox(height:9),
+      Card(child:Column(children:[
+        _colorRow('bg','Warna Latar Layar (Background)','Latar belakang aplikasi',widget.background),
+        const Divider(height:1),
+        _colorRow('primary','Warna Aksen Utama (Primary)','Tombol, highlight, icon aktif',widget.primary),
+        const Divider(height:1),
+        _colorRow('surface','Warna Kartu & Panel (Surface)','Card, menu, popup',widget.surface),
+        const Divider(height:1),
+        _colorRow('border','Warna Border & Garis Tepi','Outline dan separator',widget.border),
+      ])),
+      const SizedBox(height:10),
+      Card(child:Column(children:[
+        ListTile(leading:const Icon(Icons.image_rounded),title:const Text('Background sendiri',style:TextStyle(fontWeight:FontWeight.w900)),subtitle:const Text('Pilih gambar dari galeri/perangkat'),trailing:const Icon(Icons.chevron_right_rounded),onTap:_pickBackground),
+        if(widget.customBackground!=null) ListTile(leading:const Icon(Icons.delete_outline_rounded),title:const Text('Hapus background custom'),onTap:()=>widget.onBackgroundChanged(null)),
+      ])),
+      const SizedBox(height:10),
+      Card(child:ListTile(leading:const Icon(Icons.restore_rounded),title:const Text('Reset ke warna asli Nexora'),subtitle:const Text('#080A10 • #8B5CF6 • #111522 • #334155'),onTap:widget.onResetTheme)),
+      const SizedBox(height:18),
+      const _Title('PREFERENCES'),
+      const SizedBox(height:8),
+      Card(child:Column(children:[
+        SwitchListTile(value:notifications,onChanged:(v)=>setState(()=>notifications=v),title:const Text('Notifications'),subtitle:const Text('Notifikasi Nexora')),
+        const Divider(height:1),
+        SwitchListTile(value:sound,onChanged:(v)=>setState(()=>sound=v),title:const Text('Sound'),subtitle:const Text('Suara aplikasi dan game')),
+        const Divider(height:1),
+        SwitchListTile(value:animations,onChanged:(v)=>setState(()=>animations=v),title:const Text('Animations'),subtitle:const Text('Animasi aplikasi')),
+      ])),
+    ]);
+  }
 }
+
 
 class AboutPage extends StatelessWidget{
   const AboutPage({super.key});
