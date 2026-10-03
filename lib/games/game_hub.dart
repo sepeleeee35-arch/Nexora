@@ -501,7 +501,7 @@ class _TetrisState extends State<_Tetris>{
   final colors=const[Colors.transparent,Color(0xFF22D3EE),Color(0xFFFACC15),Color(0xFFA78BFA),Color(0xFF60A5FA),Color(0xFFFB923C),Color(0xFF4ADE80),Color(0xFFF87171)];
   Timer? timer;late int current,next,activeKind;List<List<int>> shape=const[[1]];List<List<int>>? held;int row=0,col=3,score=0,lines=0,level=1;bool running=false,over=false,canHold=true;
   @override void initState(){super.initState();_reset();}
-  void _reset(){timer?.cancel();for(var i=0;i<200;i++)board[i]=0;current=random.nextInt(7);next=random.nextInt(7);held=null;score=0;lines=0;level=1;running=false;over=false;canHold=true;_load();}
+  void _reset(){timer?.cancel();for(var i=0;i<200;i++)board[i]=0;current=random.nextInt(7);next=random.nextInt(7);held=null;score=0;lines=0;running=false;over=false;canHold=true;_load();}
   void _load(){activeKind=current;shape=shapes[activeKind].map((r)=>List<int>.from(r)).toList();row=0;col=3;current=next;next=random.nextInt(7);canHold=true;}
   bool _can(int r,int c,List<List<int>>s){for(var y=0;y<s.length;y++)for(var x=0;x<s[y].length;x++){if(s[y][x]==0)continue;final xx=c+x,yy=r+y;if(xx<0||xx>=10||yy>=20)return false;if(yy>=0&&board[yy*10+xx]!=0)return false;}return true;}
   void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();const speeds=[620,520,400,285,165];final base=speeds[nexoraDifficulty.index];timer=Timer.periodic(Duration(milliseconds:max(70,base-level*42)),(_)=>_tick());}
@@ -517,7 +517,7 @@ class _TetrisState extends State<_Tetris>{
   Widget mini(List<List<int>>?s,Color c)=>SizedBox(width:58,height:44,child:CustomPaint(painter:_MiniPiecePainter(s,c)));
   @override void dispose(){timer?.cancel();super.dispose();}
   @override Widget build(BuildContext context)=>_GamePage(title:'Tetris',subtitle:'${difficultyName(nexoraDifficulty)} • 10×20 • rotate • hold • hard drop',accent:const Color(0xFFA78BFA),reset:()=>setState(_reset),child:_World(top:const Color(0xFF17112A),bottom:const Color(0xFF070914),child:Column(children:[
-    _ScoreBar('SCORE $score','LINES $lines • LVL $level',const Color(0xFFA78BFA)),Expanded(child:Row(children:[
+    _ScoreBar('SCORE $score','LINES $lines',const Color(0xFFA78BFA)),Expanded(child:Row(children:[
       Expanded(child:GestureDetector(onTap:_rotate,onDoubleTap:_hard,onHorizontalDragUpdate:(d){if(d.delta.dx>3)_move(1);if(d.delta.dx< -3)_move(-1);},onVerticalDragUpdate:(d){if(d.delta.dy>7)_soft();},child:Center(child:AspectRatio(aspectRatio:.50,child:Container(margin:const EdgeInsets.only(left:10,right:4),padding:const EdgeInsets.all(5),decoration:BoxDecoration(color:Colors.black38,borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFA78BFA).withOpacity(.22))),child:CustomPaint(painter:_TetrisPainter(board,shape,row,col,_ghost(),colors[activeKind+1]),child:const SizedBox.expand())))))),
       SizedBox(width:84,child:Padding(padding:const EdgeInsets.only(right:8),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[const Text('NEXT',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(shapes[next],colors[next+1]),const SizedBox(height:8),const Text('HOLD',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(held,held==null?Colors.white12:colors[_kind(held!)+1]),const SizedBox(height:12),FilledButton(onPressed:over?()=>setState(_reset):_start,child:Text(over?'AGAIN':running?'DROP':'START')),TextButton(onPressed:running?_hold:null,child:const Text('HOLD'))]))),
     ]))])));}
