@@ -189,40 +189,131 @@ class _GameCard extends StatelessWidget {
     borderRadius: BorderRadius.circular(24),
     child: Container(
       decoration: BoxDecoration(
-        boxShadow: [BoxShadow(color: game.color.withOpacity(.08), blurRadius: 20, offset: const Offset(0, 8))],
         borderRadius: BorderRadius.circular(24),
-        gradient: LinearGradient(colors: [game.color.withOpacity(.20), panel], begin: Alignment.topLeft, end: Alignment.bottomRight),
-        border: Border.all(color: game.color.withOpacity(.25)),
+        boxShadow: [BoxShadow(color: game.color.withOpacity(.14), blurRadius: 22, offset: const Offset(0, 9))],
+        color: const Color(0xFF0A0E18),
+        border: Border.all(color: game.color.withOpacity(.28)),
       ),
-      child: Stack(children: [
-        Positioned(right: -18, top: -18, child: Container(width: 100, height: 100, decoration: BoxDecoration(shape: BoxShape.circle, color: game.color.withOpacity(.09)))),
-        Padding(
-          padding: const EdgeInsets.all(15),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Container(
-              width: 52, height: 52,
-              decoration: BoxDecoration(color: game.color.withOpacity(.16), borderRadius: BorderRadius.circular(17)),
-              child: Icon(game.icon, color: game.color, size: 27),
-            ),
-            const Spacer(),
-            Text(game.name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, letterSpacing: -.3)),
-            const SizedBox(height: 3),
-            Text(game.subtitle, maxLines: 2, style: const TextStyle(fontSize: 11, color: Colors.white54, height: 1.25)),
-            const SizedBox(height: 11),
-            Row(children: [
-              Text(game.category, style: TextStyle(fontSize: 9, color: game.color, fontWeight: FontWeight.w900, letterSpacing: 1)),
-              const Spacer(),
-              Container(
-                width: 30, height: 30,
-                decoration: BoxDecoration(color: Colors.white.withOpacity(.08), shape: BoxShape.circle),
-                child: const Icon(Icons.play_arrow_rounded, size: 18),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(children: [
+          Expanded(
+            flex: 7,
+            child: Stack(children: [
+              Positioned.fill(child: CustomPaint(painter: _GameCardArt(game.name, game.color))),
+              Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [Colors.black.withOpacity(.02), Colors.black.withOpacity(.08), Colors.black.withOpacity(.62)],
+                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
+                ),
+              ))),
+              Positioned(
+                left: 12, top: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(color: Colors.black.withOpacity(.28), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
+                  child: Icon(game.icon, color: Colors.white, size: 18),
+                ),
+              ),
+              Positioned(
+                right: 12, top: 12,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  decoration: BoxDecoration(color: Colors.black.withOpacity(.28), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
+                  child: Text(game.category, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: .8, color: Colors.white70)),
+                ),
               ),
             ]),
-          ]),
-        ),
-      ]),
+          ),
+          Expanded(
+            flex: 3,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(13, 10, 10, 10),
+              child: Row(children: [
+                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
+                  Text(game.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 2),
+                  Text(game.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9, color: Colors.white45)),
+                ])),
+                Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(color: game.color.withOpacity(.18), shape: BoxShape.circle, border: Border.all(color: game.color.withOpacity(.35))),
+                  child: Icon(Icons.play_arrow_rounded, color: game.color, size: 20),
+                ),
+              ]),
+            ),
+          ),
+        ]),
+      ),
     ),
   );
+}
+
+class _GameCardArt extends CustomPainter {
+  final String name;
+  final Color accent;
+  const _GameCardArt(this.name, this.accent);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final p = Paint();
+    final r = Rect.fromLTWH(0, 0, size.width, size.height);
+    final backgrounds = <String,List<Color>>{
+      '2048':[const Color(0xFF321B08),const Color(0xFF130B1F)],
+      'Tetris':[const Color(0xFF24144B),const Color(0xFF09152B)],
+      'Flappy':[const Color(0xFF2087B8),const Color(0xFF0C3951)],
+      'Breakout':[const Color(0xFF45111B),const Color(0xFF140713)],
+      'Memory':[const Color(0xFF4A123A),const Color(0xFF16091C)],
+    };
+    final colors=backgrounds[name]??[const Color(0xFF111827),const Color(0xFF070914)];
+    p.shader=LinearGradient(colors:colors,begin:Alignment.topLeft,end:Alignment.bottomRight).createShader(r);
+    canvas.drawRect(r,p);
+    p.shader=null;
+
+    if(name=='2048') _draw2048(canvas,size,p);
+    else if(name=='Tetris') _drawTetris(canvas,size,p);
+    else if(name=='Flappy') _drawFlappy(canvas,size,p);
+    else if(name=='Breakout') _drawBreakout(canvas,size,p);
+    else _drawMemory(canvas,size,p);
+
+    p.color=accent.withOpacity(.13);
+    canvas.drawCircle(Offset(size.width*.86,size.height*.12),size.width*.22,p);
+  }
+
+  void _draw2048(Canvas c,Size s,Paint p){
+    final board=Rect.fromLTWH(s.width*.16,s.height*.15,s.width*.68,s.height*.68);
+    p.color=Colors.black.withOpacity(.28);c.drawRRect(RRect.fromRectAndRadius(board,const Radius.circular(15)),p);
+    const vals=[2,4,8,16,32,64,128,256,512];
+    for(var i=0;i<16;i++){final x=i%4,y=i~/4;final v=i<vals.length?vals[i]:0;final cell=board.width/4;
+      p.color=v==0?Colors.white.withOpacity(.035):Color.lerp(const Color(0xFFF59E0B),const Color(0xFF8B5CF6),min(1,log(v)/log(512)))!;
+      c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(board.left+x*cell+3,board.top+y*cell+3,cell-6,cell-6),const Radius.circular(7)),p);
+      if(v>0){final tp=TextPainter(text:TextSpan(text:'$v',style:TextStyle(color:Colors.white.withOpacity(.9),fontSize:v>=128?8:10,fontWeight:FontWeight.w900)),textDirection:TextDirection.ltr)..layout();tp.paint(c,Offset(board.left+x*cell+(cell-tp.width)/2,board.top+y*cell+(cell-tp.height)/2));}
+    }
+  }
+  void _drawTetris(Canvas c,Size s,Paint p){
+    final cell=min(s.width/11,s.height/11);
+    final ox=(s.width-cell*10)/2,oy=s.height*.14;
+    for(var y=0;y<9;y++)for(var x=0;x<10;x++){p.color=Colors.white.withOpacity(.035);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+x*cell+1,oy+y*cell+1,cell-2,cell-2),const Radius.circular(3)),p);}
+    const blocks=[[3,0,Color(0xFF22D3EE)],[4,0,Color(0xFF22D3EE)],[5,0,Color(0xFF22D3EE)],[5,1,Color(0xFFFACC15)],[5,2,Color(0xFFFACC15)],[4,2,Color(0xFFFACC15)],[3,2,Color(0xFFA78BFA)],[3,3,Color(0xFFA78BFA)],[4,3,Color(0xFFA78BFA)],[5,3,Color(0xFFA78BFA)],[6,3,Color(0xFFA78BFA)],[6,4,Color(0xFF4ADE80)],[7,4,Color(0xFF4ADE80)],[7,5,Color(0xFF4ADE80)],[8,5,Color(0xFF4ADE80)]];
+    for(final b in blocks){p.color=b[2] as Color;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+(b[0] as int)*cell+2,oy+(b[1] as int)*cell+2,cell-4,cell-4),const Radius.circular(4)),p);}
+  }
+  void _drawFlappy(Canvas c,Size s,Paint p){
+    p.color=Colors.white.withOpacity(.14);for(var i=0;i<4;i++)c.drawOval(Rect.fromLTWH(i*s.width*.28-20,s.height*(.18+i*.12),70,18),p);
+    final px=s.width*.63,top=s.height*.17,bottom=s.height*.62;
+    p.color=const Color(0xFF58C95A);c.drawRect(Rect.fromLTWH(px,0,34,top),p);c.drawRect(Rect.fromLTWH(px,bottom,34,s.height*.82-bottom),p);
+    p.color=const Color(0xFF8BE06A);c.drawRect(Rect.fromLTWH(px-4,top-8,42,9),p);c.drawRect(Rect.fromLTWH(px-4,bottom,42,9),p);
+    p.color=const Color(0xFFFFE45C);c.drawCircle(Offset(s.width*.34,s.height*.48),17,p);p.color=Colors.white;c.drawCircle(Offset(s.width*.39,s.height*.44),4,p);p.color=Colors.black;c.drawCircle(Offset(s.width*.4,s.height*.44),2,p);p.color=const Color(0xFFF97316);c.drawOval(Rect.fromCenter(center:Offset(s.width*.34+16,s.height*.48),width:18,height:7),p);
+    p.color=const Color(0xFFD5C56A);c.drawRect(Rect.fromLTWH(0,s.height*.88,s.width,s.height*.12),p);
+  }
+  void _drawBreakout(Canvas c,Size s,Paint p){
+    const cs=[Color(0xFFF87171),Color(0xFFFB923C),Color(0xFFFACC15),Color(0xFF4ADE80),Color(0xFF22D3EE)];
+    for(var y=0;y<5;y++)for(var x=0;x<7;x++){p.color=cs[y];final rr=Rect.fromLTWH(s.width*.10+x*s.width*.115,s.height*.15+y*s.height*.09,s.width*.095,s.height*.065);c.drawRRect(RRect.fromRectAndRadius(rr,const Radius.circular(5)),p);}
+    p.color=Colors.white;c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*.30,s.height*.78,s.width*.40,9),const Radius.circular(5)),p);p.color=const Color(0xFFFFD5D5);c.drawCircle(Offset(s.width*.53,s.height*.70),6,p);
+  }
+  void _drawMemory(Canvas c,Size s,Paint p){
+    final w=s.width*.15,h=s.height*.20;for(var y=0;y<3;y++)for(var x=0;x<4;x++){final show=(x+y)%3==0;final rr=Rect.fromLTWH(s.width*.18+x*s.width*.17,s.height*.18+y*s.height*.23,w,h);p.color=show?accent.withOpacity(.25):Colors.white.withOpacity(.07);c.drawRRect(RRect.fromRectAndRadius(rr,const Radius.circular(8)),p);if(show){p.color=accent;c.drawCircle(rr.center,7,p);}else{p.color=Colors.white24;c.drawCircle(rr.center,5,p);}}
+  }
+  @override bool shouldRepaint(covariant _GameCardArt old)=>false;
 }
 
 class _GamePage extends StatelessWidget {
@@ -351,7 +442,7 @@ class _TetrisState extends State<_Tetris>{
   Widget mini(List<List<int>>?s,Color c)=>SizedBox(width:58,height:44,child:CustomPaint(painter:_MiniPiecePainter(s,c)));
   @override void dispose(){timer?.cancel();super.dispose();}
   @override Widget build(BuildContext context)=>_GamePage(title:'Tetris',subtitle:'Classic 10×20 • rotate • hold • hard drop',accent:const Color(0xFFA78BFA),reset:()=>setState(_reset),child:_World(top:const Color(0xFF17112A),bottom:const Color(0xFF070914),child:Column(children:[
-    _ScoreBar('SCORE $score','LINES $lines • LVL $level'),Expanded(child:Row(children:[
+    _ScoreBar('SCORE $score','LINES $lines • LVL $level',const Color(0xFFA78BFA)),Expanded(child:Row(children:[
       Expanded(child:GestureDetector(onTap:_rotate,onDoubleTap:_hard,onHorizontalDragUpdate:(d){if(d.delta.dx>3)_move(1);if(d.delta.dx< -3)_move(-1);},onVerticalDragUpdate:(d){if(d.delta.dy>7)_soft();},child:Center(child:AspectRatio(aspectRatio:.50,child:Container(margin:const EdgeInsets.only(left:10,right:4),padding:const EdgeInsets.all(5),decoration:BoxDecoration(color:Colors.black38,borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFA78BFA).withOpacity(.22))),child:CustomPaint(painter:_TetrisPainter(board,shape,row,col,_ghost(),colors[activeKind+1]),child:const SizedBox.expand())))))),
       SizedBox(width:84,child:Padding(padding:const EdgeInsets.only(right:8),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[const Text('NEXT',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(shapes[next],colors[next+1]),const SizedBox(height:8),const Text('HOLD',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(held,held==null?Colors.white12:colors[_kind(held!)+1]),const SizedBox(height:12),FilledButton(onPressed:over?()=>setState(_reset):_start,child:Text(over?'AGAIN':running?'DROP':'START')),TextButton(onPressed:running?_hold:null,child:const Text('HOLD'))]))),
     ]))])));}
