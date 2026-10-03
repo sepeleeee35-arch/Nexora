@@ -104,8 +104,8 @@ class _NexoraAuthGateState extends State<NexoraAuthGate> {
       if (!mounted) return;
       setState(() => _user = account);
       nexoraActiveAccountId = account.id;
-    } on GoogleSignInException catch (_) {
-      if (mounted) setState(() => _error = 'Google login: \${e.description ?? e.code.name}');
+    } on GoogleSignInException catch (e) {
+      if (mounted) setState(() => _error = 'Google login: ${e.description ?? e.code.name}');
     } catch (e) {
       if (mounted) setState(() => _error = 'Google login gagal: $e');
     } finally {
@@ -396,8 +396,11 @@ class _NexoraShellState extends State<NexoraShell> {
       data: appTheme,
       child: Scaffold(
       drawer: NexoraDrawer(
-        coins: coins, account: widget.account, displayName: _displayName,
-        customAvatar: customAvatar, onSelect: selectPage,
+        coins: coins,
+        account: widget.account,
+        displayName: _displayName,
+        customAvatar: customAvatar,
+        onSelect: selectPage,
       ),
       appBar: AppBar(
         titleSpacing: 18,
@@ -450,8 +453,17 @@ class _NexoraShellState extends State<NexoraShell> {
 class NexoraDrawer extends StatelessWidget {
   final int coins;
   final GoogleSignInAccount account;
+  final String displayName;
+  final Uint8List? customAvatar;
   final ValueChanged<String> onSelect;
-  const NexoraDrawer({required this.coins, required this.account, required this.onSelect, super.key});
+  const NexoraDrawer({
+    required this.coins,
+    required this.account,
+    required this.displayName,
+    required this.customAvatar,
+    required this.onSelect,
+    super.key,
+  });
   @override
   Widget build(BuildContext context) => Drawer(
     backgroundColor: const Color(0xFF0C0F18),
