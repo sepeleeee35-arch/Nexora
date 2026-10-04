@@ -39,6 +39,9 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
     _GameInfo('Flappy', 'ARCADE', 'Tap • dodge • score', Icons.flutter_dash_rounded, Color(0xFF22D3EE)),
     _GameInfo('Breakout', 'ARCADE', 'Smash • combo • clear', Icons.sports_baseball_rounded, Color(0xFFEF4444)),
     _GameInfo('Memory', 'PUZZLE', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
+    _GameInfo('Dino Run Ultra', 'ARCADE', 'Run • jump • survive', Icons.directions_run_rounded, Color(0xFF00FF88)),
+    _GameInfo('Brick Breaker Ultimate', 'ARCADE', 'Smash • combo • clear', Icons.view_stream_rounded, Color(0xFFFF9500)),
+    _GameInfo('Watermelon Merge Pro', 'PUZZLE', 'Drop • merge • grow', Icons.local_florist_rounded, Color(0xFF22D3EE)),
   ];
 
   Widget openGame(String name) {
@@ -56,6 +59,9 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
           case 'Tetris': game = const _Tetris(); break;
           case 'Breakout': game = const _Breakout(); break;
           case 'Memory': game = const _Memory(); break;
+          case 'Dino Run Ultra': game = const _DinoRunUltra(); break;
+          case 'Brick Breaker Ultimate': game = const _BrickBreakerUltimate(); break;
+          case 'Watermelon Merge Pro': game = const _WatermelonMergePro(); break;
           default: game = const _Twenty();
         }
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => game));
@@ -181,6 +187,9 @@ _GameInfo _gameInfoForName(String name) => switch (name) {
   'Tetris' => const _GameInfo('Tetris', 'ARCADE', 'Drop • rotate • clear', Icons.view_module_rounded, Color(0xFFA78BFA)),
   'Flappy' => const _GameInfo('Flappy', 'ARCADE', 'Tap • dodge • score', Icons.flutter_dash_rounded, Color(0xFF22D3EE)),
   'Breakout' => const _GameInfo('Breakout', 'ARCADE', 'Smash • combo • clear', Icons.sports_baseball_rounded, Color(0xFFEF4444)),
+  'Dino Run Ultra' => const _GameInfo('Dino Run Ultra', 'ARCADE', 'Run • jump • survive', Icons.directions_run_rounded, Color(0xFF00FF88)),
+  'Brick Breaker Ultimate' => const _GameInfo('Brick Breaker Ultimate', 'ARCADE', 'Smash • combo • clear', Icons.view_stream_rounded, Color(0xFFFF9500)),
+  'Watermelon Merge Pro' => const _GameInfo('Watermelon Merge Pro', 'PUZZLE', 'Drop • merge • grow', Icons.local_florist_rounded, Color(0xFF22D3EE)),
   _ => const _GameInfo('Memory', 'PUZZLE', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
 };
 
@@ -942,4 +951,59 @@ class _MemoryState extends State<_Memory> {
       ]),
     ),
   );
+}
+// Bonus arcade games based on the supplied Game Hub concept.
+class _DinoRunUltra extends StatefulWidget{const _DinoRunUltra();@override State<_DinoRunUltra> createState()=>_DinoRunUltraState();}
+class _DinoRunUltraState extends State<_DinoRunUltra>{
+ Timer? timer;double y=0,v=0,speed=6,distance=0;bool running=false,dead=false;final obstacles=<Rect>[];final random=Random();int score=0,best=0;
+ @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();y=0;v=0;distance=0;score=0;running=false;dead=false;obstacles.clear();best=0;}
+ void _start(){if(running)return;setState(()=>running=true);timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
+ void _jump(){if(!running){_start();return;}if(y==0)setState(()=>v=-15);}
+ void _tick(){if(!running)return;setState((){v+=.8;y+=v;if(y>0){y=0;v=0;}distance+=speed*.08;score=distance.floor();if(obstacles.isEmpty||obstacles.last.left<320&&random.nextDouble()<.018)obstacles.add(Rect.fromLTWH(430,118-random.nextInt(12),22+random.nextInt(12),42));for(var i=0;i<obstacles.length;i++)obstacles[i]=obstacles[i].translate(-speed,0);obstacles.removeWhere((o)=>o.right<0);if(obstacles.any((o)=>o.overlaps(Rect.fromLTWH(48,122+y,34,42)))){dead=true;running=false;timer?.cancel();best=max(best,score);}});}
+ @override void dispose(){timer?.cancel();super.dispose();}
+ @override Widget build(BuildContext context)=>_GamePage(title:'Dino Run Ultra',subtitle:'LEVEL $nexoraSelectedLevel • RUN • JUMP • SURVIVE',accent:const Color(0xFF00FF88),reset:()=>setState(_reset),child:_World(top:const Color(0xFF071A13),bottom:const Color(0xFF030609),child:Column(children:[
+  _ScoreBar('SCORE $score','BEST $best',const Color(0xFF00FF88)),Expanded(child:GestureDetector(onTap:_jump,child:CustomPaint(painter:_DinoPainter(y,obstacles,distance),child:const SizedBox.expand()))),
+  Padding(padding:const EdgeInsets.fromLTRB(18,8,18,18),child:Row(children:[Expanded(child:FilledButton(onPressed:dead?()=>setState(_reset):_start,child:Text(dead?'PLAY AGAIN':running?'RUNNING':'START'))),const SizedBox(width:10),IconButton.filled(onPressed:_jump,icon:const Icon(Icons.keyboard_arrow_up_rounded))])),
+ ])));
+}
+class _DinoPainter extends CustomPainter{
+ final double y,distance;final List<Rect> obstacles;const _DinoPainter(this.y,this.obstacles,this.distance);
+ @override void paint(Canvas c,Size s){final bg=Paint()..shader=const LinearGradient(colors:[Color(0xFF09231A),Color(0xFF030609)],begin:Alignment.topCenter,end:Alignment.bottomCenter).createShader(Offset.zero&s);c.drawRect(Offset.zero&s,bg);final glow=Paint()..color=const Color(0xFF00FF88).withOpacity(.15);for(var i=0;i<18;i++)c.drawCircle(Offset((i*73-(distance*9)%73),35+(i%4)*22),i%2+1,glow);c.drawRect(Rect.fromLTWH(0,164,s.width,2),Paint()..color=const Color(0xFF00FF88).withOpacity(.35));c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(48,122+y,34,42),const Radius.circular(8)),Paint()..color=const Color(0xFF00FF88));c.drawCircle(const Offset(72,132),3,Paint()..color=Colors.black);for(final o in obstacles)c.drawRRect(RRect.fromRectAndRadius(o,const Radius.circular(5)),Paint()..color=const Color(0xFFFF2B2B));}
+ @override bool shouldRepaint(covariant _DinoPainter old)=>true;
+}
+class _BrickBreakerUltimate extends StatefulWidget{const _BrickBreakerUltimate();@override State<_BrickBreakerUltimate> createState()=>_BrickBreakerUltimateState();}
+class _BrickBreakerUltimateState extends State<_BrickBreakerUltimate>{
+ Timer? timer;double paddle=.5,bx=.5,by=.78,dx=.006,dy=-.008;int score=0,lives=3,level=1,combo=0;bool running=false,dead=false;late List<List<bool>> bricks;
+ @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();paddle=.5;bx=.5;by=.78;dx=.006;dy=-.008;score=0;lives=3;level=nexoraSelectedLevel.clamp(1,50);combo=0;running=false;dead=false;bricks=List.generate(min(8,3+level~/4),(r)=>List.generate(8,true));}
+ void _start(){if(running)return;setState(()=>running=true);timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
+ void _tick(){if(!running)return;setState((){bx+=dx;by+=dy;if(bx<.03||bx>.97){dx=-dx;bx=bx.clamp(.03,.97);}if(by<.04)dy=dy.abs();if(by>.94){lives--;if(lives<=0){dead=true;running=false;timer?.cancel();}else{bx=paddle;by=.78;dy=-.008;dx=.006;}}if(by>.84&&by<.91&&bx>paddle-.12&&bx<paddle+.12&&dy>0){dy=-dy.abs();dx=((bx-paddle)*.035).clamp(-.018,.018);}for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final left=.08+k*.105,top=.08+r*.065;if(bx>left&&bx<left+.085&&by>top&&by<top+.05){bricks[r][k]=false;dy=-dy;score+=10+combo*2;combo++;break;}}if(bricks.every((r)=>r.every((b)=>!b))){level++;bricks=List.generate(min(10,3+level~/3),(r)=>List.generate(8,true));bx=paddle;by=.78;dy=-.008;combo=0;}});}
+ @override void dispose(){timer?.cancel();super.dispose();}
+ @override Widget build(BuildContext context)=>_GamePage(title:'Brick Breaker Ultimate',subtitle:'LEVEL $level • COMBO $combo • $lives LIVES',accent:const Color(0xFFFF9500),reset:()=>setState(_reset),child:_World(top:const Color(0xFF241107),bottom:const Color(0xFF080609),child:Column(children:[
+  _ScoreBar('SCORE $score','LIVES $lives',const Color(0xFFFF9500)),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){setState(()=>paddle=(paddle+d.delta.dx/350).clamp(.12,.88));},child:CustomPaint(painter:_BrickPainter(bricks,bx,by,paddle),child:const SizedBox.expand()))),
+  Padding(padding:const EdgeInsets.fromLTRB(18,8,18,18),child:FilledButton(onPressed:dead?()=>setState(_reset):_start,child:Text(dead?'PLAY AGAIN':running?'RUNNING':'START'))),
+ ])));
+}
+class _BrickPainter extends CustomPainter{
+ final List<List<bool>> bricks;final double bx,by,paddle;const _BrickPainter(this.bricks,this.bx,this.by,this.paddle);
+ @override void paint(Canvas c,Size s){final bg=Paint()..shader=const LinearGradient(colors:[Color(0xFF0B0B12),Color(0xFF030306)],begin:Alignment.topCenter,end:Alignment.bottomCenter).createShader(Offset.zero&s);c.drawRect(Offset.zero&s,bg);final colors=[const Color(0xFFFF2B2B),const Color(0xFFFF9500),const Color(0xFFFFC800),const Color(0xFF00FF88),const Color(0xFF00C8FF),const Color(0xFFA855F7)];for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final rect=Rect.fromLTWH(s.width*(.08+k*.105),s.height*(.08+r*.065),s.width*.085,s.height*.05);c.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(6)),Paint()..color=colors[r%colors.length]);}c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*(paddle-.12),s.height*.9,s.width*.24,s.height*.028),const Radius.circular(8)),Paint()..color=const Color(0xFFFF9500));c.drawCircle(Offset(s.width*bx,s.height*by),8,Paint()..color=Colors.white);}
+ @override bool shouldRepaint(covariant _BrickPainter old)=>true;
+}
+class _WatermelonMergePro extends StatefulWidget{const _WatermelonMergePro();@override State<_WatermelonMergePro> createState()=>_WatermelonMergeProState();}
+class _WatermelonMergeProState extends State<_WatermelonMergePro>{
+ final random=Random();final fruits=< _MergeFruit>[];Timer? timer;int score=0;bool running=false,dead=false;double dropX=.5;int current=0,next=1;
+ @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();fruits.clear();score=0;running=false;dead=false;dropX=.5;current=random.nextInt(4);next=random.nextInt(4);}
+ void _start(){if(running)return;setState(()=>running=true);timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
+ void _drop(){if(!running)return;setState((){fruits.add(_MergeFruit(dropX,.08,current));current=next;next=random.nextInt(4);});}
+ void _tick(){if(!running)return;setState((){for(final f in fruits){f.vy+=.00055;f.y+=f.vy;if(f.y+f.r>.94){f.y=.94-f.r;f.vy*=-.28;}}for(var i=0;i<fruits.length;i++)for(var j=i+1;j<fruits.length;j++){final a=fruits[i],b=fruits[j];if(a.type==b.type&&(a.x-b.x).abs()<a.r+b.r&&(a.y-b.y).abs()<a.r+b.r){a.dead=true;b.dead=true;fruits.add(_MergeFruit((a.x+b.x)/2,(a.y+b.y)/2,a.type+1));score+=(a.type+2)*5;}}fruits.removeWhere((f)=>f.dead);if(fruits.any((f)=>f.y-f.r<.12)&&fruits.length>12){dead=true;running=false;timer?.cancel();}});}
+ @override void dispose(){timer?.cancel();super.dispose();}
+ @override Widget build(BuildContext context)=>_GamePage(title:'Watermelon Merge Pro',subtitle:'LEVEL $nexoraSelectedLevel • DROP • MERGE • GROW',accent:const Color(0xFF22D3EE),reset:()=>setState(_reset),child:_World(top:const Color(0xFF071A18),bottom:const Color(0xFF030609),child:Column(children:[
+  _ScoreBar('SCORE $score','NEXT',const Color(0xFF22D3EE)),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){setState(()=>dropX=(dropX+d.delta.dx/350).clamp(.08,.92));},onHorizontalDragEnd:(_)=>_drop(),child:CustomPaint(painter:_MergePainter(fruits,dropX,current),child:const SizedBox.expand()))),
+  Padding(padding:const EdgeInsets.fromLTRB(18,8,18,18),child:FilledButton(onPressed:dead?()=>setState(_reset):_start,child:Text(dead?'PLAY AGAIN':running?'RUNNING':'START'))),
+ ])));
+}
+class _MergeFruit{double x,y,vy=0;int type;bool dead=false;final double r;_MergeFruit(this.x,this.y,this.type):r=.035+type*.008;}
+class _MergePainter extends CustomPainter{
+ final List<_MergeFruit> fruits;final double dropX;final int current;const _MergePainter(this.fruits,this.dropX,this.current);
+ @override void paint(Canvas c,Size s){final bg=Paint()..shader=const RadialGradient(colors:[Color(0xFF0B241B),Color(0xFF030609)]).createShader(Offset.zero&s);c.drawRect(Offset.zero&s,bg);c.drawRect(Rect.fromLTWH(0,s.height*.12,s.width,1.5),Paint()..color=const Color(0xFFFF2B2B).withOpacity(.45));final colors=[const Color(0xFFA855F7),const Color(0xFFFF2B2B),const Color(0xFFFF9500),const Color(0xFF22D3EE),const Color(0xFF00FF88)];for(final f in fruits)c.drawCircle(Offset(f.x*s.width,f.y*s.height),f.r*s.width,Paint()..color=colors[min(f.type,4)]);c.drawCircle(Offset(dropX*s.width,s.height*.08),(.035+current*.008)*s.width,Paint()..color=Colors.white70);}
+ @override bool shouldRepaint(covariant _MergePainter old)=>true;
 }
