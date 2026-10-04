@@ -25,6 +25,9 @@ jobs:
       - name: Generate Android project
         run: flutter create --platforms=android --org com.nexora .
 
+      - name: Remove generated sample test
+        run: rm -f test/widget_test.dart
+
       - name: Set Nexora app icon
         shell: bash
         run: |
@@ -110,12 +113,14 @@ jobs:
           VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
           cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/Nexora-${VERSION}.apk"
 
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload direct APK artifact
+        uses: actions/upload-artifact@v7
         with:
           name: Nexora-APK
           path: build/app/outputs/flutter-apk/Nexora-*.apk
           if-no-files-found: error
+          archive: false
+          overwrite: true
 
       - name: Publish direct APK release
         env:
