@@ -357,41 +357,6 @@ class _GameIntroState extends State<_GameIntro> {
     _ => '1. Semua kartu tertutup. Buka satu kartu untuk melihat simbolnya.\\n\\n2. Buka kartu kedua. Jika simbol sama, pasangan tetap terbuka dan streak bertambah.\\n\\n3. Jika salah, kedua kartu tertutup kembali. Hafalkan posisi agar gerakan berikutnya lebih cepat.\\n\\n4. Selesaikan seluruh papan untuk naik level. Pada level lebih tinggi jumlah pasangan dapat bertambah.\\n\\nCONTROL\\n• Tap kartu = buka kartu\\n• Tidak ada batas waktu paksa\\n\\nSYSTEM\\nMatch memberi skor dan streak. Salah menebak memutus streak. Kesulitan menentukan jumlah pasangan dan tekanan permainan.',
   };
 
-  void _showGuide(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0A0F1A),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (_) => SafeArea(
-        child: DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: .72,
-          minChildSize: .45,
-          maxChildSize: .94,
-          builder: (_, scroll) => SingleChildScrollView(
-            controller: scroll,
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
-              const SizedBox(height: 18),
-              Row(children: [
-                Icon(Icons.menu_book_rounded, color: accent),
-                const SizedBox(width: 9),
-                Text('CARA BERMAIN', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-              ]),
-              const SizedBox(height: 14),
-              Text(_guide(title), style: const TextStyle(color: Colors.white70, height: 1.55, fontSize: 13)),
-              const SizedBox(height: 20),
-              SizedBox(width: double.infinity, child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
-            ]),
-          ),
-        ),
-      ),
-    );
-  }
-
-
   void _showGuide() {
     showModalBottomSheet(
       context: context,
