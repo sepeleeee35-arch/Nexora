@@ -59,8 +59,16 @@ class _NexoraAuthGateState extends State<NexoraAuthGate> {
   Future<void> _initializeGoogle() async {
     try {
       await _google.initialize(
-        clientId: const String.fromEnvironment('GOOGLE_CLIENT_ID', defaultValue: ''),
-        serverClientId: const String.fromEnvironment('GOOGLE_SERVER_CLIENT_ID', defaultValue: ''),
+        // Keep a built-in production client ID so Android APK builds do not
+        // fail authentication when the GitHub Actions secret is missing.
+        clientId: const String.fromEnvironment(
+          'GOOGLE_CLIENT_ID',
+          defaultValue: '884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com',
+        ),
+        serverClientId: const String.fromEnvironment(
+          'GOOGLE_SERVER_CLIENT_ID',
+          defaultValue: '884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com',
+        ),
       );
       _authSub = _google.authenticationEvents.listen(
         (event) {
