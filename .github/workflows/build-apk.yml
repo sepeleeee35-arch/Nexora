@@ -94,6 +94,65 @@ jobs:
           p.write_text(s)
           PY
 
+      - name: Configure stable release signing
+        shell: bash
+        env:
+          NEXORA_KEYSTORE_BASE64: ${{ secrets.NEXORA_KEYSTORE_BASE64 }}
+          NEXORA_KEYSTORE_PASSWORD: ${{ secrets.NEXORA_KEYSTORE_PASSWORD }}
+          NEXORA_KEY_ALIAS: ${{ secrets.NEXORA_KEY_ALIAS }}
+          NEXORA_KEY_PASSWORD: ${{ secrets.NEXORA_KEY_PASSWORD }}
+        run: |
+          if [ -z "$NEXORA_KEYSTORE_BASE64" ]; then
+            echo "::warning::NEXORA_KEYSTORE_BASE64 belum diset; APK masih memakai signing default CI."
+            exit 0
+          fi
+          echo "$NEXORA_KEYSTORE_BASE64" | base64 --decode > android/app/nexora-release.jks
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("android/app/build.gradle")
+          k = Path("android/app/build.gradle.kts")
+          if p.exists():
+              s = p.read_text()
+              s = s.replace("android {", """android {
+    signingConfigs {
+        nexoraRelease {
+            keyAlias System.getenv("NEXORA_KEY_ALIAS")
+            keyPassword System.getenv("NEXORA_KEY_PASSWORD")
+            storePassword System.getenv("NEXORA_KEYSTORE_PASSWORD")
+            storeFile file("nexora-release.jks")
+        }
+    }""", 1)
+              s = s.replace("buildTypes {", """buildTypes {
+        release {
+            signingConfig signingConfigs.nexoraRelease
+        }""", 1)
+              p.write_text(s)
+          elif k.exists():
+              s = k.read_text()
+              s = s.replace("android {", """android {
+    signingConfigs {
+        create("nexoraRelease") {
+            keyAlias = System.getenv("NEXORA_KEY_ALIAS")
+            keyPassword = System.getenv("NEXORA_KEY_PASSWORD")
+            storePassword = System.getenv("NEXORA_KEYSTORE_PASSWORD")
+            storeFile = file("nexora-release.jks")
+        }
+    }""", 1)
+              s = s.replace("buildTypes {", """buildTypes {
+        getByName("release") {
+            signingConfig = signingConfigs.getByName("nexoraRelease")
+        }""", 1)
+              k.write_text(s)
+          else:
+              raise SystemExit("build.gradle(.kts) tidak ditemukan")
+          PY
+          cat > android/key.properties <<EOF
+          storePassword=$NEXORA_KEYSTORE_PASSWORD
+          keyPassword=$NEXORA_KEY_PASSWORD
+          keyAlias=$NEXORA_KEY_ALIAS
+          storeFile=nexora-release.jks
+          EOF
+
       - name: Get packages
         run: flutter pub get
 
