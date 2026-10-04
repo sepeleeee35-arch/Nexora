@@ -65,7 +65,7 @@ jobs:
           p=Path("android/app/src/main/AndroidManifest.xml")
           s=p.read_text()
           if "REQUEST_INSTALL_PACKAGES" not in s:
-              s=s.replace("    <application", "    <uses-permission android:name=\"REQUEST_INSTALL_PACKAGES\" />\n    <application", 1)
+              s=s.replace("    <application", "    <uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\" />\n    <application", 1)
           provider='''        <provider
               android:name="androidx.core.content.FileProvider"
               android:authorities="${applicationId}.fileProvider"
@@ -81,22 +81,6 @@ jobs:
           p.write_text(s)
           PY
 
-      - name: Configure Google Sign-In build clients
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
-        shell: bash
-        run: |
-          SERVER_CLIENT_ID="$GOOGLE_SERVER_CLIENT_ID"
-          if [ -z "$SERVER_CLIENT_ID" ]; then
-            SERVER_CLIENT_ID="$GOOGLE_CLIENT_ID"
-          fi
-          if [ -z "$SERVER_CLIENT_ID" ]; then
-            echo "::error::Google server client ID belum dikonfigurasi. Set GOOGLE_SERVER_CLIENT_ID (Web OAuth client ID) di GitHub Secrets."
-            exit 1
-          fi
-          echo "GOOGLE_SERVER_CLIENT_ID tersedia."
-
       - name: Get packages
         run: flutter pub get
 
@@ -109,11 +93,13 @@ jobs:
           GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         shell: bash
         run: |
-          SERVER_CLIENT_ID="$GOOGLE_SERVER_CLIENT_ID"
-          if [ -z "$SERVER_CLIENT_ID" ]; then
-            SERVER_CLIENT_ID="$GOOGLE_CLIENT_ID"
+          ARGS="--dart-define=GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
+          if [ -n "$GOOGLE_SERVER_CLIENT_ID" ]; then
+            ARGS="$ARGS --dart-define=GOOGLE_SERVER_CLIENT_ID=$GOOGLE_SERVER_CLIENT_ID"
+          else
+            echo "::notice::GOOGLE_SERVER_CLIENT_ID tidak diisi; APK memakai server client ID bawaan Nexora."
           fi
-          flutter build apk --release --target-platform android-arm64             --dart-define=GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID"             --dart-define=GOOGLE_SERVER_CLIENT_ID="$SERVER_CLIENT_ID"
+          flutter build apk --release --target-platform android-arm64 $ARGS
 
       - name: Prepare direct APK
         shell: bash
