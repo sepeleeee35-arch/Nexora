@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:math';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
@@ -59,17 +60,21 @@ class _NexoraAuthGateState extends State<NexoraAuthGate> {
 
   Future<void> _initializeGoogle() async {
     try {
+      const webClientId = String.fromEnvironment(
+        'GOOGLE_CLIENT_ID',
+        defaultValue: '884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com',
+      );
+      const serverClientId = String.fromEnvironment(
+        'GOOGLE_SERVER_CLIENT_ID',
+        defaultValue: '884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com',
+      );
+
+      // The OAuth app client ID is web-only. On Android the plugin expects the
+      // web OAuth client as serverClientId and resolves the Android client from
+      // the package name + signing certificate registered in Google Cloud.
       await _google.initialize(
-        // Keep a built-in production client ID so Android APK builds do not
-        // fail authentication when the GitHub Actions secret is missing.
-        clientId: const String.fromEnvironment(
-          'GOOGLE_CLIENT_ID',
-          defaultValue: '884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com',
-        ),
-        serverClientId: const String.fromEnvironment(
-          'GOOGLE_SERVER_CLIENT_ID',
-          defaultValue: '884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com',
-        ),
+        clientId: kIsWeb ? webClientId : null,
+        serverClientId: serverClientId,
       );
       _authSub = _google.authenticationEvents.listen(
         (event) {
@@ -114,7 +119,17 @@ class _NexoraAuthGateState extends State<NexoraAuthGate> {
       setState(() => _user = account);
       nexoraActiveAccountId = account.id;
     } on GoogleSignInException catch (e) {
-      if (mounted) setState(() => _error = 'Google login: ${e.description ?? e.code.name}');
+      final description = e.description ?? e.code.name;
+      final isAndroidReauthConfigIssue =
+          e.code == GoogleSignInExceptionCode.canceled &&
+          description.toLowerCase().contains('reauth');
+      if (mounted) {
+        setState(() {
+          _error = isAndroidReauthConfigIssue
+              ? 'Google login gagal: konfigurasi OAuth Android belum cocok dengan APK ini. Pastikan package com.nexora.nexora dan SHA-1 sertifikat APK terdaftar di Google Cloud.'
+              : 'Google login: $description';
+        });
+      }
     } catch (e) {
       if (mounted) setState(() => _error = 'Google login gagal: $e');
     } finally {

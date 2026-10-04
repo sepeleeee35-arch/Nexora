@@ -39,14 +39,27 @@ jobs:
               android:viewportWidth="108"
               android:viewportHeight="108">
               <path
-                  android:fillColor="#6D28D9"
-                  android:pathData="M0,0h108v108h-108z" />
+                  android:fillColor="#0B1020"
+                  android:pathData="M24,4H84C97.255,4 104,10.745 104,24V84C104,97.255 97.255,104 84,104H24C10.745,104 4,97.255 4,84V24C4,10.745 10.745,4 24,4Z" />
               <path
-                  android:fillColor="#FFFFFF"
-                  android:pathData="M22,18h15l34,49V18h15v72H71L37,41v49H22z" />
+                  android:fillColor="#4C1D95"
+                  android:pathData="M54,13L89,33V73L54,95L19,73V33Z" />
+              <path
+                  android:fillColor="#312E81"
+                  android:pathData="M54,21L81,37V69L54,87L27,69V37Z" />
+              <path
+                  android:fillColor="#F8FAFC"
+                  android:pathData="M28,78V30H40L68,61V30H80V78H68L40,47V78Z" />
+              <path
+                  android:fillColor="#A78BFA"
+                  android:pathData="M49,52L54,47L59,52L54,57Z" />
+              <path
+                  android:fillColor="#67E8F9"
+                  android:pathData="M76,19L78,24L83,26L78,28L76,33L74,28L69,26L74,24Z" />
           </vector>
           EOF
           sed -i 's#android:icon="@mipmap/ic_launcher"#android:icon="@drawable/ic_nexora"#' android/app/src/main/AndroidManifest.xml
+          sed -i 's#android:roundIcon="@mipmap/ic_launcher_round"#android:roundIcon="@drawable/ic_nexora"#' android/app/src/main/AndroidManifest.xml || true
           sed -i 's#android:label="nexora"#android:label="Nexora"#' android/app/src/main/AndroidManifest.xml || true
 
       - name: Configure Android APK installer
@@ -106,6 +119,17 @@ jobs:
           flutter build apk --release --target-platform android-arm64 \
             --dart-define="GOOGLE_CLIENT_ID=$CLIENT_ID" \
             --dart-define="GOOGLE_SERVER_CLIENT_ID=$SERVER_CLIENT_ID"
+
+      - name: Verify APK signing certificate
+        shell: bash
+        run: |
+          APK="build/app/outputs/flutter-apk/app-release.apk"
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)
+          if [ -z "$APKSIGNER" ]; then
+            echo "::error::Android apksigner tidak ditemukan."
+            exit 1
+          fi
+          "$APKSIGNER" verify --verbose --print-certs "$APK"
 
       - name: Prepare direct APK
         shell: bash
