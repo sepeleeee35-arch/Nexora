@@ -349,6 +349,83 @@ class _GameIntroState extends State<_GameIntro> {
     _ => 'Buka dua kartu, ingat posisinya, lalu cari pasangan yang sama. Streak tinggi memberi skor lebih besar.',
   };
 
+  String _guide(String game) => switch (game) {
+    '2048' => '1. Geser layar ke atas, bawah, kiri, atau kanan untuk menggerakkan semua tile.\\n\\n2. Dua angka yang sama akan bergabung saat bertemu. Contoh: 2 + 2 menjadi 4.\\n\\n3. Setiap merge memberi skor. Target utama adalah membuat tile 2048.\\n\\n4. Jangan isi papan sampai tidak ada gerakan. Simpan ruang kosong dan rencanakan beberapa langkah ke depan.\\n\\nCONTROL\\n• Swipe kiri/kanan/atas/bawah\\n• UNDO untuk membatalkan langkah terakhir\\n• RETRY untuk memulai ulang\\n\\nSYSTEM\\nSkor menaikkan level secara bertahap. Mode lebih tinggi membuat permainan lebih menuntut.',
+    'Tetris' => '1. Balok jatuh dari atas dan harus disusun di grid 10×20.\\n\\n2. Geser untuk memindahkan balok, tap untuk memutar, dan double-tap untuk hard drop.\\n\\n3. HOLD menyimpan satu balok agar bisa dipakai nanti. NEXT menunjukkan balok berikutnya.\\n\\n4. Isi satu baris penuh untuk menghapusnya. Semakin banyak baris yang dibersihkan, kecepatan jatuh meningkat.\\n\\nCONTROL\\n• Drag horizontal = kiri/kanan\\n• Tap = rotate\\n• Double-tap = hard drop\\n• HOLD = simpan/tukar balok\\n\\nSYSTEM\\nMenggunakan 7-bag agar distribusi tetromino lebih adil. Ghost piece menunjukkan posisi pendaratan.',
+    'Flappy' => '1. Ketuk layar untuk membuat burung mengepak ke atas. Setelah itu gravitasi menariknya kembali.\\n\\n2. Atur timing ketukan untuk melewati celah setiap pipa.\\n\\n3. Setiap pipa yang berhasil dilewati menambah skor dan setiap beberapa poin level naik.\\n\\n4. Menyentuh pipa, tanah, atau batas atas mengakhiri ronde.\\n\\nCONTROL\\n• Tap di mana saja = flap\\n• Tap saat GAME OVER = main lagi\\n\\nSYSTEM\\nKecepatan, gravitasi, dan ukuran celah mengikuti mode. Celah juga perlahan makin ketat saat skor bertambah.',
+    'Breakout' => '1. Geser paddle di bagian bawah untuk menjaga bola tetap hidup.\\n\\n2. Bola menghancurkan brick dari bawah/atas. Brick kuat membutuhkan lebih dari satu hit.\\n\\n3. Pantulan di bagian berbeda dari paddle mengubah arah bola sehingga kamu bisa mengontrol sudut serangan.\\n\\n4. Ambil power-up yang jatuh: W memperlebar paddle, × menambah bola, S memperlambat bola, F memberi efek serangan tambahan.\\n\\nCONTROL\\n• Drag kiri/kanan = paddle\\n• Tap = launch\\n\\nSYSTEM\\nAda 3 nyawa, combo, brick ber-HP, power-up, dan level berulang. Bola yang hilang mengurangi nyawa.',
+    _ => '1. Semua kartu tertutup. Buka satu kartu untuk melihat simbolnya.\\n\\n2. Buka kartu kedua. Jika simbol sama, pasangan tetap terbuka dan streak bertambah.\\n\\n3. Jika salah, kedua kartu tertutup kembali. Hafalkan posisi agar gerakan berikutnya lebih cepat.\\n\\n4. Selesaikan seluruh papan untuk naik level. Pada level lebih tinggi jumlah pasangan dapat bertambah.\\n\\nCONTROL\\n• Tap kartu = buka kartu\\n• Tidak ada batas waktu paksa\\n\\nSYSTEM\\nMatch memberi skor dan streak. Salah menebak memutus streak. Kesulitan menentukan jumlah pasangan dan tekanan permainan.',
+  };
+
+  void _showGuide(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0A0F1A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => SafeArea(
+        child: DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: .72,
+          minChildSize: .45,
+          maxChildSize: .94,
+          builder: (_, scroll) => SingleChildScrollView(
+            controller: scroll,
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
+              const SizedBox(height: 18),
+              Row(children: [
+                Icon(Icons.menu_book_rounded, color: accent),
+                const SizedBox(width: 9),
+                Text('CARA BERMAIN', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              ]),
+              const SizedBox(height: 14),
+              Text(_guide(title), style: const TextStyle(color: Colors.white70, height: 1.55, fontSize: 13)),
+              const SizedBox(height: 20),
+              SizedBox(width: double.infinity, child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  void _showGuide() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0A0F1A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => SafeArea(
+        child: DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: .72,
+          minChildSize: .45,
+          maxChildSize: .94,
+          builder: (_, scroll) => SingleChildScrollView(
+            controller: scroll,
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
+              const SizedBox(height: 18),
+              Row(children: [
+                Icon(Icons.menu_book_rounded, color: widget.info.color),
+                const SizedBox(width: 9),
+                const Text('CARA BERMAIN', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              ]),
+              const SizedBox(height: 14),
+              Text(_guide(widget.info.name), style: const TextStyle(color: Colors.white70, height: 1.55, fontSize: 13)),
+              const SizedBox(height: 20),
+              SizedBox(width: double.infinity, child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
     backgroundColor: bg,
@@ -378,6 +455,32 @@ class _GameIntroState extends State<_GameIntro> {
                   const SizedBox(height: 3),
                   Text(widget.info.name, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900)),
                 ])),
+
+                Positioned(
+                  right: 12,
+                  bottom: 12,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(18),
+                      onTap: _showGuide,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(.62),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: widget.info.color.withOpacity(.55)),
+                          boxShadow: [BoxShadow(color: Colors.black.withOpacity(.22), blurRadius: 12)],
+                        ),
+                        child: Row(mainAxisSize: MainAxisSize.min, children: [
+                          Icon(Icons.help_outline_rounded, color: widget.info.color, size: 17),
+                          const SizedBox(width: 6),
+                          const Text('CARA BERMAIN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: .8)),
+                        ]),
+                      ),
+                    ),
+                  ),
+                ),
               ]),
             ),
           ),
@@ -421,106 +524,6 @@ class _GameIntroState extends State<_GameIntro> {
 }
 
 class _GamePage extends StatelessWidget {
-  final String title, subtitle;
-  final Color accent;
-  final Widget child;
-  final VoidCallback? reset;
-  const _GamePage({required this.title, required this.subtitle, required this.accent, required this.child, this.reset});
-
-  String _guide(String game) => switch (game) {
-    '2048' => '1. Geser layar ke atas, bawah, kiri, atau kanan untuk menggerakkan semua tile.\\n\\n2. Dua angka yang sama akan bergabung saat bertemu. Contoh: 2 + 2 menjadi 4.\\n\\n3. Setiap merge memberi skor. Target utama adalah membuat tile 2048.\\n\\n4. Jangan isi papan sampai tidak ada gerakan. Simpan ruang kosong dan rencanakan beberapa langkah ke depan.\\n\\nCONTROL\\n• Swipe kiri/kanan/atas/bawah\\n• UNDO untuk membatalkan langkah terakhir\\n• RETRY untuk memulai ulang\\n\\nSYSTEM\\nSkor menaikkan level secara bertahap. Mode lebih tinggi membuat permainan lebih menuntut.',
-    'Tetris' => '1. Balok jatuh dari atas dan harus disusun di grid 10×20.\\n\\n2. Geser untuk memindahkan balok, tap untuk memutar, dan double-tap untuk hard drop.\\n\\n3. HOLD menyimpan satu balok agar bisa dipakai nanti. NEXT menunjukkan balok berikutnya.\\n\\n4. Isi satu baris penuh untuk menghapusnya. Semakin banyak baris yang dibersihkan, kecepatan jatuh meningkat.\\n\\nCONTROL\\n• Drag horizontal = kiri/kanan\\n• Tap = rotate\\n• Double-tap = hard drop\\n• HOLD = simpan/tukar balok\\n\\nSYSTEM\\nMenggunakan 7-bag agar distribusi tetromino lebih adil. Ghost piece menunjukkan posisi pendaratan.',
-    'Flappy' => '1. Ketuk layar untuk membuat burung mengepak ke atas. Setelah itu gravitasi menariknya kembali.\\n\\n2. Atur timing ketukan untuk melewati celah setiap pipa.\\n\\n3. Setiap pipa yang berhasil dilewati menambah skor dan setiap beberapa poin level naik.\\n\\n4. Menyentuh pipa, tanah, atau batas atas mengakhiri ronde.\\n\\nCONTROL\\n• Tap di mana saja = flap\\n• Tap saat GAME OVER = main lagi\\n\\nSYSTEM\\nKecepatan, gravitasi, dan ukuran celah mengikuti mode. Celah juga perlahan makin ketat saat skor bertambah.',
-    'Breakout' => '1. Geser paddle di bagian bawah untuk menjaga bola tetap hidup.\\n\\n2. Bola menghancurkan brick dari bawah/atas. Brick kuat membutuhkan lebih dari satu hit.\\n\\n3. Pantulan di bagian berbeda dari paddle mengubah arah bola sehingga kamu bisa mengontrol sudut serangan.\\n\\n4. Ambil power-up yang jatuh: W memperlebar paddle, × menambah bola, S memperlambat bola, F memberi efek serangan tambahan.\\n\\nCONTROL\\n• Drag kiri/kanan = paddle\\n• Tap = launch\\n\\nSYSTEM\\nAda 3 nyawa, combo, brick ber-HP, power-up, dan level berulang. Bola yang hilang mengurangi nyawa.',
-    _ => '1. Semua kartu tertutup. Buka satu kartu untuk melihat simbolnya.\\n\\n2. Buka kartu kedua. Jika simbol sama, pasangan tetap terbuka dan streak bertambah.\\n\\n3. Jika salah, kedua kartu tertutup kembali. Hafalkan posisi agar gerakan berikutnya lebih cepat.\\n\\n4. Selesaikan seluruh papan untuk naik level. Pada level lebih tinggi jumlah pasangan dapat bertambah.\\n\\nCONTROL\\n• Tap kartu = buka kartu\\n• Tidak ada batas waktu paksa\\n\\nSYSTEM\\nMatch memberi skor dan streak. Salah menebak memutus streak. Kesulitan menentukan jumlah pasangan dan tekanan permainan.',
-  };
-
-  void _showGuide(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0A0F1A),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (_) => SafeArea(
-        child: DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: .72,
-          minChildSize: .45,
-          maxChildSize: .94,
-          builder: (_, scroll) => SingleChildScrollView(
-            controller: scroll,
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
-              const SizedBox(height: 18),
-              Row(children: [
-                Icon(Icons.menu_book_rounded, color: accent),
-                const SizedBox(width: 9),
-                Text('CARA BERMAIN', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-              ]),
-              const SizedBox(height: 14),
-              Text(_guide(title), style: const TextStyle(color: Colors.white70, height: 1.55, fontSize: 13)),
-              const SizedBox(height: 20),
-              SizedBox(width: double.infinity, child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
-            ]),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: bg,
-    body: SafeArea(
-      child: Column(children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(10, 8, 10, 7),
-          child: Row(children: [
-            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded)),
-            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
-              Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.white38)),
-            ])),
-            if (reset != null) IconButton(onPressed: reset, icon: const Icon(Icons.refresh_rounded)),
-          ]),
-        ),
-        Expanded(
-          child: Stack(children: [
-            Positioned.fill(child: child),
-            Positioned(
-              right: 12,
-              bottom: 12,
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(18),
-                  onTap: () => _showGuide(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(.58),
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: accent.withOpacity(.55)),
-                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(.22), blurRadius: 12)],
-                    ),
-                    child: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.help_outline_rounded, color: accent, size: 17),
-                      const SizedBox(width: 6),
-                      const Text('CARA BERMAIN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: .8)),
-                    ]),
-                  ),
-                ),
-              ),
-            ),
-          ]),
-        ),
-      ]),
-    ),
-  );
-}
-
- {
   final String title, subtitle;
   final Color accent;
   final Widget child;
@@ -733,7 +736,7 @@ class _MemoryState extends State<_Memory> {
     final pairCounts=[6,8,10,12,18];final pairs=pairCounts[nexoraDifficulty.index];cards=<int>[for(var i=0;i<pairs;i++)...[i,i]]..shuffle(random);
     open.clear(); matched.clear();
     moves = 0; streak = 0;
-              score = max(0, score - 15); bestStreak = 0; level = 1; score = 0; locked = false;
+              bestStreak = 0; level = 1; score = 0; locked = false;
   }
   void _newRound() {
     final base=[6,8,10,12,18][nexoraDifficulty.index];
