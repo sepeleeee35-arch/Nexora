@@ -40,7 +40,6 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
     _GameInfo('Breakout', 'ARCADE', 'Smash • combo • clear', Icons.sports_baseball_rounded, Color(0xFFEF4444)),
     _GameInfo('Memory', 'PUZZLE', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
     _GameInfo('Dino Run Ultra', 'ARCADE', 'Run • jump • survive', Icons.directions_run_rounded, Color(0xFF00FF88)),
-    _GameInfo('Brick Breaker Ultimate', 'ARCADE', 'Smash • combo • clear', Icons.view_stream_rounded, Color(0xFFFF9500)),
     _GameInfo('Watermelon Merge Pro', 'PUZZLE', 'Drop • merge • grow', Icons.local_florist_rounded, Color(0xFF22D3EE)),
   ];
 
@@ -60,7 +59,6 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
           case 'Breakout': game = const _Breakout(); break;
           case 'Memory': game = const _Memory(); break;
           case 'Dino Run Ultra': game = const _DinoRunUltra(); break;
-          case 'Brick Breaker Ultimate': game = const _BrickBreakerUltimate(); break;
           case 'Watermelon Merge Pro': game = const _WatermelonMergePro(); break;
           default: game = const _Twenty();
         }
@@ -111,7 +109,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
                   const SizedBox(height: 4),
                   const Text('Play. Beat. Repeat.', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: -.8)),
                   const SizedBox(height: 7),
-                  const Text('Eight mini-games • game-specific controls • touch-first gameplay.', style: TextStyle(color: Colors.white60, height: 1.35)),
+                  const Text('Seven mini-games • game-specific controls • touch-first gameplay.', style: TextStyle(color: Colors.white60, height: 1.35)),
                   const SizedBox(height: 18),
                   Row(children: const [
                     _MiniStat('5', 'GAMES'),
@@ -188,7 +186,6 @@ _GameInfo _gameInfoForName(String name) => switch (name) {
   'Flappy' => const _GameInfo('Flappy', 'ARCADE', 'Tap • dodge • score', Icons.flutter_dash_rounded, Color(0xFF22D3EE)),
   'Breakout' => const _GameInfo('Breakout', 'ARCADE', 'Smash • combo • clear', Icons.sports_baseball_rounded, Color(0xFFEF4444)),
   'Dino Run Ultra' => const _GameInfo('Dino Run Ultra', 'ARCADE', 'Run • jump • survive', Icons.directions_run_rounded, Color(0xFF00FF88)),
-  'Brick Breaker Ultimate' => const _GameInfo('Brick Breaker Ultimate', 'ARCADE', 'Smash • combo • clear', Icons.view_stream_rounded, Color(0xFFFF9500)),
   'Watermelon Merge Pro' => const _GameInfo('Watermelon Merge Pro', 'PUZZLE', 'Drop • merge • grow', Icons.local_florist_rounded, Color(0xFF22D3EE)),
   _ => const _GameInfo('Memory', 'PUZZLE', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
 };
@@ -266,7 +263,7 @@ class _GameCardArt extends CustomPainter {
       '2048':[const Color(0xFF321B08),const Color(0xFF130B1F)],
       'Tetris':[const Color(0xFF24144B),const Color(0xFF09152B)],
       'Flappy':[const Color(0xFF2087B8),const Color(0xFF0C3951)],
-      'Breakout':[const Color(0xFF45111B),const Color(0xFF140713)],
+      'Breakout':[const Color(0xFF151D52),const Color(0xFF050817)],
       'Memory':[const Color(0xFF4A123A),const Color(0xFF16091C)],
     };
     final colors=backgrounds[name]??[const Color(0xFF111827),const Color(0xFF070914)];
@@ -815,29 +812,122 @@ class _FlappyPainter extends CustomPainter{
  @override bool shouldRepaint(covariant _FlappyPainter old)=>true;
 }
 
-class _Breakout extends StatefulWidget{const _Breakout();@override State<_Breakout> createState()=>_BreakoutState();}
-class _BreakoutState extends State<_Breakout>{
- final random=Random();Timer? timer;List<int> bricks=[],hp=[];List<_PowerDrop> drops=[];List<_Ball> balls=[];double paddle=.5;int score=0,lives=3,level=1,combo=0;bool running=false,over=false;
- @override void initState(){super.initState();_reset();}
- void _reset(){timer?.cancel();score=0;lives=3;level=1;combo=0;paddle=.5;running=false;over=false;_makeLevel();}
- void _makeLevel(){final d=nexoraDifficulty.index;bricks=List<int>.filled(54,1);hp=List<int>.generate(54,(i)=>i<9||(d>=2&&i<18)||(d>=4&&i%3==0)?(d>=2?2:1):1);drops=[];final base=[.0068,.0085,.0105,.013,.017][d];final speed=base*(1+min(level-1,500)*.002);balls=[_Ball(.5,.82,speed,-speed*1.45)];}
- void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();timer=Timer.periodic(const Duration(milliseconds:16),(_)=>_tick());}
- void _drop(double x,double y){if(random.nextDouble()>.20)return;const t=['wide','multi','slow','fire'];drops.add(_PowerDrop(x,y,t[random.nextInt(t.length)]));}
- void _tick(){if(!mounted||!running)return;final out=<_Ball>[];for(final b in balls){b.x+=b.vx;b.y+=b.vy;if(b.x<.018||b.x>.982){b.vx=-b.vx;b.x=b.x.clamp(.018,.982).toDouble();}if(b.y<.055){b.vy=b.vy.abs();b.y=.055;}if(b.vy>0&&b.y>.84&&b.y<.94&&(b.x-paddle).abs()<[.22,.18,.15,.12,.095][nexoraDifficulty.index]){final h=(b.x-paddle)/[.22,.18,.15,.12,.095][nexoraDifficulty.index];b.vx=(b.vx+h*.010).clamp(-.019,.019).toDouble();b.vy=-max(b.vy.abs(),.0065);combo++;}final col=(b.x*9).floor().clamp(0,8).toInt(),row=((b.y-.08)/.060).floor().clamp(0,5).toInt(),idx=row*9+col;if(b.y>.07&&b.y<.46&&bricks[idx]!=0){hp[idx]--;if(hp[idx]<=0){bricks[idx]=0;score+=10+combo*2;combo++;_drop(b.x,b.y);}else{score+=4;}b.vy=-b.vy;}if(b.y<1.02)out.add(b);}balls=out;if(balls.isEmpty){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final base=[.0068,.0085,.0105,.013,.017][nexoraDifficulty.index];final speed=base*(1+min(level-1,500)*.002);balls=[_Ball(.5,.82,speed*(random.nextBool()?1:-1),-speed*1.45)];}}for(final d in drops)d.y+=.006;final caught=<_PowerDrop>[];drops.removeWhere((d){final hit=d.y>.84&&d.y<.95&&(d.x-paddle).abs()<.16;if(hit)caught.add(d);return hit||d.y>1.02;});for(final d in caught)_power(d.type);if(bricks.every((v)=>v==0)){level=nexoraLevel(level+1);_makeLevel();_clock();}setState((){});}
- void _power(String t){if(t=='wide'){paddle=paddle.clamp(.16,.84).toDouble();}else if(t=='multi'&&balls.isNotEmpty&&balls.length<3){final b=balls.first;balls.add(_Ball(b.x,b.y,-b.vx,b.vy));balls.add(_Ball(b.x,b.y,b.vx*.65,b.vy));}else if(t=='slow'){for(final b in balls){b.vx*=.72;b.vy*=.72;}}else{score+=100;for(var i=0;i<bricks.length;i++)if(bricks[i]!=0&&random.nextDouble()<.14)bricks[i]=0;}}
- @override void dispose(){timer?.cancel();super.dispose();}
- @override Widget build(BuildContext context)=>_GamePage(title:'Breakout',subtitle:'${difficultyName(nexoraDifficulty)} • Brick breaker • power-ups • 3 stages',accent:const Color(0xFFEF4444),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_start,onHorizontalDragUpdate:(d){paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.10,.90).toDouble();setState((){});},child:_World(top:const Color(0xFF210A14),bottom:const Color(0xFF070914),child:Stack(children:[
-  Positioned.fill(child:CustomPaint(painter:_BreakoutPainter(bricks,hp,balls,drops,paddle))),Positioned(top:14,left:16,right:16,child:Row(children:[Text('SCORE $score',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:12)),const Spacer(),Text('LV $level  •  ♥ $lives',style:const TextStyle(color:Color(0xFFFCA5A5),fontWeight:FontWeight.w900,fontSize:12))])),
-  if(!running)Center(child:Container(padding:const EdgeInsets.symmetric(horizontal:22,vertical:16),decoration:BoxDecoration(color:Colors.black54,borderRadius:BorderRadius.circular(22),border:Border.all(color:Colors.white12)),child:Column(mainAxisSize:MainAxisSize.min,children:[const Icon(Icons.sports_baseball_rounded,color:Color(0xFFFF6B6B),size:48),const SizedBox(height:5),Text(over?(lives<=0?'GAME OVER':'ARCADE CLEAR'):'TAP TO LAUNCH',style:const TextStyle(fontSize:20,fontWeight:FontWeight.w900)),const SizedBox(height:4),Text(over?'PLAY AGAIN':'DRAG THE PADDLE',style:const TextStyle(color:Colors.white54,fontSize:9,fontWeight:FontWeight.w900,letterSpacing:1))]))),
- ]))));}
-class _Ball{double x,y,vx,vy;_Ball(this.x,this.y,this.vx,this.vy);}
-class _PowerDrop{double x,y;final String type;_PowerDrop(this.x,this.y,this.type);}
-class _BreakoutPainter extends CustomPainter{
- final List<int> bricks,hp;final List<_Ball> balls;final List<_PowerDrop> drops;final double paddle;const _BreakoutPainter(this.bricks,this.hp,this.balls,this.drops,this.paddle);
- @override void paint(Canvas canvas,Size size){final p=Paint();const cs=[Color(0xFFF87171),Color(0xFFFB923C),Color(0xFFFACC15),Color(0xFF4ADE80),Color(0xFF22D3EE),Color(0xFFA78BFA)];for(var r=0;r<6;r++)for(var col=0;col<9;col++){final i=r*9+col;if(bricks[i]==0)continue;final rect=Rect.fromLTWH(col*size.width/9+4,58+r*30,size.width/9-8,23);p.color=hp[i]>1?cs[r].withOpacity(.55):cs[r];canvas.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(7)),p);p.color=Colors.white.withOpacity(.18);canvas.drawRect(Rect.fromLTWH(rect.left+3,rect.top+3,rect.width-6,4),p);}p.color=Colors.white;canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH((paddle-[.22,.18,.15,.12,.095][nexoraDifficulty.index])*size.width,size.height*.91,[.44,.36,.30,.24,.19][nexoraDifficulty.index]*size.width,13),const Radius.circular(8)),p);for(final b in balls){p.color=const Color(0xFFFFD5D5);canvas.drawCircle(Offset(b.x*size.width,b.y*size.height),7,p);}for(final d in drops){final x=d.x*size.width,y=d.y*size.height;p.color=d.type=='multi'?const Color(0xFF22D3EE):d.type=='wide'?const Color(0xFF4ADE80):d.type=='slow'?const Color(0xFFA78BFA):const Color(0xFFFF6B35);canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center:Offset(x,y),width:24,height:24),const Radius.circular(7)),p);final label=d.type=='multi'?'×':d.type=='wide'?'W':d.type=='slow'?'S':'F';TextPainter(text:TextSpan(text:label,style:const TextStyle(fontSize:13,fontWeight:FontWeight.w900,color:Colors.black54)),textDirection:TextDirection.ltr)..layout()..paint(canvas,Offset(x-5,y-8));}}
- @override bool shouldRepaint(covariant _BreakoutPainter old)=>true;
+class _Breakout extends StatefulWidget{
+ const _Breakout();
+ @override State<_Breakout> createState()=>_BreakoutState();
 }
-
+class _BreakoutState extends State<_Breakout>{
+ final random=Random(); Timer? timer;
+ final balls=< _ArcadeBall>[]; final bricks=< _ArcadeBrick>[];
+ final drops=< _BreakoutDrop>[]; final particles=< _BreakoutParticle>[];
+ double paddle=.5,paddleWidth=.24;
+ int score=0,lives=3,level=1,combo=0; bool running=false,over=false,paused=false;
+ @override void initState(){super.initState();_reset();}
+ void _reset(){timer?.cancel();balls.clear();bricks.clear();drops.clear();particles.clear();score=0;lives=3;level=max(1,nexoraSelectedLevel);combo=0;paddle=.5;paddleWidth=.24;running=false;over=false;paused=false;_buildLevel();}
+ void _buildLevel(){
+  bricks.clear();drops.clear();particles.clear();final d=nexoraDifficulty.index;final rows=min(8,5+(level-1)%4);const cols=9;
+  final colors=const [Color(0xFFFF4D6D),Color(0xFFFF8A3D),Color(0xFFFFD166),Color(0xFF43E97B),Color(0xFF31D7FF),Color(0xFF8B7CFF),Color(0xFFD66BFF),Color(0xFFFF5EA8)];
+  final pattern=(level-1)%5;
+  for(var r=0;r<rows;r++)for(var col=0;col<cols;col++){
+   var active=true;
+   if(pattern==1)active=(r==0||r==rows-1||col==0||col==cols-1||r==rows~/2);
+   if(pattern==2)active=(col>=r&&col<cols-r);
+   if(pattern==3)active=((r+col)%2==0)||r<2;
+   if(pattern==4)active=((col-4).abs()<=r||r<2);
+   if(!active)continue;
+   var hp=1;if(r<2&&d>=1)hp=2;if((r+col)%5==0&&d>=3)hp=2;
+   bricks.add(_ArcadeBrick(.065+col*.098,.105+r*.052,.085,.038,hp,colors[r%colors.length]));
+  }
+  final speed=[.0092,.0102,.0114,.0127,.0142][d]*(1+min(level-1,80)*.0035);
+  balls.add(_ArcadeBall(.5,.80,speed*(random.nextBool()?1:-1),-speed*1.35,.012));
+  paddleWidth=[.30,.26,.235,.21,.19][d];
+ }
+ void _start(){if(over){_reset();}if(running){paused=!paused;setState((){});return;}running=true;paused=false;_clock();setState((){});}
+ void _clock(){timer?.cancel();timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
+ void _movePaddle(double dx){paddle=(paddle+dx).clamp(paddleWidth/2+.02,1-paddleWidth/2-.02).toDouble();if(!running&&balls.isNotEmpty)balls.first.x=paddle;setState((){});}
+ void _tick(){
+  if(!mounted||!running||paused)return;
+  final alive=< _ArcadeBall>[];
+  for(final b in balls){
+   final oldX=b.x,oldY=b.y;b.x+=b.vx;b.y+=b.vy;
+   if(b.x-b.r<.018){b.x=.018+b.r;b.vx=b.vx.abs();}
+   if(b.x+b.r>.982){b.x=.982-b.r;b.vx=-b.vx.abs();}
+   if(b.y-b.r<.055){b.y=.055+b.r;b.vy=b.vy.abs();}
+   final pLeft=paddle-paddleWidth/2,pRight=paddle+paddleWidth/2,pTop=.895;
+   if(b.vy>0&&b.y+b.r>=pTop&&oldY+b.r<=pTop+.035&&b.x>=pLeft-.01&&b.x<=pRight+.01){
+    final hit=((b.x-paddle)/(paddleWidth/2)).clamp(-1.0,1.0);
+    final speed=max(.010,b.vx.abs()+b.vy.abs()),angle=hit*1.05;
+    b.vx=(sin(angle)*speed).clamp(-.019,.019).toDouble();b.vy=-max(.0068,cos(angle)*speed);b.y=pTop-b.r-.002;combo++;_burst(b.x,b.y,2,Colors.white);
+   }
+   for(final brick in bricks){
+    if(brick.hp<=0)continue;
+    final cx=b.x.clamp(brick.x,brick.x+brick.w).toDouble(),cy=b.y.clamp(brick.y,brick.y+brick.h).toDouble(),ddx=b.x-cx,ddy=b.y-cy;
+    if(ddx*ddx+ddy*ddy<=b.r*b.r){
+     brick.hp--;score+=brick.hp==0?10+combo*2:4;combo++;
+     if(brick.hp==0){_burst(brick.x+brick.w/2,brick.y+brick.h/2,9,brick.color);if(random.nextDouble()<.18)_drop(brick.x+brick.w/2,brick.y+brick.h/2);}
+     else _burst(brick.x+brick.w/2,brick.y+brick.h/2,3,Colors.white);
+     final fromTop=oldY+b.r<=brick.y,fromBottom=oldY-b.r>=brick.y+brick.h,fromLeft=oldX+b.r<=brick.x,fromRight=oldX-b.r>=brick.x+brick.w;
+     if(fromTop||fromBottom)b.vy=-b.vy;else if(fromLeft||fromRight)b.vx=-b.vx;else b.vy=-b.vy;break;
+    }
+   }
+   if(b.y-b.r<1.03)alive.add(b);
+  }
+  balls..clear()..addAll(alive);
+  if(balls.isEmpty()){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final d=nexoraDifficulty.index,speed=[.0092,.0102,.0114,.0127,.0142][d]*(1+min(level-1,80)*.0035);balls.add(_ArcadeBall(paddle,.80,speed*(random.nextBool()?1:-1),-speed*1.35,.012));}}
+  for(final drop in drops)drop.y+=drop.speed;
+  final caught=< _BreakoutDrop>[];
+  drops.removeWhere((drop){final hit=drop.y>.86&&drop.y<.94&&(drop.x-paddle).abs()<paddleWidth/2+.025;if(hit)caught.add(drop);return hit||drop.y>1.05;});
+  for(final drop in caught)_applyPower(drop.type);
+  for(final pt in particles){pt.x+=pt.vx;pt.y+=pt.vy;pt.life-=.035;}particles.removeWhere((p)=>p.life<=0);
+  if(bricks.every((b)=>b.hp<=0)){score+=100+level*25;level=nexoraLevel(level+1);_buildLevel();}
+  setState((){});
+ }
+ void _drop(double x,double y){const types=['wide','multi','slow','fire'];drops.add(_BreakoutDrop(x,y,types[random.nextInt(types.length)]));}
+ void _applyPower(String type){
+  if(type=='wide')paddleWidth=min(.38,paddleWidth+.07);
+  else if(type=='multi'&&balls.length<3){final source=balls.first;balls.add(_ArcadeBall(source.x,source.y,-source.vx,source.vy,source.r));}
+  else if(type=='slow'){for(final b in balls){b.vx*=.72;b.vy*=.72;}}
+  else{score+=75;for(final brick in bricks)if(brick.hp>0&&random.nextDouble()<.20)brick.hp=0;}
+  _burst(paddle,.88,12,Colors.white);
+ }
+ void _burst(double x,double y,int count,Color color){for(var i=0;i<count;i++){final a=random.nextDouble()*pi*2,sp=.0015+random.nextDouble()*.006;particles.add(_BreakoutParticle(x,y,cos(a)*sp,sin(a)*sp,color,1));}}
+ @override void dispose(){timer?.cancel();super.dispose();}
+ @override Widget build(BuildContext context)=>_GamePage(
+  title:'Breakout',subtitle:'\${difficultyName(nexoraDifficulty)} • CLASSIC ARCADE • POWER-UPS',accent:const Color(0xFFFF4D6D),reset:()=>setState(_reset),
+  child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_start,onHorizontalDragUpdate:(d)=>_movePaddle(d.delta.dx/MediaQuery.sizeOf(context).width),
+   child:_World(top:const Color(0xFF070B24),bottom:const Color(0xFF02030B),child:Stack(children:[
+    Positioned.fill(child:CustomPaint(painter:_BreakoutArcadePainter(bricks,balls,drops,particles,paddle,paddleWidth,level))),
+    Positioned(top:12,left:15,right:15,child:Row(children:[Text('SCORE $score',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w900)),const Spacer(),Text('LV $level',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Color(0xFFFFD166))),const SizedBox(width:12),Text('♥ $lives',style:const TextStyle(fontSize:12,fontWeight:FontWeight.w900,color:Color(0xFFFF7B9C)))])),
+    if(!running)Center(child:Container(padding:const EdgeInsets.fromLTRB(24,20,24,18),decoration:BoxDecoration(color:const Color(0xFF090D1C).withOpacity(.92),borderRadius:BorderRadius.circular(24),border:Border.all(color:const Color(0xFFFF4D6D).withOpacity(.45)),boxShadow:[BoxShadow(color:const Color(0xFFFF4D6D).withOpacity(.18),blurRadius:28)]),child:Column(mainAxisSize:MainAxisSize.min,children:[
+     Icon(over?Icons.replay_rounded:Icons.sports_baseball_rounded,color:const Color(0xFFFF4D6D),size:46),const SizedBox(height:7),Text(over?'GAME OVER':'BREAKOUT',style:const TextStyle(fontSize:22,fontWeight:FontWeight.w900,letterSpacing:1)),const SizedBox(height:4),Text(over?'SCORE $score  •  LEVEL $level':'DRAG TO AIM • TAP TO LAUNCH',style:const TextStyle(color:Colors.white54,fontSize:9,fontWeight:FontWeight.w800,letterSpacing:.8)),const SizedBox(height:12),FilledButton.icon(onPressed:_start,icon:Icon(over?Icons.refresh_rounded:Icons.play_arrow_rounded),label:Text(over?'PLAY AGAIN':'START'))
+    ]))),
+    if(running&&paused)Center(child:Container(padding:const EdgeInsets.symmetric(horizontal:22,vertical:16),decoration:BoxDecoration(color:Colors.black.withOpacity(.72),borderRadius:BorderRadius.circular(20)),child:const Text('PAUSED • TAP TO RESUME',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:1))))
+   ])))
+  );
+}
+class _ArcadeBall{double x,y,vx,vy,r;_ArcadeBall(this.x,this.y,this.vx,this.vy,this.r);}
+class _ArcadeBrick{final double x,y,w,h;int hp;final Color color;_ArcadeBrick(this.x,this.y,this.w,this.h,this.hp,this.color);}
+class _BreakoutDrop{double x,y;final String type;final double speed=.0048;_BreakoutDrop(this.x,this.y,this.type);}
+class _BreakoutParticle{double x,y,vx,vy,life;final Color color;_BreakoutParticle(this.x,this.y,this.vx,this.vy,this.color,this.life);}
+class _BreakoutArcadePainter extends CustomPainter{
+ final List<_ArcadeBrick> bricks;final List<_ArcadeBall> balls;final List<_BreakoutDrop> drops;final List<_BreakoutParticle> particles;final double paddle,paddleWidth;final int level;
+ const _BreakoutArcadePainter(this.bricks,this.balls,this.drops,this.particles,this.paddle,this.paddleWidth,this.level);
+ @override void paint(Canvas c,Size s){
+  final r=Offset.zero&s;
+  c.drawRect(r,Paint()..shader=const LinearGradient(colors:[Color(0xFF101A4B),Color(0xFF07102D),Color(0xFF02030B)],begin:Alignment.topCenter,end:Alignment.bottomCenter).createShader(r));
+  final glow=Paint()..color=const Color(0xFF31D7FF).withOpacity(.06);
+  for(var i=0;i<18;i++)c.drawCircle(Offset((((i*71)+(level*13))%max(1,s.width.toInt())).toDouble(),36+(i%6)*42.0),1.5+(i%3),glow);
+  final grid=Paint()..color=Colors.white.withOpacity(.025)..strokeWidth=1;
+  for(var i=1;i<8;i++)c.drawLine(Offset(s.width*i/8,58),Offset(s.width*i/8,s.height),grid);
+  for(var i=1;i<12;i++)c.drawLine(Offset(0,s.height*i/12),Offset(s.width,s.height*i/12),grid);
+  for(final b in bricks)if(b.hp>0){final rect=Rect.fromLTWH(b.x*s.width,b.y*s.height,b.w*s.width,b.h*s.height);c.drawRRect(RRect.fromRectAndRadius(rect.inflate(3),const Radius.circular(7)),Paint()..color=b.color.withOpacity(.16));c.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(6)),Paint()..color=b.hp>1?b.color.withOpacity(.52):b.color);c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(rect.left+3,rect.top+3,rect.width-6,4),const Radius.circular(2)),Paint()..color=Colors.white.withOpacity(.20));if(b.hp>1)c.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(6)),Paint()..style=PaintingStyle.stroke..strokeWidth=1.5..color=Colors.white.withOpacity(.55));}
+  final pRect=Rect.fromLTWH((paddle-paddleWidth/2)*s.width,s.height*.895,paddleWidth*s.width,13);c.drawRRect(RRect.fromRectAndRadius(pRect.inflate(5),const Radius.circular(10)),Paint()..color=const Color(0xFFFF4D6D).withOpacity(.25));c.drawRRect(RRect.fromRectAndRadius(pRect,const Radius.circular(8)),Paint()..shader=const LinearGradient(colors:[Color(0xFFFF8AA3),Color(0xFFFF4D6D),Color(0xFFD92F55)]).createShader(pRect));
+  for(final b in balls){final center=Offset(b.x*s.width,b.y*s.height);c.drawCircle(center,10,Paint()..color=const Color(0xFF31D7FF).withOpacity(.12));c.drawCircle(center,b.r*s.width,Paint()..color=Colors.white);c.drawCircle(center,b.r*s.width*.45,Paint()..color=const Color(0xFF31D7FF));}
+  for(final d in drops){final center=Offset(d.x*s.width,d.y*s.height);final color=switch(d.type){'wide'=>const Color(0xFF43E97B),'multi'=>const Color(0xFF31D7FF),'slow'=>const Color(0xFF8B7CFF),_=>const Color(0xFFFFD166)};c.drawCircle(center,14,Paint()..color=color.withOpacity(.18));c.drawRRect(RRect.fromRectAndRadius(Rect.fromCenter(center:center,width:22,height:22),const Radius.circular(7)),Paint()..color=color);final label=switch(d.type){'wide'=>'W','multi'=>'×','slow'=>'S',_=>'F'};final tp=TextPainter(text:TextSpan(text:label,style:const TextStyle(color:Colors.black87,fontSize:12,fontWeight:FontWeight.w900)),textDirection:TextDirection.ltr)..layout();tp.paint(c,center-Offset(tp.width/2,tp.height/2));}
+  for(final p in particles)c.drawCircle(Offset(p.x*s.width,p.y*s.height),2.2,Paint()..color=p.color.withOpacity(p.life.clamp(0.0,1.0)));
+ }
+ @override bool shouldRepaint(covariant _BreakoutArcadePainter old)=>true;
+}
 class _Memory extends StatefulWidget {
   const _Memory();
   @override State<_Memory> createState() => _MemoryState();
@@ -970,23 +1060,6 @@ class _DinoPainter extends CustomPainter{
  final double y,distance;final List<Rect> obstacles;const _DinoPainter(this.y,this.obstacles,this.distance);
  @override void paint(Canvas c,Size s){final bg=Paint()..shader=const LinearGradient(colors:[Color(0xFF09231A),Color(0xFF030609)],begin:Alignment.topCenter,end:Alignment.bottomCenter).createShader(Offset.zero&s);c.drawRect(Offset.zero&s,bg);final glow=Paint()..color=const Color(0xFF00FF88).withOpacity(.15);for(var i=0;i<18;i++)c.drawCircle(Offset((i*73-(distance*9)%73),35+(i%4)*22),i%2+1,glow);c.drawRect(Rect.fromLTWH(0,164,s.width,2),Paint()..color=const Color(0xFF00FF88).withOpacity(.35));c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(48,122+y,34,42),const Radius.circular(8)),Paint()..color=const Color(0xFF00FF88));c.drawCircle(const Offset(72,132),3,Paint()..color=Colors.black);for(final o in obstacles)c.drawRRect(RRect.fromRectAndRadius(o,const Radius.circular(5)),Paint()..color=const Color(0xFFFF2B2B));}
  @override bool shouldRepaint(covariant _DinoPainter old)=>true;
-}
-class _BrickBreakerUltimate extends StatefulWidget{const _BrickBreakerUltimate();@override State<_BrickBreakerUltimate> createState()=>_BrickBreakerUltimateState();}
-class _BrickBreakerUltimateState extends State<_BrickBreakerUltimate>{
- Timer? timer;double paddle=.5,bx=.5,by=.78,dx=.006,dy=-.008;int score=0,lives=3,level=1,combo=0;bool running=false,dead=false;late List<List<bool>> bricks;
- @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();paddle=.5;bx=.5;by=.78;dx=.006;dy=-.008;score=0;lives=3;level=nexoraSelectedLevel.clamp(1,50).toInt();combo=0;running=false;dead=false;bricks=List.generate(min(8,3+level~/4),(r)=>List.generate(8,(_)=>true));}
- void _start(){if(running)return;setState(()=>running=true);timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
- void _tick(){if(!running)return;setState((){bx+=dx;by+=dy;if(bx<.03||bx>.97){dx=-dx;bx=bx.clamp(.03,.97).toDouble();}if(by<.04)dy=dy.abs();if(by>.94){lives--;if(lives<=0){dead=true;running=false;timer?.cancel();}else{bx=paddle;by=.78;dy=-.008;dx=.006;}}if(by>.84&&by<.91&&bx>paddle-.12&&bx<paddle+.12&&dy>0){dy=-dy.abs();dx=((bx-paddle)*.035).clamp(-.018,.018).toDouble();}for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final left=.08+k*.105,top=.08+r*.065;if(bx>left&&bx<left+.085&&by>top&&by<top+.05){bricks[r][k]=false;dy=-dy;score+=10+combo*2;combo++;break;}}if(bricks.every((r)=>r.every((b)=>!b))){level++;bricks=List.generate(min(10,3+level~/3),(r)=>List.generate(8,(_)=>true));bx=paddle;by=.78;dy=-.008;combo=0;}});}
- @override void dispose(){timer?.cancel();super.dispose();}
- @override Widget build(BuildContext context)=>_GamePage(title:'Brick Breaker Ultimate',subtitle:'LEVEL $level • COMBO $combo • $lives LIVES',accent:const Color(0xFFFF9500),reset:()=>setState(_reset),child:_World(top:const Color(0xFF241107),bottom:const Color(0xFF080609),child:Column(children:[
-  _ScoreBar('SCORE $score','LIVES $lives',const Color(0xFFFF9500)),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){setState(()=>paddle=(paddle+d.delta.dx/350).clamp(.12,.88).toDouble());},child:CustomPaint(painter:_BrickPainter(bricks,bx,by,paddle),child:const SizedBox.expand()))),
-  Padding(padding:const EdgeInsets.fromLTRB(18,8,18,18),child:FilledButton(onPressed:dead?()=>setState(_reset):_start,child:Text(dead?'PLAY AGAIN':running?'RUNNING':'START'))),
- ])));
-}
-class _BrickPainter extends CustomPainter{
- final List<List<bool>> bricks;final double bx,by,paddle;const _BrickPainter(this.bricks,this.bx,this.by,this.paddle);
- @override void paint(Canvas c,Size s){final bg=Paint()..shader=const LinearGradient(colors:[Color(0xFF0B0B12),Color(0xFF030306)],begin:Alignment.topCenter,end:Alignment.bottomCenter).createShader(Offset.zero&s);c.drawRect(Offset.zero&s,bg);final colors=[const Color(0xFFFF2B2B),const Color(0xFFFF9500),const Color(0xFFFFC800),const Color(0xFF00FF88),const Color(0xFF00C8FF),const Color(0xFFA855F7)];for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final rect=Rect.fromLTWH(s.width*(.08+k*.105),s.height*(.08+r*.065),s.width*.085,s.height*.05);c.drawRRect(RRect.fromRectAndRadius(rect,const Radius.circular(6)),Paint()..color=colors[r%colors.length]);}c.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(s.width*(paddle-.12),s.height*.9,s.width*.24,s.height*.028),const Radius.circular(8)),Paint()..color=const Color(0xFFFF9500));c.drawCircle(Offset(s.width*bx,s.height*by),8,Paint()..color=Colors.white);}
- @override bool shouldRepaint(covariant _BrickPainter old)=>true;
 }
 class _WatermelonMergePro extends StatefulWidget{const _WatermelonMergePro();@override State<_WatermelonMergePro> createState()=>_WatermelonMergeProState();}
 class _WatermelonMergeProState extends State<_WatermelonMergePro>{
