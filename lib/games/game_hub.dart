@@ -873,7 +873,7 @@ class _BreakoutState extends State<_Breakout>{
    if(b.y-b.r<1.03)alive.add(b);
   }
   balls..clear()..addAll(alive);
-  if(balls.isEmpty()){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final d=nexoraDifficulty.index,speed=[.0092,.0102,.0114,.0127,.0142][d]*(1+min(level-1,80)*.0035);balls.add(_ArcadeBall(paddle,.80,speed*(random.nextBool()?1:-1),-speed*1.35,.012));}}
+  if(balls.isEmpty){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final d=nexoraDifficulty.index,speed=[.0092,.0102,.0114,.0127,.0142][d]*(1+min(level-1,80)*.0035);balls.add(_ArcadeBall(paddle,.80,speed*(random.nextBool()?1:-1),-speed*1.35,.012));}}
   for(final drop in drops)drop.y+=drop.speed;
   final caught=< _BreakoutDrop>[];
   drops.removeWhere((drop){final hit=drop.y>.86&&drop.y<.94&&(drop.x-paddle).abs()<paddleWidth/2+.025;if(hit)caught.add(drop);return hit||drop.y>1.05;});
