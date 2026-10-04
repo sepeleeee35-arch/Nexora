@@ -350,7 +350,16 @@ class _GameMenuState extends State<_GameMenu>{
       SwitchListTile(dense:true,title:const Text('SOUND',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900)),value:sound,onChanged:(v)=>setState(()=>sound=v)),
     ])),
     const SizedBox(height:12),
-    OutlinedButton.icon(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>_VisualGameGuide(game:_gameInfoForName(widget.game))),icon:const Icon(Icons.menu_book_rounded),label:const Text('CARA BERMAIN')),
+    OutlinedButton.icon(
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => _VisualGameGuide(game: _gameInfoForName(widget.game))),
+        );
+      },
+      icon: const Icon(Icons.menu_book_rounded),
+      label: const Text('CARA BERMAIN'),
+    ),
     const SizedBox(height:10),
     SizedBox(height:56,child:FilledButton.icon(onPressed:()=>widget.onStart(selectedLevel,control,haptic,sound),icon:const Icon(Icons.play_arrow_rounded),label:Text(selectedLevel>1?'START LEVEL $selectedLevel':'START',style:const TextStyle(fontWeight:FontWeight.w900,letterSpacing:1)))),
   ])));
@@ -710,9 +719,74 @@ class _TetrisState extends State<_Tetris>{
   ]),
  ])));
 }
+const List<Color> _tetrisColors = [
+  Colors.transparent,
+  Color(0xFF22D3EE),
+  Color(0xFFFACC15),
+  Color(0xFFA78BFA),
+  Color(0xFF60A5FA),
+  Color(0xFFFB923C),
+  Color(0xFF4ADE80),
+  Color(0xFFF87171),
+];
+
+class _MiniPiecePainter extends CustomPainter {
+  final List<List<int>>? shape;
+  final Color color;
+  const _MiniPiecePainter(this.shape, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (shape == null || shape!.isEmpty) return;
+    final h = shape!.length;
+    final w = shape!.map((r) => r.length).reduce(max);
+    final cell = min(size.width / w, size.height / h) * .72;
+    final ox = (size.width - w * cell) / 2;
+    final oy = (size.height - h * cell) / 2;
+    final p = Paint()..color = color;
+    for (var y = 0; y < h; y++) {
+      for (var x = 0; x < shape![y].length; x++) {
+        if (shape![y][x] == 0) continue;
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(
+            Rect.fromLTWH(ox + x * cell + 1, oy + y * cell + 1, cell - 2, cell - 2),
+            const Radius.circular(4),
+          ),
+          p,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _MiniPiecePainter old) => old.shape != shape || old.color != color;
+}
+
 class _TetrisPainter extends CustomPainter{
- final List<int> board;final List<List<int>> shape;final int row,col,ghost;final Color active;const _TetrisPainter(this.board,this.shape,this.row,this.col,this.ghost,this.active);
- @override void paint(Canvas canvas,Size size){final cell=size.width/10,p=Paint();for(var y=0;y<20;y++)for(var x=0;x<10;x++){p.color=Colors.white.withOpacity(.025);canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+1,y*cell+1,cell-2,cell-2),const Radius.circular(4)),p);final v=board[y*10+x];if(v>0){p.color=_colors[v];canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+2,y*cell+2,cell-4,cell-4),const Radius.circular(5)),p);}}p.color=active.withOpacity(.16);for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0){final yy=ghost+y,xx=col+x;if(yy>=0&&yy<20&&xx>=0&&xx<10)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+4,yy*cell+4,cell-8,cell-8),const Radius.circular(4)),p);}p.color=active;for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0){final yy=row+y,xx=col+x;if(yy>=0&&yy<20&&xx>=0&&xx<10)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+2,yy*cell+2,cell-4,cell-4),const Radius.circular(5)),p);}}
+ final List<int> board;final List<List<int>> shape;final int row,col,ghost;final Color active;
+ const _TetrisPainter(this.board,this.shape,this.row,this.col,this.ghost,this.active);
+ @override void paint(Canvas canvas,Size size){
+  final cell=size.width/10,p=Paint();
+  for(var y=0;y<20;y++)for(var x=0;x<10;x++){
+   p.color=Colors.white.withOpacity(.025);
+   canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+1,y*cell+1,cell-2,cell-2),const Radius.circular(4)),p);
+   final v=board[y*10+x];
+   if(v>0){
+    p.color=_tetrisColors[v.clamp(0,_tetrisColors.length-1)];
+    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+2,y*cell+2,cell-4,cell-4),const Radius.circular(5)),p);
+   }
+  }
+  p.color=active.withOpacity(.16);
+  for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0){
+   final yy=ghost+y,xx=col+x;
+   if(yy>=0&&yy<20&&xx>=0&&xx<10)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+4,yy*cell+4,cell-8,cell-8),const Radius.circular(4)),p);
+  }
+  p.color=active;
+  for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0){
+   final yy=row+y,xx=col+x;
+   if(yy>=0&&yy<20&&xx>=0&&xx<10)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+2,yy*cell+2,cell-4,cell-4),const Radius.circular(5)),p);
+  }
+ }
  @override bool shouldRepaint(covariant _TetrisPainter old)=>true;
 }
 class _Flappy extends StatefulWidget{const _Flappy();@override State<_Flappy> createState()=>_FlappyState();}
