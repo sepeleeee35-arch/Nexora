@@ -1,7 +1,7 @@
 name: nexora
 description: Nexora - original mobile hub app.
 publish_to: "none"
-version: 1.0.3+6
+version: 1.0.4+7
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
