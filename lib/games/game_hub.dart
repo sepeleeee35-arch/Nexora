@@ -111,7 +111,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
                   const SizedBox(height: 4),
                   const Text('Play. Beat. Repeat.', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: -.8)),
                   const SizedBox(height: 7),
-                  const Text('Five mini-games • game-specific modes • touch-first controls.', style: TextStyle(color: Colors.white60, height: 1.35)),
+                  const Text('Eight mini-games • game-specific controls • touch-first gameplay.', style: TextStyle(color: Colors.white60, height: 1.35)),
                   const SizedBox(height: 18),
                   Row(children: const [
                     _MiniStat('5', 'GAMES'),
@@ -974,7 +974,7 @@ class _DinoPainter extends CustomPainter{
 class _BrickBreakerUltimate extends StatefulWidget{const _BrickBreakerUltimate();@override State<_BrickBreakerUltimate> createState()=>_BrickBreakerUltimateState();}
 class _BrickBreakerUltimateState extends State<_BrickBreakerUltimate>{
  Timer? timer;double paddle=.5,bx=.5,by=.78,dx=.006,dy=-.008;int score=0,lives=3,level=1,combo=0;bool running=false,dead=false;late List<List<bool>> bricks;
- @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();paddle=.5;bx=.5;by=.78;dx=.006;dy=-.008;score=0;lives=3;level=nexoraSelectedLevel.clamp(1,50);combo=0;running=false;dead=false;bricks=List.generate(min(8,3+level~/4),(r)=>List.generate(8,true));}
+ @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();paddle=.5;bx=.5;by=.78;dx=.006;dy=-.008;score=0;lives=3;level=nexoraSelectedLevel.clamp(1,50).toInt();combo=0;running=false;dead=false;bricks=List.generate(min(8,3+level~/4),(r)=>List.generate(8,true));}
  void _start(){if(running)return;setState(()=>running=true);timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
  void _tick(){if(!running)return;setState((){bx+=dx;by+=dy;if(bx<.03||bx>.97){dx=-dx;bx=bx.clamp(.03,.97);}if(by<.04)dy=dy.abs();if(by>.94){lives--;if(lives<=0){dead=true;running=false;timer?.cancel();}else{bx=paddle;by=.78;dy=-.008;dx=.006;}}if(by>.84&&by<.91&&bx>paddle-.12&&bx<paddle+.12&&dy>0){dy=-dy.abs();dx=((bx-paddle)*.035).clamp(-.018,.018);}for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final left=.08+k*.105,top=.08+r*.065;if(bx>left&&bx<left+.085&&by>top&&by<top+.05){bricks[r][k]=false;dy=-dy;score+=10+combo*2;combo++;break;}}if(bricks.every((r)=>r.every((b)=>!b))){level++;bricks=List.generate(min(10,3+level~/3),(r)=>List.generate(8,true));bx=paddle;by=.78;dy=-.008;combo=0;}});}
  @override void dispose(){timer?.cancel();super.dispose();}
