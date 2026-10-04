@@ -13,6 +13,7 @@ import 'music/music_page.dart';
 import 'games/game_hub.dart';
 import 'music/music_service.dart';
 import 'tools/nexora_tools_page.dart';
+import 'update/nexora_update_service.dart';
 
 void main() => runApp(const NexoraApp());
 
@@ -234,12 +235,62 @@ class _NexoraShellState extends State<NexoraShell> {
   double cardOpacity = 1.0;
   double cardBorderWidth = 0.0;
   double cardBorderOpacity = 0.0;
+  NexoraUpdateInfo? _availableUpdate;
+  bool _updateDialogShown = false;
+  bool _updateBusy = false;
   static const names = ['Home','Games','Music','Tools','Market'];
 
   @override
   void initState() {
     super.initState();
     _loadPreferences();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForNexoraUpdate());
+  }
+
+  Future<void> _checkForNexoraUpdate() async {
+    final update = await NexoraUpdateService.checkForUpdate();
+    if (!mounted || update == null || _updateDialogShown) return;
+    _availableUpdate = update;
+    _updateDialogShown = true;
+    await _showNexoraUpdateDialog(update);
+  }
+
+  Future<void> _showNexoraUpdateDialog(NexoraUpdateInfo update) async {
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Row(children: [Icon(Icons.system_update_rounded), SizedBox(width: 10), Expanded(child: Text('Update Nexora tersedia'))]),
+          content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text('Versi terbaru: ${update.version}', style: const TextStyle(fontWeight: FontWeight.w800)),
+            const SizedBox(height: 8),
+            const Text('APK terbaru akan diunduh lalu installer Android dibuka untuk memasang update.'),
+            if (_updateBusy) ...[const SizedBox(height: 18), const LinearProgressIndicator(), const SizedBox(height: 8), const Text('Menyiapkan APK update...', style: TextStyle(fontSize: 12, color: Colors.white60))],
+          ]),
+          actions: [
+            TextButton(onPressed: _updateBusy ? null : () => Navigator.pop(dialogContext), child: const Text('Nanti')),
+            FilledButton.icon(
+              onPressed: _updateBusy ? null : () async {
+                setDialogState(() => _updateBusy = true);
+                setState(() => _updateBusy = true);
+                try {
+                  await NexoraUpdateService.downloadAndInstall(update);
+                } catch (e) {
+                  if (!mounted) return;
+                  setDialogState(() => _updateBusy = false);
+                  setState(() => _updateBusy = false);
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update gagal dibuka: $e')));
+                }
+              },
+              icon: const Icon(Icons.download_rounded),
+              label: const Text('Update sekarang'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (mounted) setState(() => _updateBusy = false);
   }
 
   String get _prefPrefix => 'nexora_' + widget.account.id + '_';
