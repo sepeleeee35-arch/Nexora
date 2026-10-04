@@ -176,6 +176,14 @@ class _GameInfo {
   const _GameInfo(this.name, this.category, this.subtitle, this.icon, this.color);
 }
 
+_GameInfo _gameInfoForName(String name) => switch (name) {
+  '2048' => const _GameInfo('2048', 'PUZZLE', 'Merge • chain • survive', Icons.grid_4x4_rounded, Color(0xFFF59E0B)),
+  'Tetris' => const _GameInfo('Tetris', 'ARCADE', 'Drop • rotate • clear', Icons.view_module_rounded, Color(0xFFA78BFA)),
+  'Flappy' => const _GameInfo('Flappy', 'ARCADE', 'Tap • dodge • score', Icons.flutter_dash_rounded, Color(0xFF22D3EE)),
+  'Breakout' => const _GameInfo('Breakout', 'ARCADE', 'Smash • combo • clear', Icons.sports_baseball_rounded, Color(0xFFEF4444)),
+  _ => const _GameInfo('Memory', 'PUZZLE', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
+};
+
 class _Badge extends StatelessWidget {
   final String text;
   const _Badge(this.text);
@@ -342,7 +350,7 @@ class _GameMenuState extends State<_GameMenu>{
       SwitchListTile(dense:true,title:const Text('SOUND',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900)),value:sound,onChanged:(v)=>setState(()=>sound=v)),
     ])),
     const SizedBox(height:12),
-    OutlinedButton.icon(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>_VisualGameGuide(game:games.firstWhere((g)=>g.name==widget.game))),icon:const Icon(Icons.menu_book_rounded),label:const Text('CARA BERMAIN')),
+    OutlinedButton.icon(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>_VisualGameGuide(game:_gameInfoForName(widget.game))),icon:const Icon(Icons.menu_book_rounded),label:const Text('CARA BERMAIN')),
     const SizedBox(height:10),
     SizedBox(height:56,child:FilledButton.icon(onPressed:()=>widget.onStart(selectedLevel,control,haptic,sound),icon:const Icon(Icons.play_arrow_rounded),label:Text(selectedLevel>1?'START LEVEL $selectedLevel':'START',style:const TextStyle(fontWeight:FontWeight.w900,letterSpacing:1)))),
   ])));
@@ -707,39 +715,6 @@ class _TetrisPainter extends CustomPainter{
  @override void paint(Canvas canvas,Size size){final cell=size.width/10,p=Paint();for(var y=0;y<20;y++)for(var x=0;x<10;x++){p.color=Colors.white.withOpacity(.025);canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+1,y*cell+1,cell-2,cell-2),const Radius.circular(4)),p);final v=board[y*10+x];if(v>0){p.color=_colors[v];canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+2,y*cell+2,cell-4,cell-4),const Radius.circular(5)),p);}}p.color=active.withOpacity(.16);for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0){final yy=ghost+y,xx=col+x;if(yy>=0&&yy<20&&xx>=0&&xx<10)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+4,yy*cell+4,cell-8,cell-8),const Radius.circular(4)),p);}p.color=active;for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0){final yy=row+y,xx=col+x;if(yy>=0&&yy<20&&xx>=0&&xx<10)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+2,yy*cell+2,cell-4,cell-4),const Radius.circular(5)),p);}}
  @override bool shouldRepaint(covariant _TetrisPainter old)=>true;
 }
-class _TetrisState extends State<_Tetris>{
-  final random=Random(),board=List<int>.filled(200,0); List<int> bag=[];
-  final shapes=const[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]]];
-  final colors=const[Colors.transparent,Color(0xFF22D3EE),Color(0xFFFACC15),Color(0xFFA78BFA),Color(0xFF60A5FA),Color(0xFFFB923C),Color(0xFF4ADE80),Color(0xFFF87171)];
-  Timer? timer;late int current,next,activeKind;List<List<int>> shape=const[[1]];List<List<int>>? held;int row=0,col=3,score=0,lines=0;bool running=false,over=false,canHold=true;
-  @override void initState(){super.initState();_reset();}
-  void _reset(){timer?.cancel();for(var i=0;i<200;i++)board[i]=0;bag=[];current=_nextPiece();next=_nextPiece();held=null;score=0;lines=0;running=false;over=false;canHold=true;_load();}
-  int _nextPiece(){if(bag.isEmpty){bag=List<int>.generate(7,(i)=>i)..shuffle(random);}return bag.removeLast();}
-  void _load(){activeKind=current;shape=shapes[activeKind].map((r)=>List<int>.from(r)).toList();row=0;col=3;current=next;next=_nextPiece();canHold=true;}
-  bool _can(int r,int c,List<List<int>>s){for(var y=0;y<s.length;y++)for(var x=0;x<s[y].length;x++){if(s[y][x]==0)continue;final xx=c+x,yy=r+y;if(xx<0||xx>=10||yy>=20)return false;if(yy>=0&&board[yy*10+xx]!=0)return false;}return true;}
-  void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();const speeds=[620,520,400,285,165];final base=speeds[nexoraDifficulty.index];final speedStage=lines~/10;timer=Timer.periodic(Duration(milliseconds:max(55,base-speedStage*38)),(_)=>_tick());}
-  void _tick(){if(!mounted||!running)return;if(_can(row+1,col,shape)){row++;setState((){});}else{_lock();}}
-  void _move(int d){if(!running){_start();return;}if(_can(row,col+d,shape)){col+=d;setState((){});}}
-  void _soft(){if(!running){_start();return;}if(_can(row+1,col,shape)){row++;score++;setState((){});}else{_lock();}}
-  void _hard(){if(!running){_start();return;}var n=0;while(_can(row+1,col,shape)){row++;n++;}score+=n*2;_lock();}
-  void _rotate(){if(!running){_start();return;}final h=shape.length,w=shape[0].length,r=List.generate(w,(_)=>List<int>.filled(h,0));for(var y=0;y<h;y++)for(var x=0;x<w;x++)r[x][h-1-y]=shape[y][x];for(final k in[0,-1,1,-2,2])if(_can(row,col+k,r)){shape=r;col+=k;setState((){});return;}}
-  int _kind(List<List<int>>s){final k=s.expand((r)=>r).join();for(var i=0;i<7;i++)if(shapes[i].expand((r)=>r).join()==k)return i;return activeKind;}
-  void _hold(){if(!running||!canHold)return;canHold=false;final old=activeKind;if(held==null){held=shapes[old].map((r)=>List<int>.from(r)).toList();_load();canHold=false;}else{final t=held!;held=shapes[old].map((r)=>List<int>.from(r)).toList();shape=t.map((r)=>List<int>.from(r)).toList();activeKind=_kind(shape);row=0;col=3;}setState((){});}
-  int _ghost(){var r=row;while(_can(r+1,col,shape))r++;return r;}
-  void _lock(){for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0&&row+y>=0&&row+y<20&&col+x>=0&&col+x<10)board[(row+y)*10+col+x]=activeKind+1;var clear=0;for(var y=19;y>=0;y--){var full=true;for(var x=0;x<10;x++)if(board[y*10+x]==0){full=false;break;}if(full){for(var yy=y;yy>0;yy--)for(var x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];for(var x=0;x<10;x++)board[x]=0;clear++;y++;}}if(clear>0){lines+=clear;score+=[0,100,300,500,800][clear]*(1+lines~/10);_clock();}_load();if(!_can(row,col,shape)){running=false;over=true;timer?.cancel();}setState((){});}
-  Widget mini(List<List<int>>?s,Color c)=>SizedBox(width:58,height:44,child:CustomPaint(painter:_MiniPiecePainter(s,c)));
-  @override void dispose(){timer?.cancel();super.dispose();}
-  @override Widget build(BuildContext context)=>_GamePage(title:'Tetris',subtitle:'${difficultyName(nexoraDifficulty)} • 10×20 • rotate • hold • hard drop',accent:const Color(0xFFA78BFA),reset:()=>setState(_reset),child:_World(top:const Color(0xFF17112A),bottom:const Color(0xFF070914),child:Column(children:[
-    _ScoreBar('SCORE $score','LINES $lines',const Color(0xFFA78BFA)),Expanded(child:Row(children:[
-      Expanded(child:GestureDetector(onTap:_rotate,onDoubleTap:_hard,onHorizontalDragUpdate:(d){if(d.delta.dx>3)_move(1);if(d.delta.dx< -3)_move(-1);},onVerticalDragUpdate:(d){if(d.delta.dy>7)_soft();},child:Center(child:AspectRatio(aspectRatio:.50,child:Container(margin:const EdgeInsets.only(left:10,right:4),padding:const EdgeInsets.all(5),decoration:BoxDecoration(color:Colors.black38,borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFA78BFA).withOpacity(.22))),child:CustomPaint(painter:_TetrisPainter(board,shape,row,col,_ghost(),colors[activeKind+1]),child:const SizedBox.expand())))))),
-      SizedBox(width:84,child:Padding(padding:const EdgeInsets.only(right:8),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[const Text('NEXT',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(shapes[next],colors[next+1]),const SizedBox(height:8),const Text('HOLD',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(held,held==null?Colors.white12:colors[_kind(held!)+1]),const SizedBox(height:12),FilledButton(onPressed:over?()=>setState(_reset):_start,child:Text(over?'AGAIN':running?'DROP':'START')),TextButton(onPressed:running?_hold:null,child:const Text('HOLD'))]))),
-    ]))])));}
-class _MiniPiecePainter extends CustomPainter{
- final List<List<int>>? shape;final Color color;const _MiniPiecePainter(this.shape,this.color);
- @override void paint(Canvas canvas,Size size){if(shape==null)return;const cell=14.0;final w=shape!.first.length*cell,h=shape!.length*cell,ox=(size.width-w)/2,oy=(size.height-h)/2,p=Paint()..color=color;for(var y=0;y<shape!.length;y++)for(var x=0;x<shape![y].length;x++)if(shape![y][x]!=0)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(ox+x*cell,oy+y*cell,cell-2,cell-2),const Radius.circular(4)),p);}
- @override bool shouldRepaint(covariant _MiniPiecePainter old)=>true;
-}
-
 class _Flappy extends StatefulWidget{const _Flappy();@override State<_Flappy> createState()=>_FlappyState();}
 class _FlappyState extends State<_Flappy>{
  Timer? timer;double birdY=.45,velocity=0,pipeX=1.15,gap=.48;int score=0,best=0,level=1;bool running=false,over=false;final random=Random();
