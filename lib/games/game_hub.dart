@@ -372,7 +372,7 @@ class _GameMenuState extends State<_GameMenu>{
       const SizedBox(height:12),
       SizedBox(height:235,child:GridView.builder(gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:5,mainAxisSpacing:8,crossAxisSpacing:8,childAspectRatio:1.25),itemCount:50,itemBuilder:(_,i){final n=i+1;return OutlinedButton(style:OutlinedButton.styleFrom(padding:EdgeInsets.zero,foregroundColor:n==selectedLevel?accent:Colors.white70,side:BorderSide(color:n==selectedLevel?accent:Colors.white10)),onPressed:(){setState(()=>selectedLevel=n);Navigator.pop(sheet);},child:Text('$n',style:const TextStyle(fontWeight:FontWeight.w900)));})),
       Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('1 — 50',style:TextStyle(color:Colors.white38,fontSize:11)),Text('1 — 1B',style:TextStyle(color:accent,fontSize:11,fontWeight:FontWeight.w900))]),
-    ]))));
+    ])))));
   }
 }
 
