@@ -18,6 +18,9 @@ const int nexoraMaxLevel = 1000000000;
 int nexoraLevel(int value) => value.clamp(1, nexoraMaxLevel).toInt();
 const panel = Color(0xFF0D1320);
 const purple = Color(0xFF8B5CF6);
+bool nexoraHapticEnabled = true;
+bool nexoraSoundEnabled = true;
+String nexoraControlMode = 'GESTURE';
 
 class NexoraGameHub extends StatefulWidget {
   const NexoraGameHub({super.key});
@@ -37,21 +40,27 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
     _GameInfo('Memory', 'PUZZLE', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
   ];
 
-  Widget openGame(String name) {
-    final info = games.firstWhere((g) => g.name == name, orElse: () => games.first);
-    return _GameIntro(info: info, onStart: (difficulty) {
-      nexoraDifficulty = difficulty;
-      Widget game;
-      switch (name) {
-        case '2048': game = const _Twenty(); break;
-        case 'Tetris': game = const _Tetris(); break;
-        case 'Flappy': game = const _Flappy(); break;
-        case 'Breakout': game = const _Breakout(); break;
-        case 'Memory': game = const _Memory(); break;
-        default: game = const _Twenty();
-      }
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => game));
-    });
+  Widget openGame(String name, NexoraDifficulty difficulty) {
+    nexoraDifficulty = difficulty;
+    if (name == 'Flappy') return const _Flappy();
+    return _GameMenu(
+      game: name,
+      difficulty: difficulty,
+      onStart: (level, control, haptic, sound) {
+        nexoraControlMode = control;
+        nexoraHapticEnabled = haptic;
+        nexoraSoundEnabled = sound;
+        Widget game;
+        switch (name) {
+          case '2048': game = const _Twenty(); break;
+          case 'Tetris': game = const _Tetris(); break;
+          case 'Breakout': game = const _Breakout(); break;
+          case 'Memory': game = const _Memory(); break;
+          default: game = const _Twenty();
+        }
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => game));
+      },
+    );
   }
 
   @override
@@ -96,7 +105,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
                   const SizedBox(height: 4),
                   const Text('Play. Beat. Repeat.', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: -.8)),
                   const SizedBox(height: 7),
-                  const Text('Five polished mini-games • instant play • touch-first controls.', style: TextStyle(color: Colors.white60, height: 1.35)),
+                  const Text('Five mini-games • game-specific modes • touch-first controls.', style: TextStyle(color: Colors.white60, height: 1.35)),
                   const SizedBox(height: 18),
                   Row(children: const [
                     _MiniStat('5', 'GAMES'),
@@ -150,7 +159,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
               ),
               itemBuilder: (_, i) {
                 final game = visible[i];
-                return _GameCard(game, () => Navigator.push(context, MaterialPageRoute(builder: (_) => openGame(game.name))));
+                return _GameCard(game, (difficulty) => Navigator.push(context, MaterialPageRoute(builder: (_) => openGame(game.name, difficulty))));
               },
             ),
           ],
@@ -195,75 +204,159 @@ class _MiniStat extends StatelessWidget {
   );
 }
 
-class _GameCard extends StatelessWidget {
+class _GameCard extends StatefulWidget {
   final _GameInfo game;
-  final VoidCallback onTap;
-  const _GameCard(this.game, this.onTap);
+  final ValueChanged<NexoraDifficulty> onPlay;
+  const _GameCard(this.game, this.onPlay);
 
   @override
-  Widget build(BuildContext context) => InkWell(
-    onTap: onTap,
-    borderRadius: BorderRadius.circular(24),
-    child: Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [BoxShadow(color: game.color.withOpacity(.14), blurRadius: 22, offset: const Offset(0, 9))],
-        color: const Color(0xFF0A0E18),
-        border: Border.all(color: game.color.withOpacity(.28)),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Column(children: [
-          Expanded(
-            flex: 7,
-            child: Stack(children: [
-              Positioned.fill(child: CustomPaint(painter: _GameCardArt(game.name, game.color))),
-              Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.black.withOpacity(.02), Colors.black.withOpacity(.08), Colors.black.withOpacity(.62)],
-                  begin: Alignment.topCenter, end: Alignment.bottomCenter,
-                ),
-              ))),
-              Positioned(
-                left: 12, top: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(color: Colors.black.withOpacity(.28), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
-                  child: Icon(game.icon, color: Colors.white, size: 18),
-                ),
+  State<_GameCard> createState() => _GameCardState();
+}
+
+class _GameCardState extends State<_GameCard> {
+  NexoraDifficulty selected = NexoraDifficulty.normal;
+
+  List<NexoraDifficulty> get modes => switch (widget.game.name) {
+    'Flappy' => const [NexoraDifficulty.easy, NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro],
+    'Tetris' => const [NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro, NexoraDifficulty.impossible],
+    'Breakout' => const [NexoraDifficulty.easy, NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro, NexoraDifficulty.impossible],
+    'Memory' => const [NexoraDifficulty.easy, NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro],
+    _ => const [NexoraDifficulty.easy, NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro],
+  };
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      boxShadow: [BoxShadow(color: widget.game.color.withOpacity(.14), blurRadius: 22, offset: const Offset(0, 9))],
+      color: const Color(0xFF0A0E18),
+      border: Border.all(color: widget.game.color.withOpacity(.28)),
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Column(children: [
+        Expanded(
+          flex: 7,
+          child: Stack(children: [
+            Positioned.fill(child: CustomPaint(painter: _GameCardArt(widget.game.name, widget.game.color))),
+            Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.black.withOpacity(.02), Colors.black.withOpacity(.08), Colors.black.withOpacity(.62)],
+                begin: Alignment.topCenter, end: Alignment.bottomCenter,
               ),
-              Positioned(
-                right: 12, top: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                  decoration: BoxDecoration(color: Colors.black.withOpacity(.28), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
-                  child: Text(game.category, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: .8, color: Colors.white70)),
-                ),
+            ))),
+            Positioned(
+              left: 12, top: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(color: Colors.black.withOpacity(.28), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
+                child: Icon(widget.game.icon, color: Colors.white, size: 18),
               ),
-            ]),
-          ),
-          Expanded(
-            flex: 3,
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(13, 10, 10, 10),
-              child: Row(children: [
-                Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisAlignment: MainAxisAlignment.center, children: [
-                  Text(game.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
-                  const SizedBox(height: 2),
-                  Text(game.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(.45))),
-                ])),
-                Container(
+            ),
+            Positioned(
+              right: 12, top: 12,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                decoration: BoxDecoration(color: Colors.black.withOpacity(.28), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
+                child: Text(widget.game.category, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: .8, color: Colors.white70)),
+              ),
+            ),
+          ]),
+        ),
+        Expanded(
+          flex: 5,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 10, 9),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Row(children: [
+                Expanded(child: Text(widget.game.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900))),
+                SizedBox(
                   width: 34, height: 34,
-                  decoration: BoxDecoration(color: game.color.withOpacity(.18), shape: BoxShape.circle, border: Border.all(color: game.color.withOpacity(.35))),
-                  child: Icon(Icons.play_arrow_rounded, color: game.color, size: 20),
+                  child: IconButton(
+                    padding: EdgeInsets.zero,
+                    tooltip: 'CARA BERMAIN',
+                    onPressed: () => _showQuickGuide(context),
+                    icon: Icon(Icons.help_outline_rounded, color: widget.game.color, size: 19),
+                  ),
                 ),
               ]),
-            ),
+              Text(widget.game.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(.45))),
+              const SizedBox(height: 7),
+              Row(children: [
+                const Text('MODE', style: TextStyle(fontSize: 8, color: Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 1)),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: Container(
+                    height: 31,
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    decoration: BoxDecoration(color: Colors.white.withOpacity(.055), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white10)),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<NexoraDifficulty>(
+                        isExpanded: true,
+                        value: modes.contains(selected) ? selected : modes.first,
+                        dropdownColor: const Color(0xFF101624),
+                        icon: const Icon(Icons.expand_more_rounded, size: 16, color: Colors.white54),
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
+                        items: modes.map((d) => DropdownMenuItem(value: d, child: Text(difficultyName(d)))).toList(),
+                        onChanged: (d) => setState(() => selected = d ?? selected),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 7),
+                SizedBox(
+                  width: 42, height: 34,
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      backgroundColor: widget.game.color.withOpacity(.18),
+                      foregroundColor: widget.game.color,
+                      side: BorderSide(color: widget.game.color.withOpacity(.35)),
+                    ),
+                    onPressed: () => widget.onPlay(selected),
+                    child: const Icon(Icons.play_arrow_rounded, size: 21),
+                  ),
+                ),
+              ]),
+            ]),
           ),
-        ]),
-      ),
+        ),
+      ]),
     ),
   );
+
+  void _showQuickGuide(BuildContext context) {
+    final guide = switch (widget.game.name) {
+      '2048' => 'Geser tile ke empat arah. Angka yang sama menyatu. Jaga ruang kosong dan kejar tile 2048.',
+      'Tetris' => 'Geser untuk pindah, tap untuk rotate, double-tap untuk hard drop. Gunakan HOLD dan NEXT untuk merencanakan langkah.',
+      'Flappy' => 'Tap untuk flap dan atur ritme agar melewati celah pipa. Semakin jauh, permainan makin cepat.',
+      'Breakout' => 'Drag paddle, pantulkan bola, hancurkan brick, dan ambil power-up. Combo membuat skor makin tinggi.',
+      _ => 'Buka dua kartu, ingat simbolnya, lalu cari pasangan. Pasangan beruntun membangun streak.',
+    };
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0A0F1A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
+            const SizedBox(height: 15),
+            Row(children: [
+              Icon(Icons.menu_book_rounded, color: widget.game.color),
+              const SizedBox(width: 8),
+              Text('CARA BERMAIN • ${widget.game.name}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+            ]),
+            const SizedBox(height: 10),
+            Text(guide, style: const TextStyle(color: Colors.white70, height: 1.5, fontSize: 13)),
+            const SizedBox(height: 14),
+            Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
+          ]),
+        ),
+      ),
+    );
+  }
 }
 
 class _GameCardArt extends CustomPainter {
@@ -330,6 +423,181 @@ class _GameCardArt extends CustomPainter {
     final w=s.width*.15,h=s.height*.20;for(var y=0;y<3;y++)for(var x=0;x<4;x++){final show=(x+y)%3==0;final rr=Rect.fromLTWH(s.width*.18+x*s.width*.17,s.height*.18+y*s.height*.23,w,h);p.color=show?accent.withOpacity(.25):Colors.white.withOpacity(.07);c.drawRRect(RRect.fromRectAndRadius(rr,const Radius.circular(8)),p);if(show){p.color=accent;c.drawCircle(rr.center,7,p);}else{p.color=Colors.white24;c.drawCircle(rr.center,5,p);}}
   }
   @override bool shouldRepaint(covariant _GameCardArt old)=>false;
+}
+
+class _GameMenu extends StatefulWidget {
+  final String game;
+  final NexoraDifficulty difficulty;
+  final void Function(int level, String control, bool haptic, bool sound) onStart;
+  const _GameMenu({required this.game, required this.difficulty, required this.onStart});
+
+  @override
+  State<_GameMenu> createState() => _GameMenuState();
+}
+
+class _GameMenuState extends State<_GameMenu> {
+  bool haptic = true;
+  bool sound = true;
+  late String control;
+
+  bool get hasLevels => widget.game == '2048' || widget.game == 'Breakout' || widget.game == 'Memory';
+
+  List<String> get controls => switch (widget.game) {
+    'Tetris' => const ['GESTURE', 'BUTTONS'],
+    'Breakout' => const ['DRAG', 'BUTTONS'],
+    '2048' => const ['SWIPE', 'BUTTONS'],
+    'Memory' => const ['TOUCH'],
+    _ => const ['TAP'],
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    control = controls.first;
+  }
+
+  Color get accent => switch (widget.game) {
+    '2048' => const Color(0xFFF59E0B),
+    'Tetris' => const Color(0xFFA78BFA),
+    'Breakout' => const Color(0xFFEF4444),
+    _ => const Color(0xFFEC4899),
+  };
+
+  String get tagline => switch (widget.game) {
+    '2048' => 'MERGE & SURVIVE',
+    'Tetris' => 'DROP & CLEAR',
+    'Breakout' => 'SMASH & COMBO',
+    _ => 'MATCH & MASTER',
+  };
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: bg,
+    body: SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
+        children: [
+          Row(children: [
+            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded)),
+            const Spacer(),
+            _Badge('${difficultyName(widget.difficulty)} MODE'),
+          ]),
+          const SizedBox(height: 8),
+          Container(
+            height: 205,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(color: accent.withOpacity(.4)),
+              boxShadow: [BoxShadow(color: accent.withOpacity(.12), blurRadius: 28)],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(30),
+              child: Stack(children: [
+                Positioned.fill(child: CustomPaint(painter: _GameCardArt(widget.game, accent))),
+                Positioned(left: 18, bottom: 16, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(widget.game.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white60)),
+                  const SizedBox(height: 3),
+                  Text(tagline, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
+                ])),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 17),
+          Text('LEVEL', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.white38)),
+          const SizedBox(height: 7),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
+            decoration: BoxDecoration(color: panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white10)),
+            child: Row(children: [
+              Icon(hasLevels ? Icons.flag_rounded : Icons.trending_up_rounded, color: accent),
+              const SizedBox(width: 11),
+              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(hasLevels ? 'LEVEL 1 — 1,000,000,000' : 'AUTO PROGRESSION', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
+                const SizedBox(height: 3),
+                Text(hasLevels ? 'Level dibuat dinamis, bukan satu miliar data manual.' : 'Progress mengikuti score, lines, atau jarak sesuai game.', style: const TextStyle(color: Colors.white38, fontSize: 10)),
+              ])),
+            ]),
+          ),
+          const SizedBox(height: 16),
+          Text('SETTINGS', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.white38)),
+          const SizedBox(height: 7),
+          Container(
+            decoration: BoxDecoration(color: panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white10)),
+            child: Column(children: [
+              ListTile(
+                dense: true,
+                leading: const Icon(Icons.gamepad_rounded),
+                title: const Text('CONTROL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+                trailing: DropdownButtonHideUnderline(child: DropdownButton<String>(
+                  value: control,
+                  dropdownColor: const Color(0xFF101624),
+                  items: controls.map((x) => DropdownMenuItem(value: x, child: Text(x, style: const TextStyle(fontSize: 11)))).toList(),
+                  onChanged: (v) => setState(() => control = v ?? control),
+                )),
+              ),
+              const Divider(height: 1, color: Colors.white10),
+              SwitchListTile(
+                dense: true,
+                title: const Text('HAPTIC', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+                value: haptic,
+                onChanged: (v) => setState(() => haptic = v),
+              ),
+              SwitchListTile(
+                dense: true,
+                title: const Text('SOUND', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
+                value: sound,
+                onChanged: (v) => setState(() => sound = v),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: () => _showGuide(context),
+            icon: const Icon(Icons.menu_book_rounded),
+            label: const Text('CARA BERMAIN'),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 56,
+            child: FilledButton.icon(
+              onPressed: () => widget.onStart(1, control, haptic, sound),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('START', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  void _showGuide(BuildContext context) {
+    final text = switch (widget.game) {
+      '2048' => 'Geser papan ke empat arah. Tile dengan angka sama menyatu. Simpan ruang kosong dan rencanakan beberapa langkah ke depan.',
+      'Tetris' => 'Geser untuk memindahkan balok, tap untuk rotate, double-tap untuk hard drop. HOLD menyimpan balok dan NEXT memberi gambaran balok berikutnya.',
+      'Breakout' => 'Drag paddle untuk memantulkan bola. Hancurkan brick, ambil power-up, pertahankan combo, dan jangan habiskan 3 nyawa.',
+      _ => 'Buka dua kartu, hafalkan simbolnya, lalu cari pasangan yang sama. Pasangan beruntun membuat streak lebih tinggi.',
+    };
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0A0F1A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
+          child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
+            const SizedBox(height: 16),
+            Text('CARA BERMAIN • ${widget.game}', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
+            const SizedBox(height: 12),
+            Text(text, style: const TextStyle(color: Colors.white70, height: 1.55, fontSize: 13)),
+            const SizedBox(height: 18),
+            Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
+          ])),
+        ),
+      ),
+    );
+  }
 }
 
 class _GameIntro extends StatefulWidget {
