@@ -781,7 +781,7 @@ class _TetrisPainter extends CustomPainter{
    canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+1,y*cell+1,cell-2,cell-2),const Radius.circular(4)),p);
    final v=board[y*10+x];
    if(v>0){
-    p.color=_tetrisColors[v.clamp(0,_tetrisColors.length-1)];
+    p.color=_tetrisColors[v.clamp(0,_tetrisColors.length-1).toInt()];
     canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+2,y*cell+2,cell-4,cell-4),const Radius.circular(5)),p);
    }
   }
@@ -976,10 +976,10 @@ class _BrickBreakerUltimateState extends State<_BrickBreakerUltimate>{
  Timer? timer;double paddle=.5,bx=.5,by=.78,dx=.006,dy=-.008;int score=0,lives=3,level=1,combo=0;bool running=false,dead=false;late List<List<bool>> bricks;
  @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();paddle=.5;bx=.5;by=.78;dx=.006;dy=-.008;score=0;lives=3;level=nexoraSelectedLevel.clamp(1,50).toInt();combo=0;running=false;dead=false;bricks=List.generate(min(8,3+level~/4),(r)=>List.generate(8,true));}
  void _start(){if(running)return;setState(()=>running=true);timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
- void _tick(){if(!running)return;setState((){bx+=dx;by+=dy;if(bx<.03||bx>.97){dx=-dx;bx=bx.clamp(.03,.97);}if(by<.04)dy=dy.abs();if(by>.94){lives--;if(lives<=0){dead=true;running=false;timer?.cancel();}else{bx=paddle;by=.78;dy=-.008;dx=.006;}}if(by>.84&&by<.91&&bx>paddle-.12&&bx<paddle+.12&&dy>0){dy=-dy.abs();dx=((bx-paddle)*.035).clamp(-.018,.018);}for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final left=.08+k*.105,top=.08+r*.065;if(bx>left&&bx<left+.085&&by>top&&by<top+.05){bricks[r][k]=false;dy=-dy;score+=10+combo*2;combo++;break;}}if(bricks.every((r)=>r.every((b)=>!b))){level++;bricks=List.generate(min(10,3+level~/3),(r)=>List.generate(8,true));bx=paddle;by=.78;dy=-.008;combo=0;}});}
+ void _tick(){if(!running)return;setState((){bx+=dx;by+=dy;if(bx<.03||bx>.97){dx=-dx;bx=bx.clamp(.03,.97).toDouble();}if(by<.04)dy=dy.abs();if(by>.94){lives--;if(lives<=0){dead=true;running=false;timer?.cancel();}else{bx=paddle;by=.78;dy=-.008;dx=.006;}}if(by>.84&&by<.91&&bx>paddle-.12&&bx<paddle+.12&&dy>0){dy=-dy.abs();dx=((bx-paddle)*.035).clamp(-.018,.018).toDouble();}for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final left=.08+k*.105,top=.08+r*.065;if(bx>left&&bx<left+.085&&by>top&&by<top+.05){bricks[r][k]=false;dy=-dy;score+=10+combo*2;combo++;break;}}if(bricks.every((r)=>r.every((b)=>!b))){level++;bricks=List.generate(min(10,3+level~/3),(r)=>List.generate(8,true));bx=paddle;by=.78;dy=-.008;combo=0;}});}
  @override void dispose(){timer?.cancel();super.dispose();}
  @override Widget build(BuildContext context)=>_GamePage(title:'Brick Breaker Ultimate',subtitle:'LEVEL $level • COMBO $combo • $lives LIVES',accent:const Color(0xFFFF9500),reset:()=>setState(_reset),child:_World(top:const Color(0xFF241107),bottom:const Color(0xFF080609),child:Column(children:[
-  _ScoreBar('SCORE $score','LIVES $lives',const Color(0xFFFF9500)),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){setState(()=>paddle=(paddle+d.delta.dx/350).clamp(.12,.88));},child:CustomPaint(painter:_BrickPainter(bricks,bx,by,paddle),child:const SizedBox.expand()))),
+  _ScoreBar('SCORE $score','LIVES $lives',const Color(0xFFFF9500)),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){setState(()=>paddle=(paddle+d.delta.dx/350).clamp(.12,.88).toDouble());},child:CustomPaint(painter:_BrickPainter(bricks,bx,by,paddle),child:const SizedBox.expand()))),
   Padding(padding:const EdgeInsets.fromLTRB(18,8,18,18),child:FilledButton(onPressed:dead?()=>setState(_reset):_start,child:Text(dead?'PLAY AGAIN':running?'RUNNING':'START'))),
  ])));
 }
@@ -997,7 +997,7 @@ class _WatermelonMergeProState extends State<_WatermelonMergePro>{
  void _tick(){if(!running)return;setState((){for(final f in fruits){f.vy+=.00055;f.y+=f.vy;if(f.y+f.r>.94){f.y=.94-f.r;f.vy*=-.28;}}for(var i=0;i<fruits.length;i++)for(var j=i+1;j<fruits.length;j++){final a=fruits[i],b=fruits[j];if(a.type==b.type&&(a.x-b.x).abs()<a.r+b.r&&(a.y-b.y).abs()<a.r+b.r){a.dead=true;b.dead=true;fruits.add(_MergeFruit((a.x+b.x)/2,(a.y+b.y)/2,a.type+1));score+=(a.type+2)*5;}}fruits.removeWhere((f)=>f.dead);if(fruits.any((f)=>f.y-f.r<.12)&&fruits.length>12){dead=true;running=false;timer?.cancel();}});}
  @override void dispose(){timer?.cancel();super.dispose();}
  @override Widget build(BuildContext context)=>_GamePage(title:'Watermelon Merge Pro',subtitle:'LEVEL $nexoraSelectedLevel • DROP • MERGE • GROW',accent:const Color(0xFF22D3EE),reset:()=>setState(_reset),child:_World(top:const Color(0xFF071A18),bottom:const Color(0xFF030609),child:Column(children:[
-  _ScoreBar('SCORE $score','NEXT',const Color(0xFF22D3EE)),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){setState(()=>dropX=(dropX+d.delta.dx/350).clamp(.08,.92));},onHorizontalDragEnd:(_)=>_drop(),child:CustomPaint(painter:_MergePainter(fruits,dropX,current),child:const SizedBox.expand()))),
+  _ScoreBar('SCORE $score','NEXT',const Color(0xFF22D3EE)),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){setState(()=>dropX=(dropX+d.delta.dx/350).clamp(.08,.92).toDouble());},onHorizontalDragEnd:(_)=>_drop(),child:CustomPaint(painter:_MergePainter(fruits,dropX,current),child:const SizedBox.expand()))),
   Padding(padding:const EdgeInsets.fromLTRB(18,8,18,18),child:FilledButton(onPressed:dead?()=>setState(_reset):_start,child:Text(dead?'PLAY AGAIN':running?'RUNNING':'START'))),
  ])));
 }
