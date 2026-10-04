@@ -54,7 +54,7 @@ class NexoraMusicPlayer {
   Future<void> resume() => _audio.resume();
   Future<void> seek(Duration position) => _audio.seek(position);
   Future<void> stop() => _audio.stop();
-  Future<void> setVolume(double value) => _audio.setVolume(value.clamp(0.0, 1.0));
+  Future<void> setVolume(double value) => _audio.setVolume(value.clamp(0.0, 1.0).toDouble());
 
   Future<void> next() async {
     if (queue.isEmpty) return;

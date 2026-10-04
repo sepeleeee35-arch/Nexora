@@ -1391,7 +1391,8 @@ class _DodgeState extends State<DodgeZonePage> {
                   onHorizontalDragUpdate: (d) {
                     setState(() {
                       x = (x + d.delta.dx / constraints.maxWidth)
-                          .clamp(.08, .92);
+                          .clamp(.08, .92)
+                          .toDouble();
                     });
                   },
                   child: Container(
