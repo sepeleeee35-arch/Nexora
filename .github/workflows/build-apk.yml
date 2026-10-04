@@ -66,20 +66,17 @@ jobs:
           s=p.read_text()
           if "REQUEST_INSTALL_PACKAGES" not in s:
               s=s.replace("    <application", "    <uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\" />\n    <application", 1)
-          provider='''        <provider
-              android:name="androidx.core.content.FileProvider"
-              android:authorities="${applicationId}.fileProvider"
-              android:exported="false"
-              android:grantUriPermissions="true">
-              <meta-data
-                  android:name="android.support.FILE_PROVIDER_PATHS"
-                  android:resource="@xml/file_paths" />
-          </provider>
-'''
+          provider='''        <provider\n            android:name="androidx.core.content.FileProvider"\n            android:authorities="${applicationId}.fileProvider"\n            android:exported="false"\n            android:grantUriPermissions="true">\n            <meta-data\n                android:name="android.support.FILE_PROVIDER_PATHS"\n                android:resource="@xml/file_paths" />\n        </provider>\n'''
           if "android.support.FILE_PROVIDER_PATHS" not in s:
               s=s.replace("    </application>", provider+"    </application>", 1)
           p.write_text(s)
           PY
+
+      - name: Configure Google Sign-In build client
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+        run: |
+          if [ -z "$GOOGLE_CLIENT_ID" ]; then echo "::warning::GOOGLE_CLIENT_ID GitHub secret belum diisi; APK tetap dibuild, tetapi Google login belum bisa dipakai."; fi
 
       - name: Get packages
         run: flutter pub get
@@ -88,18 +85,7 @@ jobs:
         run: flutter analyze
 
       - name: Build release APK
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_SERVER_CLIENT_ID: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
-        shell: bash
-        run: |
-          ARGS="--dart-define=GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID"
-          if [ -n "$GOOGLE_SERVER_CLIENT_ID" ]; then
-            ARGS="$ARGS --dart-define=GOOGLE_SERVER_CLIENT_ID=$GOOGLE_SERVER_CLIENT_ID"
-          else
-            echo "::notice::GOOGLE_SERVER_CLIENT_ID tidak diisi; APK memakai server client ID bawaan Nexora."
-          fi
-          flutter build apk --release --target-platform android-arm64 $ARGS
+        run: flutter build apk --release --target-platform android-arm64 --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} --dart-define=GOOGLE_SERVER_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
 
       - name: Prepare direct APK
         shell: bash
