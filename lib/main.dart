@@ -235,7 +235,6 @@ class _NexoraShellState extends State<NexoraShell> {
   double cardOpacity = 1.0;
   double cardBorderWidth = 0.0;
   double cardBorderOpacity = 0.0;
-  NexoraUpdateInfo? _availableUpdate;
   bool _updateDialogShown = false;
   bool _updateBusy = false;
   static const names = ['Home','Games','Music','Tools','Market'];
@@ -250,7 +249,6 @@ class _NexoraShellState extends State<NexoraShell> {
   Future<void> _checkForNexoraUpdate() async {
     final update = await NexoraUpdateService.checkForUpdate();
     if (!mounted || update == null || _updateDialogShown) return;
-    _availableUpdate = update;
     _updateDialogShown = true;
     await _showNexoraUpdateDialog(update);
   }
@@ -277,7 +275,7 @@ class _NexoraShellState extends State<NexoraShell> {
                 try {
                   await NexoraUpdateService.downloadAndInstall(update);
                 } catch (e) {
-                  if (!mounted) return;
+                  if (!context.mounted) return;
                   setDialogState(() => _updateBusy = false);
                   setState(() => _updateBusy = false);
                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update gagal dibuka: $e')));
