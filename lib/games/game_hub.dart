@@ -341,7 +341,7 @@ class _GameIntroState extends State<_GameIntro> {
   NexoraDifficulty selected = NexoraDifficulty.normal;
   String instructions(String name) => switch (name) {
     '2048' => 'Geser papan untuk menggabungkan angka yang sama. Gabungkan terus sampai mencapai 2048. Rencanakan ruang kosongmu dan jangan biarkan papan penuh.',
-    'Tetris' => 'Geser dan putar balok yang jatuh. Susun tanpa celah untuk membuat garis penuh. Gunakan HOLD dan hard drop untuk mengontrol permainan.',
+    'Tetris' => 'Geser untuk memindahkan, tap untuk memutar, double-tap untuk hard drop. HOLD menyimpan balok. Penuhi garis tanpa celah; kecepatan jatuh naik terus saat garis bertambah.',
     'Flappy' => 'Ketuk layar untuk membuat burung terbang naik. Lewati celah pipa tanpa menabrak. Setiap pipa yang dilewati menambah skor.',
     'Breakout' => 'Geser paddle untuk memantulkan bola dan hancurkan semua brick. Jaga nyawa, manfaatkan power-up, dan pertahankan combo setinggi mungkin.',
     _ => 'Buka dua kartu untuk mencari pasangan yang sama. Ingat posisi kartu, bangun streak, dan selesaikan papan dengan gerakan sesedikit mungkin.',
@@ -496,15 +496,16 @@ class _Tetris extends StatefulWidget{
   const _Tetris();@override State<_Tetris> createState()=>_TetrisState();
 }
 class _TetrisState extends State<_Tetris>{
-  final random=Random(),board=List<int>.filled(200,0);
+  final random=Random(),board=List<int>.filled(200,0); List<int> bag=[];
   final shapes=const[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]]];
   final colors=const[Colors.transparent,Color(0xFF22D3EE),Color(0xFFFACC15),Color(0xFFA78BFA),Color(0xFF60A5FA),Color(0xFFFB923C),Color(0xFF4ADE80),Color(0xFFF87171)];
-  Timer? timer;late int current,next,activeKind;List<List<int>> shape=const[[1]];List<List<int>>? held;int row=0,col=3,score=0,lines=0,level=1;bool running=false,over=false,canHold=true;
+  Timer? timer;late int current,next,activeKind;List<List<int>> shape=const[[1]];List<List<int>>? held;int row=0,col=3,score=0,lines=0;bool running=false,over=false,canHold=true;
   @override void initState(){super.initState();_reset();}
-  void _reset(){timer?.cancel();for(var i=0;i<200;i++)board[i]=0;current=random.nextInt(7);next=random.nextInt(7);held=null;score=0;lines=0;running=false;over=false;canHold=true;_load();}
-  void _load(){activeKind=current;shape=shapes[activeKind].map((r)=>List<int>.from(r)).toList();row=0;col=3;current=next;next=random.nextInt(7);canHold=true;}
+  void _reset(){timer?.cancel();for(var i=0;i<200;i++)board[i]=0;bag=[];current=_nextPiece();next=_nextPiece();held=null;score=0;lines=0;running=false;over=false;canHold=true;_load();}
+  int _nextPiece(){if(bag.isEmpty){bag=List<int>.generate(7,(i)=>i)..shuffle(random);}return bag.removeLast();}
+  void _load(){activeKind=current;shape=shapes[activeKind].map((r)=>List<int>.from(r)).toList();row=0;col=3;current=next;next=_nextPiece();canHold=true;}
   bool _can(int r,int c,List<List<int>>s){for(var y=0;y<s.length;y++)for(var x=0;x<s[y].length;x++){if(s[y][x]==0)continue;final xx=c+x,yy=r+y;if(xx<0||xx>=10||yy>=20)return false;if(yy>=0&&board[yy*10+xx]!=0)return false;}return true;}
-  void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();const speeds=[620,520,400,285,165];final base=speeds[nexoraDifficulty.index];timer=Timer.periodic(Duration(milliseconds:max(70,base-level*42)),(_)=>_tick());}
+  void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();const speeds=[620,520,400,285,165];final base=speeds[nexoraDifficulty.index];final speedStage=lines~/10;timer=Timer.periodic(Duration(milliseconds:max(55,base-speedStage*38)),(_)=>_tick());}
   void _tick(){if(!mounted||!running)return;if(_can(row+1,col,shape)){row++;setState((){});}else{_lock();}}
   void _move(int d){if(!running){_start();return;}if(_can(row,col+d,shape)){col+=d;setState((){});}}
   void _soft(){if(!running){_start();return;}if(_can(row+1,col,shape)){row++;score++;setState((){});}else{_lock();}}
@@ -513,7 +514,7 @@ class _TetrisState extends State<_Tetris>{
   int _kind(List<List<int>>s){final k=s.expand((r)=>r).join();for(var i=0;i<7;i++)if(shapes[i].expand((r)=>r).join()==k)return i;return activeKind;}
   void _hold(){if(!running||!canHold)return;canHold=false;final old=activeKind;if(held==null){held=shapes[old].map((r)=>List<int>.from(r)).toList();_load();canHold=false;}else{final t=held!;held=shapes[old].map((r)=>List<int>.from(r)).toList();shape=t.map((r)=>List<int>.from(r)).toList();activeKind=_kind(shape);row=0;col=3;}setState((){});}
   int _ghost(){var r=row;while(_can(r+1,col,shape))r++;return r;}
-  void _lock(){for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0&&row+y>=0&&row+y<20&&col+x>=0&&col+x<10)board[(row+y)*10+col+x]=activeKind+1;var clear=0;for(var y=19;y>=0;y--){var full=true;for(var x=0;x<10;x++)if(board[y*10+x]==0){full=false;break;}if(full){for(var yy=y;yy>0;yy--)for(var x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];for(var x=0;x<10;x++)board[x]=0;clear++;y++;}}if(clear>0){lines+=clear;score+=[0,100,300,500,800][clear]*level;level=nexoraLevel(1+lines~/10);_clock();}_load();if(!_can(row,col,shape)){running=false;over=true;timer?.cancel();}setState((){});}
+  void _lock(){for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0&&row+y>=0&&row+y<20&&col+x>=0&&col+x<10)board[(row+y)*10+col+x]=activeKind+1;var clear=0;for(var y=19;y>=0;y--){var full=true;for(var x=0;x<10;x++)if(board[y*10+x]==0){full=false;break;}if(full){for(var yy=y;yy>0;yy--)for(var x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];for(var x=0;x<10;x++)board[x]=0;clear++;y++;}}if(clear>0){lines+=clear;score+=[0,100,300,500,800][clear]*(1+lines~/10);_clock();}_load();if(!_can(row,col,shape)){running=false;over=true;timer?.cancel();}setState((){});}
   Widget mini(List<List<int>>?s,Color c)=>SizedBox(width:58,height:44,child:CustomPaint(painter:_MiniPiecePainter(s,c)));
   @override void dispose(){timer?.cancel();super.dispose();}
   @override Widget build(BuildContext context)=>_GamePage(title:'Tetris',subtitle:'${difficultyName(nexoraDifficulty)} • 10×20 • rotate • hold • hard drop',accent:const Color(0xFFA78BFA),reset:()=>setState(_reset),child:_World(top:const Color(0xFF17112A),bottom:const Color(0xFF070914),child:Column(children:[
@@ -537,7 +538,7 @@ class _FlappyState extends State<_Flappy>{
  Timer? timer;double birdY=.45,velocity=0,pipeX=1.15,gap=.48;int score=0,best=0,level=1;bool running=false,over=false;final random=Random();
  void _reset(){timer?.cancel();birdY=.45;velocity=0;pipeX=1.15;gap=.48;score=0;level=1;running=false;over=false;}
  void _flap(){if(!running){if(over)_reset();running=true;timer=Timer.periodic(const Duration(milliseconds:25),(_)=>_tick());}velocity=-.028;setState((){});}
- void _tick(){if(!mounted||!running)return;birdY+=velocity;const gravity=[.00125,.00155,.00185,.00215,.00255];const pipeSpeed=[.0072,.0098,.0125,.015,.0185];const gapBase=[.20,.18,.16,.145,.125];final d=nexoraDifficulty.index;velocity+=gravity[d];pipeX-=pipeSpeed[d];if(pipeX<-.18){pipeX=1.08;gap=(.5-gapBase[d])+random.nextDouble()*(gapBase[d]*2);score++;level=nexoraLevel(1+score~/10);best=max(best,score);}final hit=birdY<.055||birdY>.90||(pipeX<.25&&pipeX>-.02&&(birdY<gap-gapBase[d]||birdY>gap+gapBase[d]));if(hit){running=false;over=true;timer?.cancel();}setState((){});}
+ void _tick(){if(!mounted||!running)return;birdY+=velocity;const gravity=[.00125,.00155,.00185,.00215,.00255];const pipeSpeed=[.0072,.0098,.0125,.015,.0185];const gapBase=[.20,.18,.16,.145,.125];final d=nexoraDifficulty.index;velocity+=gravity[d];pipeX-=pipeSpeed[d];if(pipeX<-.18){pipeX=1.08;final dynamicGap=max(.09,gapBase[d]-min(score,900)*.00002);gap=(.5-dynamicGap)+random.nextDouble()*(dynamicGap*2);score++;level=nexoraLevel(1+score~/10);best=max(best,score);}final hit=birdY<.055||birdY>.90||(pipeX<.25&&pipeX>-.02&&(birdY<gap-gapBase[d]||birdY>gap+gapBase[d]));if(hit){running=false;over=true;timer?.cancel();}setState((){});}
  @override void dispose(){timer?.cancel();super.dispose();}
  @override Widget build(BuildContext context)=>_GamePage(title:'Flappy',subtitle:'${difficultyName(nexoraDifficulty)} • Tap flight • dodge the pipes',accent:const Color(0xFF22D3EE),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_flap,child:_World(top:const Color(0xFF49B9E9),bottom:const Color(0xFFB8E9D4),child:Stack(children:[
   Positioned.fill(child:CustomPaint(painter:_FlappyPainter(birdY,pipeX,gap,score))),Positioned(top:14,left:0,right:0,child:Column(children:[Text('$score',style:const TextStyle(fontSize:50,fontWeight:FontWeight.w900,shadows:[Shadow(blurRadius:5)])),Text('LVL $level  •  BEST $best',style:const TextStyle(fontSize:9,color:Colors.white70,fontWeight:FontWeight.w900,letterSpacing:2))])),
@@ -557,7 +558,7 @@ class _BreakoutState extends State<_Breakout>{
  void _makeLevel(){final d=nexoraDifficulty.index;bricks=List<int>.filled(54,1);hp=List<int>.generate(54,(i)=>i<9||(d>=2&&i<18)||(d>=4&&i%3==0)?(d>=2?2:1):1);drops=[];final base=[.0068,.0085,.0105,.013,.017][d];final speed=base*(1+min(level-1,500)*.002);balls=[_Ball(.5,.82,speed,-speed*1.45)];}
  void _start(){if(running||over)return;running=true;_clock();setState((){});}void _clock(){timer?.cancel();timer=Timer.periodic(const Duration(milliseconds:16),(_)=>_tick());}
  void _drop(double x,double y){if(random.nextDouble()>.20)return;const t=['wide','multi','slow','fire'];drops.add(_PowerDrop(x,y,t[random.nextInt(t.length)]));}
- void _tick(){if(!mounted||!running)return;final out=<_Ball>[];for(final b in balls){b.x+=b.vx;b.y+=b.vy;if(b.x<.018||b.x>.982){b.vx=-b.vx;b.x=b.x.clamp(.018,.982).toDouble();}if(b.y<.055){b.vy=b.vy.abs();b.y=.055;}if(b.vy>0&&b.y>.84&&b.y<.94&&(b.x-paddle).abs()<[.22,.18,.15,.12,.095][nexoraDifficulty.index]){final h=(b.x-paddle)/[.22,.18,.15,.12,.095][nexoraDifficulty.index];b.vx=(b.vx+h*.005).clamp(-.017,.017).toDouble();b.vy=-b.vy.abs();combo++;}final col=(b.x*9).floor().clamp(0,8).toInt(),row=((b.y-.08)/.060).floor().clamp(0,5).toInt(),idx=row*9+col;if(b.y>.07&&b.y<.46&&bricks[idx]!=0){hp[idx]--;if(hp[idx]<=0){bricks[idx]=0;score+=10+combo*2;combo++;_drop(b.x,b.y);}else{score+=4;}b.vy=-b.vy;}if(b.y<1.02)out.add(b);}balls=out;if(balls.isEmpty){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final base=[.0068,.0085,.0105,.013,.017][nexoraDifficulty.index];final speed=base*(1+min(level-1,500)*.002);balls=[_Ball(.5,.82,speed*(random.nextBool()?1:-1),-speed*1.45)];}}for(final d in drops)d.y+=.006;final caught=<_PowerDrop>[];drops.removeWhere((d){final hit=d.y>.84&&d.y<.95&&(d.x-paddle).abs()<.16;if(hit)caught.add(d);return hit||d.y>1.02;});for(final d in caught)_power(d.type);if(bricks.every((v)=>v==0)){level=nexoraLevel(level+1);_makeLevel();_clock();}setState((){});}
+ void _tick(){if(!mounted||!running)return;final out=<_Ball>[];for(final b in balls){b.x+=b.vx;b.y+=b.vy;if(b.x<.018||b.x>.982){b.vx=-b.vx;b.x=b.x.clamp(.018,.982).toDouble();}if(b.y<.055){b.vy=b.vy.abs();b.y=.055;}if(b.vy>0&&b.y>.84&&b.y<.94&&(b.x-paddle).abs()<[.22,.18,.15,.12,.095][nexoraDifficulty.index]){final h=(b.x-paddle)/[.22,.18,.15,.12,.095][nexoraDifficulty.index];b.vx=(b.vx+h*.010).clamp(-.019,.019).toDouble();b.vy=-max(b.vy.abs(),.0065);combo++;}final col=(b.x*9).floor().clamp(0,8).toInt(),row=((b.y-.08)/.060).floor().clamp(0,5).toInt(),idx=row*9+col;if(b.y>.07&&b.y<.46&&bricks[idx]!=0){hp[idx]--;if(hp[idx]<=0){bricks[idx]=0;score+=10+combo*2;combo++;_drop(b.x,b.y);}else{score+=4;}b.vy=-b.vy;}if(b.y<1.02)out.add(b);}balls=out;if(balls.isEmpty){lives--;combo=0;if(lives<=0){running=false;over=true;timer?.cancel();}else{final base=[.0068,.0085,.0105,.013,.017][nexoraDifficulty.index];final speed=base*(1+min(level-1,500)*.002);balls=[_Ball(.5,.82,speed*(random.nextBool()?1:-1),-speed*1.45)];}}for(final d in drops)d.y+=.006;final caught=<_PowerDrop>[];drops.removeWhere((d){final hit=d.y>.84&&d.y<.95&&(d.x-paddle).abs()<.16;if(hit)caught.add(d);return hit||d.y>1.02;});for(final d in caught)_power(d.type);if(bricks.every((v)=>v==0)){level=nexoraLevel(level+1);_makeLevel();_clock();}setState((){});}
  void _power(String t){if(t=='wide'){paddle=paddle.clamp(.16,.84).toDouble();}else if(t=='multi'&&balls.isNotEmpty&&balls.length<3){final b=balls.first;balls.add(_Ball(b.x,b.y,-b.vx,b.vy));balls.add(_Ball(b.x,b.y,b.vx*.65,b.vy));}else if(t=='slow'){for(final b in balls){b.vx*=.72;b.vy*=.72;}}else{score+=100;for(var i=0;i<bricks.length;i++)if(bricks[i]!=0&&random.nextDouble()<.14)bricks[i]=0;}}
  @override void dispose(){timer?.cancel();super.dispose();}
  @override Widget build(BuildContext context)=>_GamePage(title:'Breakout',subtitle:'${difficultyName(nexoraDifficulty)} • Brick breaker • power-ups • 3 stages',accent:const Color(0xFFEF4444),reset:()=>setState(_reset),child:GestureDetector(behavior:HitTestBehavior.opaque,onTap:_start,onHorizontalDragUpdate:(d){paddle=(paddle+d.delta.dx/MediaQuery.sizeOf(context).width).clamp(.10,.90).toDouble();setState((){});},child:_World(top:const Color(0xFF210A14),bottom:const Color(0xFF070914),child:Stack(children:[
@@ -595,14 +596,22 @@ class _MemoryState extends State<_Memory> {
   late List<int> cards;
   final open = <int>[];
   final matched = <int>{};
-  int moves = 0, streak = 0, bestStreak = 0, level = 1;
+  int moves = 0, streak = 0, bestStreak = 0, level = 1, score = 0;
   bool locked = false;
 
   @override void initState() { super.initState(); _reset(); }
   void _reset() {
     final pairCounts=[6,8,10,12,18];final pairs=pairCounts[nexoraDifficulty.index];cards=<int>[for(var i=0;i<pairs;i++)...[i,i]]..shuffle(random);
     open.clear(); matched.clear();
-    moves = 0; streak = 0; bestStreak = 0; level = 1; locked = false;
+    moves = 0; streak = 0;
+              score = max(0, score - 15); bestStreak = 0; level = 1; score = 0; locked = false;
+  }
+  void _newRound() {
+    final base=[6,8,10,12,18][nexoraDifficulty.index];
+    final extra=min(4, (level-1)~/3);
+    final pairs=min(18, base+extra);
+    cards=<int>[for(var i=0;i<pairs;i++)...[i,i]]..shuffle(random);
+    open.clear(); matched.clear(); moves=0; streak=0; locked=false;
   }
   void _tap(int index) {
     if (locked || open.contains(index) || matched.contains(index)) return;
@@ -623,7 +632,13 @@ class _MemoryState extends State<_Memory> {
               streak = 0;
             }
             open.clear();
-            if (matched.length == cards.length) level = nexoraLevel(level + 1);
+            if (matched.length == cards.length) {
+              level = nexoraLevel(level + 1);
+              Future.delayed(const Duration(milliseconds: 650), () {
+                if (!mounted || locked) return;
+                setState(() => _newRound());
+              });
+            }
             locked = false;
           });
         });
@@ -638,7 +653,7 @@ class _MemoryState extends State<_Memory> {
     child: _World(
       top: const Color(0xFF180B1C), bottom: const Color(0xFF070914),
       child: Column(children: [
-        _ScoreBar('LVL $level • MOVES $moves', 'STREAK $streak', const Color(0xFFEC4899)),
+        _ScoreBar('LVL $level • SCORE $score', 'MOVES $moves • STREAK $streak', const Color(0xFFEC4899)),
         Expanded(child: GridView.builder(
           padding: const EdgeInsets.fromLTRB(18, 4, 18, 18),
           itemCount: cards.length,
