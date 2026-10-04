@@ -724,7 +724,7 @@ class _TetrisState extends State<_Tetris>{
     const SizedBox(height:5),Row(mainAxisAlignment:MainAxisAlignment.center,children:[ctl(Icons.rotate_right_rounded,_rotate),const SizedBox(width:4),ctl(Icons.keyboard_double_arrow_down_rounded,_hard)]),
     const SizedBox(height:5),Row(mainAxisAlignment:MainAxisAlignment.center,children:[ctl(Icons.keyboard_arrow_down_rounded,_soft),const SizedBox(width:4),ctl(Icons.back_hand_rounded,_hold)]),
     const SizedBox(height:7),SizedBox(width:94,height:40,child:FilledButton(onPressed:over?()=>setState(_reset):_start,child:Text(over?'AGAIN':running?'RUNNING':'START',style:const TextStyle(fontSize:9,fontWeight:FontWeight.w900)))),
-   ])),
+   ]))),
   ])),
  ])));
 }
