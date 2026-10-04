@@ -49,6 +49,29 @@ jobs:
       - name: Remove generated sample test
         run: rm -f test/widget_test.dart
 
+      - name: Configure Android APK installer
+        shell: bash
+        run: |
+          mkdir -p android/app/src/main/res/xml
+          cat > android/app/src/main/res/xml/file_paths.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <paths>
+              <external-path path="Android/data/com.nexora/" name="files_root" />
+              <external-path path="." name="external_storage_root" />
+          </paths>
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path("android/app/src/main/AndroidManifest.xml")
+          s=p.read_text()
+          if "REQUEST_INSTALL_PACKAGES" not in s:
+              s=s.replace("    <application", "    <uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\" />\n    <application", 1)
+          provider='''        <provider\n            android:name="androidx.core.content.FileProvider"\n            android:authorities="${applicationId}.fileProvider"\n            android:exported="false"\n            android:grantUriPermissions="true">\n            <meta-data\n                android:name="android.support.FILE_PROVIDER_PATHS"\n                android:resource="@xml/file_paths" />\n        </provider>\n'''
+          if "android.support.FILE_PROVIDER_PATHS" not in s:
+              s=s.replace("    </application>", provider+"    </application>", 1)
+          p.write_text(s)
+          PY
+
       - name: Configure Google Sign-In build client
         env:
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -65,21 +88,26 @@ jobs:
         run: flutter build apk --release --target-platform android-arm64 --dart-define=GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }} --dart-define=GOOGLE_SERVER_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
 
       - name: Prepare direct APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/Nexora-v1.0.0.apk
+        shell: bash
+        run: |
+          VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
+          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/Nexora-${VERSION}.apk"
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: Nexora-APK
-          path: build/app/outputs/flutter-apk/Nexora-v1.0.0.apk
+          path: build/app/outputs/flutter-apk/Nexora-*.apk
           if-no-files-found: error
 
       - name: Publish direct APK release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          TAG="v1.0.0"
-          FILE="build/app/outputs/flutter-apk/Nexora-v1.0.0.apk"
+          VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
+          RELEASE_VERSION="\${VERSION%%+*}"
+          TAG="v\${RELEASE_VERSION}"
+          FILE="build/app/outputs/flutter-apk/Nexora-\${VERSION}.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$FILE" --clobber
           else
