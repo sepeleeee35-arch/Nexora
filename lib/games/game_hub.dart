@@ -725,7 +725,7 @@ class _TetrisState extends State<_Tetris>{
     const SizedBox(height:5),Row(mainAxisAlignment:MainAxisAlignment.center,children:[ctl(Icons.keyboard_arrow_down_rounded,_soft),const SizedBox(width:4),ctl(Icons.back_hand_rounded,_hold)]),
     const SizedBox(height:7),SizedBox(width:94,height:40,child:FilledButton(onPressed:over?()=>setState(_reset):_start,child:Text(over?'AGAIN':running?'RUNNING':'START',style:const TextStyle(fontSize:9,fontWeight:FontWeight.w900)))),
    ])),
-  ]),
+  ])),
  ])));
 }
 const List<Color> _tetrisColors = [
@@ -959,7 +959,7 @@ class _DinoRunUltraState extends State<_DinoRunUltra>{
  @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();y=0;v=0;distance=0;score=0;running=false;dead=false;obstacles.clear();best=0;}
  void _start(){if(running)return;setState(()=>running=true);timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
  void _jump(){if(!running){_start();return;}if(y==0)setState(()=>v=-15);}
- void _tick(){if(!running)return;setState((){v+=.8;y+=v;if(y>0){y=0;v=0;}distance+=speed*.08;score=distance.floor();if(obstacles.isEmpty||obstacles.last.left<320&&random.nextDouble()<.018)obstacles.add(Rect.fromLTWH(430,118-random.nextInt(12),22+random.nextInt(12),42));for(var i=0;i<obstacles.length;i++)obstacles[i]=obstacles[i].translate(-speed,0);obstacles.removeWhere((o)=>o.right<0);if(obstacles.any((o)=>o.overlaps(Rect.fromLTWH(48,122+y,34,42)))){dead=true;running=false;timer?.cancel();best=max(best,score);}});}
+ void _tick(){if(!running)return;setState((){v+=.8;y+=v;if(y>0){y=0;v=0;}distance+=speed*.08;score=distance.floor();if(obstacles.isEmpty||obstacles.last.left<320&&random.nextDouble()<.018)obstacles.add(Rect.fromLTWH(430.0,118.0-random.nextInt(12).toDouble(),22.0+random.nextInt(12).toDouble(),42.0));for(var i=0;i<obstacles.length;i++)obstacles[i]=obstacles[i].translate(-speed,0);obstacles.removeWhere((o)=>o.right<0);if(obstacles.any((o)=>o.overlaps(Rect.fromLTWH(48,122+y,34,42)))){dead=true;running=false;timer?.cancel();best=max(best,score);}});}
  @override void dispose(){timer?.cancel();super.dispose();}
  @override Widget build(BuildContext context)=>_GamePage(title:'Dino Run Ultra',subtitle:'LEVEL $nexoraSelectedLevel • RUN • JUMP • SURVIVE',accent:const Color(0xFF00FF88),reset:()=>setState(_reset),child:_World(top:const Color(0xFF071A13),bottom:const Color(0xFF030609),child:Column(children:[
   _ScoreBar('SCORE $score','BEST $best',const Color(0xFF00FF88)),Expanded(child:GestureDetector(onTap:_jump,child:CustomPaint(painter:_DinoPainter(y,obstacles,distance),child:const SizedBox.expand()))),
@@ -974,9 +974,9 @@ class _DinoPainter extends CustomPainter{
 class _BrickBreakerUltimate extends StatefulWidget{const _BrickBreakerUltimate();@override State<_BrickBreakerUltimate> createState()=>_BrickBreakerUltimateState();}
 class _BrickBreakerUltimateState extends State<_BrickBreakerUltimate>{
  Timer? timer;double paddle=.5,bx=.5,by=.78,dx=.006,dy=-.008;int score=0,lives=3,level=1,combo=0;bool running=false,dead=false;late List<List<bool>> bricks;
- @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();paddle=.5;bx=.5;by=.78;dx=.006;dy=-.008;score=0;lives=3;level=nexoraSelectedLevel.clamp(1,50).toInt();combo=0;running=false;dead=false;bricks=List.generate(min(8,3+level~/4),(r)=>List.generate(8,true));}
+ @override void initState(){super.initState();_reset();} void _reset(){timer?.cancel();paddle=.5;bx=.5;by=.78;dx=.006;dy=-.008;score=0;lives=3;level=nexoraSelectedLevel.clamp(1,50).toInt();combo=0;running=false;dead=false;bricks=List.generate(min(8,3+level~/4),(r)=>List.generate(8,(_)=>true));}
  void _start(){if(running)return;setState(()=>running=true);timer=Timer.periodic(const Duration(milliseconds:16),(_){if(mounted)_tick();});}
- void _tick(){if(!running)return;setState((){bx+=dx;by+=dy;if(bx<.03||bx>.97){dx=-dx;bx=bx.clamp(.03,.97).toDouble();}if(by<.04)dy=dy.abs();if(by>.94){lives--;if(lives<=0){dead=true;running=false;timer?.cancel();}else{bx=paddle;by=.78;dy=-.008;dx=.006;}}if(by>.84&&by<.91&&bx>paddle-.12&&bx<paddle+.12&&dy>0){dy=-dy.abs();dx=((bx-paddle)*.035).clamp(-.018,.018).toDouble();}for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final left=.08+k*.105,top=.08+r*.065;if(bx>left&&bx<left+.085&&by>top&&by<top+.05){bricks[r][k]=false;dy=-dy;score+=10+combo*2;combo++;break;}}if(bricks.every((r)=>r.every((b)=>!b))){level++;bricks=List.generate(min(10,3+level~/3),(r)=>List.generate(8,true));bx=paddle;by=.78;dy=-.008;combo=0;}});}
+ void _tick(){if(!running)return;setState((){bx+=dx;by+=dy;if(bx<.03||bx>.97){dx=-dx;bx=bx.clamp(.03,.97).toDouble();}if(by<.04)dy=dy.abs();if(by>.94){lives--;if(lives<=0){dead=true;running=false;timer?.cancel();}else{bx=paddle;by=.78;dy=-.008;dx=.006;}}if(by>.84&&by<.91&&bx>paddle-.12&&bx<paddle+.12&&dy>0){dy=-dy.abs();dx=((bx-paddle)*.035).clamp(-.018,.018).toDouble();}for(var r=0;r<bricks.length;r++)for(var k=0;k<8;k++)if(bricks[r][k]){final left=.08+k*.105,top=.08+r*.065;if(bx>left&&bx<left+.085&&by>top&&by<top+.05){bricks[r][k]=false;dy=-dy;score+=10+combo*2;combo++;break;}}if(bricks.every((r)=>r.every((b)=>!b))){level++;bricks=List.generate(min(10,3+level~/3),(r)=>List.generate(8,(_)=>true));bx=paddle;by=.78;dy=-.008;combo=0;}});}
  @override void dispose(){timer?.cancel();super.dispose();}
  @override Widget build(BuildContext context)=>_GamePage(title:'Brick Breaker Ultimate',subtitle:'LEVEL $level • COMBO $combo • $lives LIVES',accent:const Color(0xFFFF9500),reset:()=>setState(_reset),child:_World(top:const Color(0xFF241107),bottom:const Color(0xFF080609),child:Column(children:[
   _ScoreBar('SCORE $score','LIVES $lives',const Color(0xFFFF9500)),Expanded(child:GestureDetector(onHorizontalDragUpdate:(d){setState(()=>paddle=(paddle+d.delta.dx/350).clamp(.12,.88).toDouble());},child:CustomPaint(painter:_BrickPainter(bricks,bx,by,paddle),child:const SizedBox.expand()))),
