@@ -337,61 +337,190 @@ class _GameIntro extends StatefulWidget {
   const _GameIntro({required this.info, required this.onStart});
   @override State<_GameIntro> createState() => _GameIntroState();
 }
+
 class _GameIntroState extends State<_GameIntro> {
   NexoraDifficulty selected = NexoraDifficulty.normal;
-  String instructions(String name) => switch (name) {
-    '2048' => 'Geser papan untuk menggabungkan angka yang sama. Gabungkan terus sampai mencapai 2048. Rencanakan ruang kosongmu dan jangan biarkan papan penuh.',
-    'Tetris' => 'Geser untuk memindahkan, tap untuk memutar, double-tap untuk hard drop. HOLD menyimpan balok. Penuhi garis tanpa celah; kecepatan jatuh naik terus saat garis bertambah.',
-    'Flappy' => 'Ketuk layar untuk membuat burung terbang naik. Lewati celah pipa tanpa menabrak. Setiap pipa yang dilewati menambah skor.',
-    'Breakout' => 'Geser paddle untuk memantulkan bola dan hancurkan semua brick. Jaga nyawa, manfaatkan power-up, dan pertahankan combo setinggi mungkin.',
-    _ => 'Buka dua kartu untuk mencari pasangan yang sama. Ingat posisi kartu, bangun streak, dan selesaikan papan dengan gerakan sesedikit mungkin.',
-  };
-  @override Widget build(BuildContext context) {
-    final d=selected;
-    return Scaffold(backgroundColor:bg,body:SafeArea(child:ListView(padding:const EdgeInsets.fromLTRB(18,18,18,28),children:[
-      Row(children:[IconButton(onPressed:()=>Navigator.pop(context),icon:const Icon(Icons.arrow_back_rounded)),const Spacer(),_Badge('GAME BRIEFING')]),
-      const SizedBox(height:10),
-      Container(height:170,decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),gradient:LinearGradient(colors:[widget.info.color.withOpacity(.38),const Color(0xFF0A0F1D)],begin:Alignment.topLeft,end:Alignment.bottomRight),border:Border.all(color:widget.info.color.withOpacity(.42)),boxShadow:[BoxShadow(color:widget.info.color.withOpacity(.12),blurRadius:28)]),child:Stack(children:[
-        Positioned.fill(child:CustomPaint(painter:_GameCardArt(widget.info.name,widget.info.color))),
-        Positioned(left:18,bottom:16,child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(widget.info.category,style:const TextStyle(fontSize:9,fontWeight:FontWeight.w900,letterSpacing:1.6,color:Colors.white60)),const SizedBox(height:3),Text(widget.info.name,style:const TextStyle(fontSize:32,fontWeight:FontWeight.w900))])),
-      ])),
-      const SizedBox(height:16),const Text('HOW TO PLAY',style:TextStyle(fontSize:11,fontWeight:FontWeight.w900,letterSpacing:1.5,color:Colors.white54)),const SizedBox(height:7),
-      Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(color:panel,borderRadius:BorderRadius.circular(20),border:Border.all(color:Colors.white10)),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        Container(width:42,height:42,decoration:BoxDecoration(color:widget.info.color.withOpacity(.15),shape:BoxShape.circle),child:Icon(widget.info.icon,color:widget.info.color)),const SizedBox(width:12),Expanded(child:Text(instructions(widget.info.name),style:const TextStyle(height:1.45,color:Colors.white70))),
-      ])),
-      const SizedBox(height:18),
-      InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () async {
-          final picked = await showModalBottomSheet<NexoraDifficulty>(context: context, backgroundColor: const Color(0xFF0A0F1A), shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))), builder: (_) => _DifficultySheet(selected: selected, accent: widget.info.color));
-          if (picked != null) setState(() => selected = picked);
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 180), padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
-          decoration: BoxDecoration(color: widget.info.color.withOpacity(.10), borderRadius: BorderRadius.circular(20), border: Border.all(color: widget.info.color.withOpacity(.45))),
-          child: Row(children: [
-            Container(width: 38, height: 38, decoration: BoxDecoration(color: widget.info.color.withOpacity(.16), borderRadius: BorderRadius.circular(13)), child: Icon(Icons.tune_rounded, color: widget.info.color, size: 20)),
-            const SizedBox(width: 12), Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [const Text('DIFFICULTY', style: TextStyle(fontSize: 8, color: Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 1.2)), const SizedBox(height: 2), Text(difficultyName(d), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)), Text(difficultyHint(d), style: const TextStyle(fontSize: 9, color: Colors.white54))])),
-            Icon(Icons.expand_more_rounded, color: widget.info.color),
-          ]),
-        ),
-      ),
-      const SizedBox(height:14),SizedBox(height:56,child:FilledButton.icon(onPressed:()=>widget.onStart(selected),icon:const Icon(Icons.play_arrow_rounded),label:const Text('START GAME',style:TextStyle(fontWeight:FontWeight.w900,letterSpacing:.7)))),
-    ])));
-  }
-}
 
-class _DifficultySheet extends StatelessWidget {
-  final NexoraDifficulty selected; final Color accent;
-  const _DifficultySheet({required this.selected, required this.accent});
-  @override Widget build(BuildContext context) => SafeArea(child: Padding(padding: const EdgeInsets.fromLTRB(18, 18, 18, 20), child: Column(mainAxisSize: MainAxisSize.min, children: [
-    Row(children: [Container(width: 36, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8))), const Spacer(), const Text('SELECT MODE', style: TextStyle(fontSize: 10, color: Colors.white54, fontWeight: FontWeight.w900, letterSpacing: 1.3)), const Spacer(), const SizedBox(width: 36)]),
-    const SizedBox(height: 18),
-    ...NexoraDifficulty.values.map((d) => Padding(padding: const EdgeInsets.only(bottom: 7), child: ListTile(shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), tileColor: d == selected ? accent.withOpacity(.14) : Colors.white.withOpacity(.035), leading: Icon(d == selected ? Icons.radio_button_checked_rounded : Icons.radio_button_off_rounded, color: d == selected ? accent : Colors.white30), title: Text(difficultyName(d), style: const TextStyle(fontWeight: FontWeight.w900)), subtitle: Text(difficultyHint(d), style: const TextStyle(fontSize: 9, color: Colors.white38)), trailing: Text('${d.index + 1}/5', style: const TextStyle(fontSize: 9, color: Colors.white30, fontWeight: FontWeight.w900)), onTap: () => Navigator.pop(context, d))))
-  ])));
+  String shortHow(String name) => switch (name) {
+    '2048' => 'Geser semua tile. Tile bernilai sama akan menyatu menjadi angka lebih besar. Jaga ruang kosong dan kejar 2048.',
+    'Tetris' => 'Geser, putar, HOLD, lalu hard drop. Susun balok tanpa celah dan hapus garis untuk terus bertahan.',
+    'Flappy' => 'Ketuk layar untuk mengepak. Atur ritme agar melewati celah pipa. Jangan menyentuh pipa atau tanah.',
+    'Breakout' => 'Geser paddle untuk memantulkan bola. Hancurkan semua brick, ambil power-up, dan pertahankan combo.',
+    _ => 'Buka dua kartu, ingat posisinya, lalu cari pasangan yang sama. Streak tinggi memberi skor lebih besar.',
+  };
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: bg,
+    body: SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
+        children: [
+          Row(children: [
+            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded)),
+            const Spacer(),
+            _Badge('READY TO PLAY'),
+          ]),
+          const SizedBox(height: 10),
+          Container(
+            height: 170,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: widget.info.color.withOpacity(.42)),
+              boxShadow: [BoxShadow(color: widget.info.color.withOpacity(.12), blurRadius: 28)],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(28),
+              child: Stack(children: [
+                Positioned.fill(child: CustomPaint(painter: _GameCardArt(widget.info.name, widget.info.color))),
+                Positioned(left: 18, bottom: 16, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Text(widget.info.category, style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.6, color: Colors.white60)),
+                  const SizedBox(height: 3),
+                  Text(widget.info.name, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900)),
+                ])),
+              ]),
+            ),
+          ),
+          const SizedBox(height: 18),
+          Text(shortHow(widget.info.name), style: const TextStyle(color: Colors.white70, height: 1.5, fontSize: 14)),
+          const SizedBox(height: 18),
+          Row(children: [
+            const Text('MODE', style: TextStyle(fontSize: 9, color: Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 1.3)),
+            const SizedBox(width: 10),
+            Container(
+              height: 40,
+              padding: const EdgeInsets.symmetric(horizontal: 10),
+              decoration: BoxDecoration(color: Colors.white.withOpacity(.06), borderRadius: BorderRadius.circular(12)),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<NexoraDifficulty>(
+                  value: selected,
+                  dropdownColor: const Color(0xFF101624),
+                  icon: const Icon(Icons.expand_more_rounded, size: 18, color: Colors.white54),
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w900),
+                  items: NexoraDifficulty.values.map((d) => DropdownMenuItem(value: d, child: Text(difficultyName(d)))).toList(),
+                  onChanged: (d) => setState(() => selected = d ?? selected),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(child: Text(difficultyHint(selected), maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 9, color: Colors.white38))),
+          ]),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 56,
+            child: FilledButton.icon(
+              onPressed: () => widget.onStart(selected),
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('START GAME', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: .7)),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
 }
 
 class _GamePage extends StatelessWidget {
+  final String title, subtitle;
+  final Color accent;
+  final Widget child;
+  final VoidCallback? reset;
+  const _GamePage({required this.title, required this.subtitle, required this.accent, required this.child, this.reset});
+
+  String _guide(String game) => switch (game) {
+    '2048' => '1. Geser layar ke atas, bawah, kiri, atau kanan untuk menggerakkan semua tile.\\n\\n2. Dua angka yang sama akan bergabung saat bertemu. Contoh: 2 + 2 menjadi 4.\\n\\n3. Setiap merge memberi skor. Target utama adalah membuat tile 2048.\\n\\n4. Jangan isi papan sampai tidak ada gerakan. Simpan ruang kosong dan rencanakan beberapa langkah ke depan.\\n\\nCONTROL\\n• Swipe kiri/kanan/atas/bawah\\n• UNDO untuk membatalkan langkah terakhir\\n• RETRY untuk memulai ulang\\n\\nSYSTEM\\nSkor menaikkan level secara bertahap. Mode lebih tinggi membuat permainan lebih menuntut.',
+    'Tetris' => '1. Balok jatuh dari atas dan harus disusun di grid 10×20.\\n\\n2. Geser untuk memindahkan balok, tap untuk memutar, dan double-tap untuk hard drop.\\n\\n3. HOLD menyimpan satu balok agar bisa dipakai nanti. NEXT menunjukkan balok berikutnya.\\n\\n4. Isi satu baris penuh untuk menghapusnya. Semakin banyak baris yang dibersihkan, kecepatan jatuh meningkat.\\n\\nCONTROL\\n• Drag horizontal = kiri/kanan\\n• Tap = rotate\\n• Double-tap = hard drop\\n• HOLD = simpan/tukar balok\\n\\nSYSTEM\\nMenggunakan 7-bag agar distribusi tetromino lebih adil. Ghost piece menunjukkan posisi pendaratan.',
+    'Flappy' => '1. Ketuk layar untuk membuat burung mengepak ke atas. Setelah itu gravitasi menariknya kembali.\\n\\n2. Atur timing ketukan untuk melewati celah setiap pipa.\\n\\n3. Setiap pipa yang berhasil dilewati menambah skor dan setiap beberapa poin level naik.\\n\\n4. Menyentuh pipa, tanah, atau batas atas mengakhiri ronde.\\n\\nCONTROL\\n• Tap di mana saja = flap\\n• Tap saat GAME OVER = main lagi\\n\\nSYSTEM\\nKecepatan, gravitasi, dan ukuran celah mengikuti mode. Celah juga perlahan makin ketat saat skor bertambah.',
+    'Breakout' => '1. Geser paddle di bagian bawah untuk menjaga bola tetap hidup.\\n\\n2. Bola menghancurkan brick dari bawah/atas. Brick kuat membutuhkan lebih dari satu hit.\\n\\n3. Pantulan di bagian berbeda dari paddle mengubah arah bola sehingga kamu bisa mengontrol sudut serangan.\\n\\n4. Ambil power-up yang jatuh: W memperlebar paddle, × menambah bola, S memperlambat bola, F memberi efek serangan tambahan.\\n\\nCONTROL\\n• Drag kiri/kanan = paddle\\n• Tap = launch\\n\\nSYSTEM\\nAda 3 nyawa, combo, brick ber-HP, power-up, dan level berulang. Bola yang hilang mengurangi nyawa.',
+    _ => '1. Semua kartu tertutup. Buka satu kartu untuk melihat simbolnya.\\n\\n2. Buka kartu kedua. Jika simbol sama, pasangan tetap terbuka dan streak bertambah.\\n\\n3. Jika salah, kedua kartu tertutup kembali. Hafalkan posisi agar gerakan berikutnya lebih cepat.\\n\\n4. Selesaikan seluruh papan untuk naik level. Pada level lebih tinggi jumlah pasangan dapat bertambah.\\n\\nCONTROL\\n• Tap kartu = buka kartu\\n• Tidak ada batas waktu paksa\\n\\nSYSTEM\\nMatch memberi skor dan streak. Salah menebak memutus streak. Kesulitan menentukan jumlah pasangan dan tekanan permainan.',
+  };
+
+  void _showGuide(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: const Color(0xFF0A0F1A),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => SafeArea(
+        child: DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: .72,
+          minChildSize: .45,
+          maxChildSize: .94,
+          builder: (_, scroll) => SingleChildScrollView(
+            controller: scroll,
+            padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
+              const SizedBox(height: 18),
+              Row(children: [
+                Icon(Icons.menu_book_rounded, color: accent),
+                const SizedBox(width: 9),
+                Text('CARA BERMAIN', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w900)),
+              ]),
+              const SizedBox(height: 14),
+              Text(_guide(title), style: const TextStyle(color: Colors.white70, height: 1.55, fontSize: 13)),
+              const SizedBox(height: 20),
+              SizedBox(width: double.infinity, child: OutlinedButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
+            ]),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    backgroundColor: bg,
+    body: SafeArea(
+      child: Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(10, 8, 10, 7),
+          child: Row(children: [
+            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded)),
+            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900)),
+              Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.white38)),
+            ])),
+            if (reset != null) IconButton(onPressed: reset, icon: const Icon(Icons.refresh_rounded)),
+          ]),
+        ),
+        Expanded(
+          child: Stack(children: [
+            Positioned.fill(child: child),
+            Positioned(
+              right: 12,
+              bottom: 12,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(18),
+                  onTap: () => _showGuide(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(.58),
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(color: accent.withOpacity(.55)),
+                      boxShadow: [BoxShadow(color: Colors.black.withOpacity(.22), blurRadius: 12)],
+                    ),
+                    child: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Icon(Icons.help_outline_rounded, color: accent, size: 17),
+                      const SizedBox(width: 6),
+                      const Text('CARA BERMAIN', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: .8)),
+                    ]),
+                  ),
+                ),
+              ),
+            ),
+          ]),
+        ),
+      ]),
+    ),
+  );
+}
+
+ {
   final String title, subtitle;
   final Color accent;
   final Widget child;
