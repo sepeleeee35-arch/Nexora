@@ -20,7 +20,8 @@ const panel = Color(0xFF0D1320);
 const purple = Color(0xFF8B5CF6);
 bool nexoraHapticEnabled = true;
 bool nexoraSoundEnabled = true;
-String nexoraControlMode = 'GESTURE';
+String nexoraControlMode = 'BUTTONS';
+int nexoraSelectedLevel = 1;
 
 class NexoraGameHub extends StatefulWidget {
   const NexoraGameHub({super.key});
@@ -40,13 +41,12 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
     _GameInfo('Memory', 'PUZZLE', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
   ];
 
-  Widget openGame(String name, NexoraDifficulty difficulty) {
-    nexoraDifficulty = difficulty;
+  Widget openGame(String name) {
     if (name == 'Flappy') return const _Flappy();
     return _GameMenu(
       game: name,
-      difficulty: difficulty,
       onStart: (level, control, haptic, sound) {
+        nexoraSelectedLevel = level;
         nexoraControlMode = control;
         nexoraHapticEnabled = haptic;
         nexoraSoundEnabled = sound;
@@ -159,7 +159,7 @@ class _NexoraGameHubState extends State<NexoraGameHub> {
               ),
               itemBuilder: (_, i) {
                 final game = visible[i];
-                return _GameCard(game, (difficulty) => Navigator.push(context, MaterialPageRoute(builder: (_) => openGame(game.name, difficulty))));
+                return _GameCard(game, () => Navigator.push(context, MaterialPageRoute(builder: (_) => openGame(game.name))));
               },
             ),
           ],
@@ -204,159 +204,36 @@ class _MiniStat extends StatelessWidget {
   );
 }
 
-class _GameCard extends StatefulWidget {
+class _GameCard extends StatelessWidget {
   final _GameInfo game;
-  final ValueChanged<NexoraDifficulty> onPlay;
+  final VoidCallback onPlay;
   const _GameCard(this.game, this.onPlay);
-
-  @override
-  State<_GameCard> createState() => _GameCardState();
+  @override Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(borderRadius: BorderRadius.circular(24),color:const Color(0xFF0A0E18),border:Border.all(color:game.color.withOpacity(.28)),boxShadow:[BoxShadow(color:game.color.withOpacity(.14),blurRadius:22,offset:const Offset(0,9))]),
+    child:ClipRRect(borderRadius:BorderRadius.circular(24),child:Column(children:[
+      Expanded(flex:7,child:Stack(children:[
+        Positioned.fill(child:CustomPaint(painter:_GameCardArt(game.name,game.color))),
+        Positioned.fill(child:DecoratedBox(decoration:BoxDecoration(gradient:LinearGradient(colors:[Colors.transparent,Colors.black.withOpacity(.08),Colors.black.withOpacity(.62)],begin:Alignment.topCenter,end:Alignment.bottomCenter)))),
+        Positioned(left:12,top:12,child:_MiniBadge(game.category)),
+      ])),
+      Expanded(flex:5,child:Padding(padding:const EdgeInsets.fromLTRB(12,8,10,9),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Text(game.name,style:const TextStyle(fontSize:17,fontWeight:FontWeight.w900)),
+        const SizedBox(height:2),
+        Text(game.subtitle,maxLines:1,overflow:TextOverflow.ellipsis,style:TextStyle(fontSize:9,color:Colors.white.withOpacity(.45))),
+        const Spacer(),
+        Row(children:[
+          Expanded(child:OutlinedButton.icon(style:OutlinedButton.styleFrom(minimumSize:const Size(0,35),padding:const EdgeInsets.symmetric(horizontal:8),side:BorderSide(color:game.color.withOpacity(.35)),foregroundColor:game.color),onPressed:onPlay,icon:const Icon(Icons.play_arrow_rounded,size:17),label:const Text('PLAY',style:TextStyle(fontSize:10,fontWeight:FontWeight.w900)))),
+          const SizedBox(width:7),
+          SizedBox(width:39,height:35,child:IconButton(tooltip:'CARA BERMAIN',onPressed:()=>_showGuide(context),icon:Icon(Icons.menu_book_rounded,color:game.color,size:19))),
+        ]),
+      ]))),
+    ])));
+  void _showGuide(BuildContext context)=>Navigator.push(context,MaterialPageRoute(builder:(_)=>_VisualGameGuide(game:game)));
 }
 
-class _GameCardState extends State<_GameCard> {
-  NexoraDifficulty selected = NexoraDifficulty.normal;
-
-  List<NexoraDifficulty> get modes => switch (widget.game.name) {
-    'Flappy' => const [NexoraDifficulty.easy, NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro],
-    'Tetris' => const [NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro, NexoraDifficulty.impossible],
-    'Breakout' => const [NexoraDifficulty.easy, NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro, NexoraDifficulty.impossible],
-    'Memory' => const [NexoraDifficulty.easy, NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro],
-    _ => const [NexoraDifficulty.easy, NexoraDifficulty.normal, NexoraDifficulty.hard, NexoraDifficulty.pro],
-  };
-
-  @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(24),
-      boxShadow: [BoxShadow(color: widget.game.color.withOpacity(.14), blurRadius: 22, offset: const Offset(0, 9))],
-      color: const Color(0xFF0A0E18),
-      border: Border.all(color: widget.game.color.withOpacity(.28)),
-    ),
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(24),
-      child: Column(children: [
-        Expanded(
-          flex: 7,
-          child: Stack(children: [
-            Positioned.fill(child: CustomPaint(painter: _GameCardArt(widget.game.name, widget.game.color))),
-            Positioned.fill(child: DecoratedBox(decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Colors.black.withOpacity(.02), Colors.black.withOpacity(.08), Colors.black.withOpacity(.62)],
-                begin: Alignment.topCenter, end: Alignment.bottomCenter,
-              ),
-            ))),
-            Positioned(
-              left: 12, top: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(color: Colors.black.withOpacity(.28), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
-                child: Icon(widget.game.icon, color: Colors.white, size: 18),
-              ),
-            ),
-            Positioned(
-              right: 12, top: 12,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                decoration: BoxDecoration(color: Colors.black.withOpacity(.28), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white12)),
-                child: Text(widget.game.category, style: const TextStyle(fontSize: 8, fontWeight: FontWeight.w900, letterSpacing: .8, color: Colors.white70)),
-              ),
-            ),
-          ]),
-        ),
-        Expanded(
-          flex: 5,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(12, 8, 10, 9),
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Row(children: [
-                Expanded(child: Text(widget.game.name, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900))),
-                SizedBox(
-                  width: 34, height: 34,
-                  child: IconButton(
-                    padding: EdgeInsets.zero,
-                    tooltip: 'CARA BERMAIN',
-                    onPressed: () => _showQuickGuide(context),
-                    icon: Icon(Icons.help_outline_rounded, color: widget.game.color, size: 19),
-                  ),
-                ),
-              ]),
-              Text(widget.game.subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(fontSize: 9, color: Colors.white.withOpacity(.45))),
-              const SizedBox(height: 7),
-              Row(children: [
-                const Text('MODE', style: TextStyle(fontSize: 8, color: Colors.white38, fontWeight: FontWeight.w900, letterSpacing: 1)),
-                const SizedBox(width: 7),
-                Expanded(
-                  child: Container(
-                    height: 31,
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    decoration: BoxDecoration(color: Colors.white.withOpacity(.055), borderRadius: BorderRadius.circular(10), border: Border.all(color: Colors.white10)),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<NexoraDifficulty>(
-                        isExpanded: true,
-                        value: modes.contains(selected) ? selected : modes.first,
-                        dropdownColor: const Color(0xFF101624),
-                        icon: const Icon(Icons.expand_more_rounded, size: 16, color: Colors.white54),
-                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w900),
-                        items: modes.map((d) => DropdownMenuItem(value: d, child: Text(difficultyName(d)))).toList(),
-                        onChanged: (d) => setState(() => selected = d ?? selected),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 7),
-                SizedBox(
-                  width: 42, height: 34,
-                  child: FilledButton(
-                    style: FilledButton.styleFrom(
-                      padding: EdgeInsets.zero,
-                      backgroundColor: widget.game.color.withOpacity(.18),
-                      foregroundColor: widget.game.color,
-                      side: BorderSide(color: widget.game.color.withOpacity(.35)),
-                    ),
-                    onPressed: () => widget.onPlay(selected),
-                    child: const Icon(Icons.play_arrow_rounded, size: 21),
-                  ),
-                ),
-              ]),
-            ]),
-          ),
-        ),
-      ]),
-    ),
-  );
-
-  void _showQuickGuide(BuildContext context) {
-    final guide = switch (widget.game.name) {
-      '2048' => 'Geser tile ke empat arah. Angka yang sama menyatu. Jaga ruang kosong dan kejar tile 2048.',
-      'Tetris' => 'Geser untuk pindah, tap untuk rotate, double-tap untuk hard drop. Gunakan HOLD dan NEXT untuk merencanakan langkah.',
-      'Flappy' => 'Tap untuk flap dan atur ritme agar melewati celah pipa. Semakin jauh, permainan makin cepat.',
-      'Breakout' => 'Drag paddle, pantulkan bola, hancurkan brick, dan ambil power-up. Combo membuat skor makin tinggi.',
-      _ => 'Buka dua kartu, ingat simbolnya, lalu cari pasangan. Pasangan beruntun membangun streak.',
-    };
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: const Color(0xFF0A0F1A),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
-          child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
-            const SizedBox(height: 15),
-            Row(children: [
-              Icon(Icons.menu_book_rounded, color: widget.game.color),
-              const SizedBox(width: 8),
-              Text('CARA BERMAIN • ${widget.game.name}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
-            ]),
-            const SizedBox(height: 10),
-            Text(guide, style: const TextStyle(color: Colors.white70, height: 1.5, fontSize: 13)),
-            const SizedBox(height: 14),
-            Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
-          ]),
-        ),
-      ),
-    );
-  }
+class _MiniBadge extends StatelessWidget {
+  final String text; const _MiniBadge(this.text);
+  @override Widget build(BuildContext context)=>Container(padding:const EdgeInsets.symmetric(horizontal:9,vertical:6),decoration:BoxDecoration(color:Colors.black.withOpacity(.34),borderRadius:BorderRadius.circular(12),border:Border.all(color:Colors.white12)),child:Text(text,style:const TextStyle(fontSize:8,fontWeight:FontWeight.w900,letterSpacing:.8,color:Colors.white70)));
 }
 
 class _GameCardArt extends CustomPainter {
@@ -427,177 +304,105 @@ class _GameCardArt extends CustomPainter {
 
 class _GameMenu extends StatefulWidget {
   final String game;
-  final NexoraDifficulty difficulty;
-  final void Function(int level, String control, bool haptic, bool sound) onStart;
-  const _GameMenu({required this.game, required this.difficulty, required this.onStart});
-
-  @override
-  State<_GameMenu> createState() => _GameMenuState();
+  final void Function(int level,String control,bool haptic,bool sound) onStart;
+  const _GameMenu({required this.game,required this.onStart});
+  @override State<_GameMenu> createState()=>_GameMenuState();
+}
+class _GameMenuState extends State<_GameMenu>{
+  bool haptic=true,sound=true;late String control;int selectedLevel=1;
+  bool get hasLevels=>widget.game!='Flappy';
+  List<String> get controls=>switch(widget.game){ 'Tetris'=>const['BUTTONS'],'Breakout'=>const['DRAG'],'2048'=>const['SWIPE'],'Memory'=>const['TOUCH'],_=>const['TAP']};
+  Color get accent=>switch(widget.game){'2048'=>const Color(0xFFF59E0B),'Tetris'=>const Color(0xFFA78BFA),'Breakout'=>const Color(0xFFEF4444),_=>const Color(0xFFEC4899)};
+  String get tagline=>switch(widget.game){'2048'=>'MERGE & SURVIVE','Tetris'=>'DROP & CLEAR','Breakout'=>'SMASH & COMBO',_=>'MATCH & MASTER'};
+  @override void initState(){super.initState();control=controls.first;}
+  @override Widget build(BuildContext context)=>Scaffold(backgroundColor:bg,body:SafeArea(child:ListView(padding:const EdgeInsets.fromLTRB(20,12,20,30),children:[
+    Row(children:[IconButton(onPressed:()=>Navigator.pop(context),icon:const Icon(Icons.arrow_back_rounded)),const Spacer(),Text(widget.game.toUpperCase(),style:const TextStyle(fontWeight:FontWeight.w900,letterSpacing:1.5,color:Colors.white54))]),
+    Container(height:185,decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),border:Border.all(color:accent.withOpacity(.4)),boxShadow:[BoxShadow(color:accent.withOpacity(.12),blurRadius:28)]),child:ClipRRect(borderRadius:BorderRadius.circular(28),child:Stack(children:[
+      Positioned.fill(child:CustomPaint(painter:_GameCardArt(widget.game,accent))),
+      Positioned(left:18,bottom:16,child:Text(tagline,style:const TextStyle(fontSize:24,fontWeight:FontWeight.w900))),
+    ]))),
+    const SizedBox(height:18),
+    const Text('LEVEL',style:TextStyle(fontSize:10,fontWeight:FontWeight.w900,letterSpacing:1.5,color:Colors.white38)),
+    const SizedBox(height:7),
+    InkWell(borderRadius:BorderRadius.circular(18),onTap:hasLevels?()=>_showLevels(context):null,child:Container(padding:const EdgeInsets.symmetric(horizontal:15,vertical:14),decoration:BoxDecoration(color:panel,borderRadius:BorderRadius.circular(18),border:Border.all(color:Colors.white10)),child:Row(children:[
+      Icon(Icons.flag_rounded,color:accent),const SizedBox(width:11),
+      Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+        Text(hasLevels?'LEVEL $selectedLevel':'INSTANT PLAY',style:const TextStyle(fontWeight:FontWeight.w900,fontSize:15)),
+        const SizedBox(height:3),Text(hasLevels?'Pilih level yang ingin dimainkan.':'Game langsung dimulai tanpa level selector.',style:const TextStyle(color:Colors.white38,fontSize:10)),
+      ])),
+      if(hasLevels)const Icon(Icons.chevron_right_rounded,color:Colors.white38),
+    ]))),
+    const SizedBox(height:16),
+    const Text('SETTINGS',style:TextStyle(fontSize:10,fontWeight:FontWeight.w900,letterSpacing:1.5,color:Colors.white38)),
+    const SizedBox(height:7),
+    Container(decoration:BoxDecoration(color:panel,borderRadius:BorderRadius.circular(18),border:Border.all(color:Colors.white10)),child:Column(children:[
+      ListTile(dense:true,leading:const Icon(Icons.gamepad_rounded),title:const Text('CONTROL',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900)),trailing:Text(control,style:TextStyle(color:accent,fontSize:11,fontWeight:FontWeight.w900))),
+      const Divider(height:1,color:Colors.white10),
+      SwitchListTile(dense:true,title:const Text('HAPTIC',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900)),value:haptic,onChanged:(v)=>setState(()=>haptic=v)),
+      SwitchListTile(dense:true,title:const Text('SOUND',style:TextStyle(fontSize:12,fontWeight:FontWeight.w900)),value:sound,onChanged:(v)=>setState(()=>sound=v)),
+    ])),
+    const SizedBox(height:12),
+    OutlinedButton.icon(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>_VisualGameGuide(game:games.firstWhere((g)=>g.name==widget.game))),icon:const Icon(Icons.menu_book_rounded),label:const Text('CARA BERMAIN')),
+    const SizedBox(height:10),
+    SizedBox(height:56,child:FilledButton.icon(onPressed:()=>widget.onStart(selectedLevel,control,haptic,sound),icon:const Icon(Icons.play_arrow_rounded),label:Text(selectedLevel>1?'START LEVEL $selectedLevel':'START',style:const TextStyle(fontWeight:FontWeight.w900,letterSpacing:1)))),
+  ])));
+  void _showLevels(BuildContext context){
+    final input=TextEditingController(text:'$selectedLevel');
+    showModalBottomSheet(context:context,isScrollControlled:true,backgroundColor:const Color(0xFF0A0F1A),shape:const RoundedRectangleBorder(borderRadius:BorderRadius.vertical(top:Radius.circular(26))),builder:(sheet)=>StatefulBuilder(builder:(context,setSheet)=>SafeArea(child:Padding(padding:const EdgeInsets.fromLTRB(16,14,16,20),child:Column(mainAxisSize:MainAxisSize.min,children:[
+      Container(width:42,height:4,decoration:BoxDecoration(color:Colors.white24,borderRadius:BorderRadius.circular(8))),const SizedBox(height:12),
+      const Text('SELECT LEVEL',style:TextStyle(fontSize:18,fontWeight:FontWeight.w900)),const SizedBox(height:8),
+      Row(children:[Expanded(child:TextField(controller:input,keyboardType:TextInputType.number,decoration:const InputDecoration(prefixText:'LEVEL ',hintText:'1 - 1,000,000,000'))),const SizedBox(width:8),FilledButton(onPressed:(){final n=int.tryParse(input.text.replaceAll(',','').trim());if(n!=null&&n>=1&&n<=nexoraMaxLevel){setState(()=>selectedLevel=n);Navigator.pop(sheet);}},child:const Text('GO'))]),
+      const SizedBox(height:12),
+      SizedBox(height:235,child:GridView.builder(gridDelegate:const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount:5,mainAxisSpacing:8,crossAxisSpacing:8,childAspectRatio:1.25),itemCount:50,itemBuilder:(_,i){final n=i+1;return OutlinedButton(style:OutlinedButton.styleFrom(padding:EdgeInsets.zero,foregroundColor:n==selectedLevel?accent:Colors.white70,side:BorderSide(color:n==selectedLevel?accent:Colors.white10)),onPressed:(){setState(()=>selectedLevel=n);Navigator.pop(sheet);},child:Text('$n',style:const TextStyle(fontWeight:FontWeight.w900)));})),
+      Row(mainAxisAlignment:MainAxisAlignment.spaceBetween,children:[const Text('1 — 50',style:TextStyle(color:Colors.white38,fontSize:11)),Text('1 — 1B',style:TextStyle(color:accent,fontSize:11,fontWeight:FontWeight.w900))]),
+    ]))));
+  }
 }
 
-class _GameMenuState extends State<_GameMenu> {
-  bool haptic = true;
-  bool sound = true;
-  late String control;
-
-  bool get hasLevels => widget.game == '2048' || widget.game == 'Breakout' || widget.game == 'Memory';
-
-  List<String> get controls => switch (widget.game) {
-    'Tetris' => const ['GESTURE', 'BUTTONS'],
-    'Breakout' => const ['DRAG', 'BUTTONS'],
-    '2048' => const ['SWIPE', 'BUTTONS'],
-    'Memory' => const ['TOUCH'],
-    _ => const ['TAP'],
-  };
-
-  @override
-  void initState() {
-    super.initState();
-    control = controls.first;
-  }
-
-  Color get accent => switch (widget.game) {
-    '2048' => const Color(0xFFF59E0B),
-    'Tetris' => const Color(0xFFA78BFA),
-    'Breakout' => const Color(0xFFEF4444),
-    _ => const Color(0xFFEC4899),
-  };
-
-  String get tagline => switch (widget.game) {
-    '2048' => 'MERGE & SURVIVE',
-    'Tetris' => 'DROP & CLEAR',
-    'Breakout' => 'SMASH & COMBO',
-    _ => 'MATCH & MASTER',
-  };
-
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: bg,
-    body: SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 30),
-        children: [
-          Row(children: [
-            IconButton(onPressed: () => Navigator.pop(context), icon: const Icon(Icons.arrow_back_rounded)),
-            const Spacer(),
-            _Badge('${difficultyName(widget.difficulty)} MODE'),
-          ]),
-          const SizedBox(height: 8),
-          Container(
-            height: 205,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(color: accent.withOpacity(.4)),
-              boxShadow: [BoxShadow(color: accent.withOpacity(.12), blurRadius: 28)],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(30),
-              child: Stack(children: [
-                Positioned.fill(child: CustomPaint(painter: _GameCardArt(widget.game, accent))),
-                Positioned(left: 18, bottom: 16, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(widget.game.toUpperCase(), style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white60)),
-                  const SizedBox(height: 3),
-                  Text(tagline, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.w900)),
-                ])),
-              ]),
-            ),
-          ),
-          const SizedBox(height: 17),
-          Text('LEVEL', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.white38)),
-          const SizedBox(height: 7),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 14),
-            decoration: BoxDecoration(color: panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white10)),
-            child: Row(children: [
-              Icon(hasLevels ? Icons.flag_rounded : Icons.trending_up_rounded, color: accent),
-              const SizedBox(width: 11),
-              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(hasLevels ? 'LEVEL 1 — 1,000,000,000' : 'AUTO PROGRESSION', style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 14)),
-                const SizedBox(height: 3),
-                Text(hasLevels ? 'Level dibuat dinamis, bukan satu miliar data manual.' : 'Progress mengikuti score, lines, atau jarak sesuai game.', style: const TextStyle(color: Colors.white38, fontSize: 10)),
-              ])),
-            ]),
-          ),
-          const SizedBox(height: 16),
-          Text('SETTINGS', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900, letterSpacing: 1.5, color: Colors.white38)),
-          const SizedBox(height: 7),
-          Container(
-            decoration: BoxDecoration(color: panel, borderRadius: BorderRadius.circular(18), border: Border.all(color: Colors.white10)),
-            child: Column(children: [
-              ListTile(
-                dense: true,
-                leading: const Icon(Icons.gamepad_rounded),
-                title: const Text('CONTROL', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
-                trailing: DropdownButtonHideUnderline(child: DropdownButton<String>(
-                  value: control,
-                  dropdownColor: const Color(0xFF101624),
-                  items: controls.map((x) => DropdownMenuItem(value: x, child: Text(x, style: const TextStyle(fontSize: 11)))).toList(),
-                  onChanged: (v) => setState(() => control = v ?? control),
-                )),
-              ),
-              const Divider(height: 1, color: Colors.white10),
-              SwitchListTile(
-                dense: true,
-                title: const Text('HAPTIC', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
-                value: haptic,
-                onChanged: (v) => setState(() => haptic = v),
-              ),
-              SwitchListTile(
-                dense: true,
-                title: const Text('SOUND', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900)),
-                value: sound,
-                onChanged: (v) => setState(() => sound = v),
-              ),
-            ]),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: () => _showGuide(context),
-            icon: const Icon(Icons.menu_book_rounded),
-            label: const Text('CARA BERMAIN'),
-          ),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 56,
-            child: FilledButton.icon(
-              onPressed: () => widget.onStart(1, control, haptic, sound),
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('START', style: TextStyle(fontWeight: FontWeight.w900, letterSpacing: 1)),
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-
-  void _showGuide(BuildContext context) {
-    final text = switch (widget.game) {
-      '2048' => 'Geser papan ke empat arah. Tile dengan angka sama menyatu. Simpan ruang kosong dan rencanakan beberapa langkah ke depan.',
-      'Tetris' => 'Geser untuk memindahkan balok, tap untuk rotate, double-tap untuk hard drop. HOLD menyimpan balok dan NEXT memberi gambaran balok berikutnya.',
-      'Breakout' => 'Drag paddle untuk memantulkan bola. Hancurkan brick, ambil power-up, pertahankan combo, dan jangan habiskan 3 nyawa.',
-      _ => 'Buka dua kartu, hafalkan simbolnya, lalu cari pasangan yang sama. Pasangan beruntun membuat streak lebih tinggi.',
-    };
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF0A0F1A),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(26))),
-      builder: (_) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 28),
-          child: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Center(child: Container(width: 42, height: 4, decoration: BoxDecoration(color: Colors.white24, borderRadius: BorderRadius.circular(8)))),
-            const SizedBox(height: 16),
-            Text('CARA BERMAIN • ${widget.game}', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 12),
-            Text(text, style: const TextStyle(color: Colors.white70, height: 1.55, fontSize: 13)),
-            const SizedBox(height: 18),
-            Align(alignment: Alignment.centerRight, child: TextButton(onPressed: () => Navigator.pop(context), child: const Text('TUTUP'))),
-          ])),
-        ),
-      ),
-    );
-  }
+class _VisualGameGuide extends StatefulWidget{
+  final _GameInfo game;const _VisualGameGuide({required this.game});
+  @override State<_VisualGameGuide> createState()=>_VisualGameGuideState();
+}
+class _VisualGameGuideState extends State<_VisualGameGuide>{
+  final PageController page=PageController();int index=0;
+  List<Map<String,String>> get steps=>switch(widget.game.name){
+    'Tetris'=>[
+      {'title':'GERAKKAN','text':'Gunakan tombol kiri dan kanan untuk memindahkan balok dengan presisi.','key':'MOVE'},
+      {'title':'PUTAR','text':'Tekan ROTATE untuk mengubah arah balok.','key':'ROTATE'},
+      {'title':'TURUNKAN','text':'Gunakan ↓ untuk soft drop atau HARD DROP untuk langsung menjatuhkan balok.','key':'DROP'},
+      {'title':'CLEAR BARIS','text':'Penuhi satu baris untuk menghapusnya dan mendapatkan score.','key':'CLEAR'}],
+    '2048'=>[
+      {'title':'GESER','text':'Geser papan ke empat arah untuk menggerakkan tile.','key':'SWIPE'},
+      {'title':'GABUNGKAN','text':'Tile dengan angka sama bergabung menjadi angka yang lebih besar.','key':'MERGE'},
+      {'title':'ATUR PAPAN','text':'Jaga ruang kosong dan rencanakan beberapa langkah ke depan.','key':'PLAN'}],
+    'Breakout'=>[
+      {'title':'GERAKKAN PADDLE','text':'Geser paddle untuk mengarahkan pantulan bola.','key':'PADDLE'},
+      {'title':'HANCURKAN BRICK','text':'Pantulkan bola ke brick sampai habis.','key':'BRICK'},
+      {'title':'POWER-UP','text':'Ambil power-up untuk mendapatkan bantuan sementara.','key':'POWER'}],
+    'Memory'=>[
+      {'title':'BUKA KARTU','text':'Tap dua kartu untuk melihat simbolnya.','key':'FLIP'},
+      {'title':'CARI PASANGAN','text':'Temukan dua kartu dengan simbol yang sama.','key':'MATCH'},
+      {'title':'SELESAIKAN','text':'Temukan semua pasangan untuk menyelesaikan level.','key':'WIN'}],
+    _=>[
+      {'title':'TAP','text':'Tap layar untuk membuat karakter terbang naik.','key':'TAP'},
+      {'title':'LEWATI RINTANGAN','text':'Atur ritme tap agar melewati celah.','key':'PIPE'},
+      {'title':'KEJAR SCORE','text':'Bertahan sejauh mungkin untuk score tinggi.','key':'SCORE'}]};
+  @override Widget build(BuildContext context)=>Scaffold(backgroundColor:bg,appBar:AppBar(title:Text('CARA BERMAIN • '+widget.game.name),backgroundColor:bg),body:Column(children:[
+    Expanded(child:PageView.builder(controller:page,itemCount:steps.length,onPageChanged:(i)=>setState(()=>index=i),itemBuilder:(_,i)=>Padding(padding:const EdgeInsets.fromLTRB(20,12,20,18),child:Column(children:[
+      Expanded(child:Container(width:double.infinity,decoration:BoxDecoration(borderRadius:BorderRadius.circular(28),border:Border.all(color:widget.game.color.withOpacity(.35)),gradient:LinearGradient(colors:[widget.game.color.withOpacity(.16),Colors.white.withOpacity(.025)],begin:Alignment.topLeft,end:Alignment.bottomRight)),child:Center(child:_GuideIllustration(game:widget.game.name,step:steps[i]['key']!)))),
+      const SizedBox(height:20),Text(steps[i]['title']!,style:const TextStyle(fontSize:22,fontWeight:FontWeight.w900)),const SizedBox(height:8),Text(steps[i]['text']!,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white60,height:1.45,fontSize:13)),
+    ])))),
+    Row(mainAxisAlignment:MainAxisAlignment.center,children:List.generate(steps.length,(i)=>AnimatedContainer(duration:const Duration(milliseconds:180),margin:const EdgeInsets.all(3),width:i==index?22:6,height:6,decoration:BoxDecoration(color:i==index?widget.game.color:Colors.white24,borderRadius:BorderRadius.circular(9))))),
+    Padding(padding:const EdgeInsets.fromLTRB(20,12,20,18),child:Row(children:[
+      if(index>0)Expanded(child:OutlinedButton(onPressed:()=>page.previousPage(duration:const Duration(milliseconds:180),curve:Curves.easeOut),child:const Text('KEMBALI'))),
+      if(index>0)const SizedBox(width:8),
+      Expanded(child:FilledButton(onPressed:()=>index<steps.length-1?page.nextPage(duration:const Duration(milliseconds:180),curve:Curves.easeOut):Navigator.pop(context),child:Text(index<steps.length-1?'LANJUT':'SELESAI'))),
+    ])),
+  ]));
+}
+class _GuideIllustration extends StatelessWidget{
+  final String game,step;const _GuideIllustration({required this.game,required this.step});
+  @override Widget build(BuildContext context){final c=switch(game){'Tetris'=>const Color(0xFFA78BFA),'2048'=>const Color(0xFFF59E0B),'Breakout'=>const Color(0xFFEF4444),'Memory'=>const Color(0xFFEC4899),_=>const Color(0xFF22D3EE)};final icon=switch(step){'MOVE'=>Icons.swap_horiz_rounded,'ROTATE'=>Icons.rotate_right_rounded,'DROP'=>Icons.vertical_align_bottom_rounded,'CLEAR'=>Icons.view_agenda_rounded,'SWIPE'=>Icons.swipe_rounded,'MERGE'=>Icons.merge_type_rounded,'PLAN'=>Icons.grid_view_rounded,'PADDLE'=>Icons.horizontal_rule_rounded,'BRICK'=>Icons.grid_on_rounded,'POWER'=>Icons.bolt_rounded,'FLIP'=>Icons.style_rounded,'MATCH'=>Icons.compare_arrows_rounded,'WIN'=>Icons.emoji_events_rounded,'TAP'=>Icons.touch_app_rounded,'PIPE'=>Icons.alt_route_rounded,_=>Icons.star_rounded};return Column(mainAxisSize:MainAxisSize.min,children:[Icon(icon,size:92,color:c),const SizedBox(height:22),Container(width:190,height:70,decoration:BoxDecoration(color:Colors.black.withOpacity(.28),borderRadius:BorderRadius.circular(18),border:Border.all(color:c.withOpacity(.28))),child:Center(child:Text(step,style:TextStyle(color:c,fontWeight:FontWeight.w900,letterSpacing:2))))]);}
 }
 
 class _GameIntro extends StatefulWidget {
@@ -857,8 +662,50 @@ class _TwentyState extends State<_Twenty>{
         if(gameOver)FilledButton.icon(onPressed:()=>setState(_reset),icon:const Icon(Icons.refresh_rounded,size:17),label:const Text('RETRY')),
       ]))]))));}
 
-class _Tetris extends StatefulWidget{
-  const _Tetris();@override State<_Tetris> createState()=>_TetrisState();
+class _Tetris extends StatefulWidget{const _Tetris();@override State<_Tetris> createState()=>_TetrisState();}
+class _TetrisState extends State<_Tetris>{
+ final random=Random(),board=List<int>.filled(200,0);List<int> bag=[];
+ final shapes=const[[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]]];
+ final colors=const[Colors.transparent,Color(0xFF22D3EE),Color(0xFFFACC15),Color(0xFFA78BFA),Color(0xFF60A5FA),Color(0xFFFB923C),Color(0xFF4ADE80),Color(0xFFF87171)];
+ Timer? timer;late int current,next,activeKind;List<List<int>> shape=const[[1]];List<List<int>>? held;int row=0,col=3,score=0,lines=0;bool running=false,over=false,canHold=true;
+ @override void initState(){super.initState();_reset();}
+ void _reset(){timer?.cancel();for(var i=0;i<200;i++)board[i]=0;bag=[];current=_nextPiece();next=_nextPiece();held=null;score=0;lines=0;running=false;over=false;canHold=true;_load();}
+ int _nextPiece(){if(bag.isEmpty){bag=List<int>.generate(7,(i)=>i)..shuffle(random);}return bag.removeLast();}
+ void _load(){activeKind=current;shape=shapes[activeKind].map((r)=>List<int>.from(r)).toList();row=0;col=3;current=next;next=_nextPiece();canHold=true;}
+ bool _can(int r,int c,List<List<int>>s){for(var y=0;y<s.length;y++)for(var x=0;x<s[y].length;x++){if(s[y][x]==0)continue;final xx=c+x,yy=r+y;if(xx<0||xx>=10||yy>=20)return false;if(yy>=0&&board[yy*10+xx]!=0)return false;}return true;}
+ void _start(){if(running||over)return;running=true;_clock();setState((){});}
+ void _clock(){timer?.cancel();final base=max(70,720-((nexoraSelectedLevel-1)*5));final speedStage=lines~/10;timer=Timer.periodic(Duration(milliseconds:max(45,base-speedStage*38)),(_)=>_tick());}
+ void _tick(){if(!mounted||!running)return;if(_can(row+1,col,shape)){row++;setState((){});}else{_lock();}}
+ void _move(int d){if(!running)_start();if(_can(row,col+d,shape)){col+=d;setState((){});}}
+ void _soft(){if(!running)_start();if(_can(row+1,col,shape)){row++;score++;setState((){});}else{_lock();}}
+ void _hard(){if(!running)_start();var n=0;while(_can(row+1,col,shape)){row++;n++;}score+=n*2;_lock();}
+ void _rotate(){if(!running)_start();final h=shape.length,w=shape[0].length,r=List.generate(w,(_)=>List<int>.filled(h,0));for(var y=0;y<h;y++)for(var x=0;x<w;x++)r[x][h-1-y]=shape[y][x];for(final k in[0,-1,1,-2,2])if(_can(row,col+k,r)){shape=r;col+=k;setState((){});return;}}
+ int _kind(List<List<int>>s){final k=s.expand((r)=>r).join();for(var i=0;i<7;i++)if(shapes[i].expand((r)=>r).join()==k)return i;return activeKind;}
+ void _hold(){if(!running||!canHold)return;canHold=false;final old=activeKind;if(held==null){held=shapes[old].map((r)=>List<int>.from(r)).toList();_load();canHold=false;}else{final t=held!;held=shapes[old].map((r)=>List<int>.from(r)).toList();shape=t.map((r)=>List<int>.from(r)).toList();activeKind=_kind(shape);row=0;col=3;}setState((){});}
+ int _ghost(){var r=row;while(_can(r+1,col,shape))r++;return r;}
+ void _lock(){for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0&&row+y>=0&&row+y<20&&col+x>=0&&col+x<10)board[(row+y)*10+col+x]=activeKind+1;var clear=0;for(var y=19;y>=0;y--){var full=true;for(var x=0;x<10;x++)if(board[y*10+x]==0){full=false;break;}if(full){for(var yy=y;yy>0;yy--)for(var x=0;x<10;x++)board[yy*10+x]=board[(yy-1)*10+x];for(var x=0;x<10;x++)board[x]=0;clear++;y++;}}if(clear>0){lines+=clear;score+=[0,100,300,500,800][clear]*(1+lines~/10);_clock();}_load();if(!_can(row,col,shape)){running=false;over=true;timer?.cancel();}setState((){});}
+ Widget ctl(IconData icon,VoidCallback fn)=>SizedBox(width:46,height:50,child:FilledButton(style:FilledButton.styleFrom(backgroundColor:const Color(0xFF171A2B),foregroundColor:Colors.white,side:BorderSide(color:const Color(0xFFA78BFA).withOpacity(.28)),shape:RoundedRectangleBorder(borderRadius:BorderRadius.circular(14))),onPressed:fn,child:Icon(icon,size:22)));
+ Widget mini(List<List<int>>?s,Color c)=>SizedBox(width:58,height:44,child:CustomPaint(painter:_MiniPiecePainter(s,c)));
+ @override void dispose(){timer?.cancel();super.dispose();}
+ @override Widget build(BuildContext context)=>_GamePage(title:'Tetris',subtitle:'LEVEL $nexoraSelectedLevel • BUTTON CONTROL • 10×20',accent:const Color(0xFFA78BFA),reset:()=>setState(_reset),child:_World(top:const Color(0xFF17112A),bottom:const Color(0xFF070914),child:Column(children:[
+  _ScoreBar('SCORE $score','LINES $lines',const Color(0xFFA78BFA)),
+  Expanded(child:Row(children:[
+   Expanded(child:Center(child:AspectRatio(aspectRatio:.50,child:Container(margin:const EdgeInsets.only(left:10,right:4),padding:const EdgeInsets.all(5),decoration:BoxDecoration(color:Colors.black38,borderRadius:BorderRadius.circular(20),border:Border.all(color:const Color(0xFFA78BFA).withOpacity(.22))),child:CustomPaint(painter:_TetrisPainter(board,shape,row,col,_ghost(),colors[activeKind+1]),child:const SizedBox.expand()))))),
+   SizedBox(width:102,child:Padding(padding:const EdgeInsets.only(right:7),child:Column(mainAxisAlignment:MainAxisAlignment.center,children:[
+    const Text('NEXT',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(shapes[next],colors[next+1]),const SizedBox(height:6),
+    const Text('HOLD',style:TextStyle(fontSize:9,color:Colors.white38,fontWeight:FontWeight.w900)),mini(held,held==null?Colors.white12:colors[_kind(held!)+1]),const SizedBox(height:8),
+    Row(mainAxisAlignment:MainAxisAlignment.center,children:[ctl(Icons.arrow_back_rounded,()=>_move(-1)),const SizedBox(width:4),ctl(Icons.arrow_forward_rounded,()=>_move(1))]),
+    const SizedBox(height:5),Row(mainAxisAlignment:MainAxisAlignment.center,children:[ctl(Icons.rotate_right_rounded,_rotate),const SizedBox(width:4),ctl(Icons.keyboard_double_arrow_down_rounded,_hard)]),
+    const SizedBox(height:5),Row(mainAxisAlignment:MainAxisAlignment.center,children:[ctl(Icons.keyboard_arrow_down_rounded,_soft),const SizedBox(width:4),ctl(Icons.back_hand_rounded,_hold)]),
+    const SizedBox(height:7),SizedBox(width:94,height:40,child:FilledButton(onPressed:over?()=>setState(_reset):_start,child:Text(over?'AGAIN':running?'RUNNING':'START',style:const TextStyle(fontSize:9,fontWeight:FontWeight.w900)))),
+   ])),
+  ]),
+ ])));
+}
+class _TetrisPainter extends CustomPainter{
+ final List<int> board;final List<List<int>> shape;final int row,col,ghost;final Color active;const _TetrisPainter(this.board,this.shape,this.row,this.col,this.ghost,this.active);
+ @override void paint(Canvas canvas,Size size){final cell=size.width/10,p=Paint();for(var y=0;y<20;y++)for(var x=0;x<10;x++){p.color=Colors.white.withOpacity(.025);canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+1,y*cell+1,cell-2,cell-2),const Radius.circular(4)),p);final v=board[y*10+x];if(v>0){p.color=_colors[v];canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(x*cell+2,y*cell+2,cell-4,cell-4),const Radius.circular(5)),p);}}p.color=active.withOpacity(.16);for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0){final yy=ghost+y,xx=col+x;if(yy>=0&&yy<20&&xx>=0&&xx<10)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+4,yy*cell+4,cell-8,cell-8),const Radius.circular(4)),p);}p.color=active;for(var y=0;y<shape.length;y++)for(var x=0;x<shape[y].length;x++)if(shape[y][x]!=0){final yy=row+y,xx=col+x;if(yy>=0&&yy<20&&xx>=0&&xx<10)canvas.drawRRect(RRect.fromRectAndRadius(Rect.fromLTWH(xx*cell+2,yy*cell+2,cell-4,cell-4),const Radius.circular(5)),p);}}
+ @override bool shouldRepaint(covariant _TetrisPainter old)=>true;
 }
 class _TetrisState extends State<_Tetris>{
   final random=Random(),board=List<int>.filled(200,0); List<int> bag=[];
