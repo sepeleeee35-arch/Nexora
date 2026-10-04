@@ -856,9 +856,16 @@ class _BreakoutState extends State<_Breakout>{
    if(b.y-b.r<.055){b.y=.055+b.r;b.vy=b.vy.abs();}
    final pLeft=paddle-paddleWidth/2,pRight=paddle+paddleWidth/2,pTop=.895;
    if(b.vy>0&&b.y+b.r>=pTop&&oldY+b.r<=pTop+.035&&b.x>=pLeft-.01&&b.x<=pRight+.01){
-    final hit=((b.x-paddle)/(paddleWidth/2)).clamp(-1.0,1.0);
-    final speed=max(.010,b.vx.abs()+b.vy.abs()),angle=hit*1.05;
-    b.vx=(sin(angle)*speed).clamp(-.019,.019).toDouble();b.vy=-max(.0068,cos(angle)*speed);b.y=pTop-b.r-.002;combo++;_burst(b.x,b.y,2,Colors.white);
+    final hit=((b.x-paddle)/(paddleWidth/2)).clamp(-1.0,1.0).toDouble();
+    // Paddle contact changes the angle only. The ball keeps its current speed.
+    final currentSpeed=sqrt(b.vx*b.vx+b.vy*b.vy);
+    final safeSpeed=max(.0001,currentSpeed);
+    final angle=hit*1.05;
+    b.vx=sin(angle)*safeSpeed;
+    b.vy=-cos(angle)*safeSpeed;
+    b.y=pTop-b.r-.002;
+    combo++;
+    _burst(b.x,b.y,2,Colors.white);
    }
    for(final brick in bricks){
     if(brick.hp<=0)continue;
