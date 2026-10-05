@@ -44,6 +44,18 @@ PY
 echo "==> Building Nexora Web"
 flutter build web --release --no-wasm-dry-run --dart-define=GOOGLE_CLIENT_ID="884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com" --dart-define=GOOGLE_SERVER_CLIENT_ID="884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com"
 
+echo "==> Installing Nexora Arcade web games"
+mkdir -p build/web/games
+curl -fL --retry 3 --retry-delay 2 "https://raw.githubusercontent.com/wangzifan396-wzf/mini-browser-games/main/neon-2048.html" -o build/web/games/neon-2048.html
+curl -fL --retry 3 --retry-delay 2 "https://raw.githubusercontent.com/wangzifan396-wzf/mini-browser-games/main/beat-bento.html" -o build/web/games/beat-bento.html
+curl -fL --retry 3 --retry-delay 2 "https://raw.githubusercontent.com/wangzifan396-wzf/mini-browser-games/main/air-hockey.html" -o build/web/games/air-hockey.html
+cat > build/web/games/LICENSE.txt <<'EOF'
+Nexora Arcade web games include single-file games from:
+https://github.com/wangzifan396-wzf/mini-browser-games
+The upstream project is licensed under the MIT License.
+Copyright (c) 2026 wangzifan396-wzf
+EOF
+
 echo "==> Checking build output"
 test -f build/web/index.html
 test -d build/web
