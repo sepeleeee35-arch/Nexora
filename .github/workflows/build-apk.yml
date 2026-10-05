@@ -1,16 +1,23 @@
 name: Build Nexora APK
 
 on:
-  workflow_dispatch:
   push:
-    branches: [main]
+    branches:
+      - main
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+concurrency:
+  group: nexora-apk-build
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -46,6 +53,7 @@ jobs:
               <path android:fillColor="#67E8F9" android:pathData="M76,19L78,24L83,26L78,28L76,33L74,28L69,26L74,24Z" />
           </vector>
           EOF
+
           sed -i 's#android:icon="@mipmap/ic_launcher"#android:icon="@drawable/ic_nexora"#' android/app/src/main/AndroidManifest.xml
           sed -i 's#android:roundIcon="@mipmap/ic_launcher_round"#android:roundIcon="@drawable/ic_nexora"#' android/app/src/main/AndroidManifest.xml || true
           sed -i 's#android:label="nexora"#android:label="Nexora"#' android/app/src/main/AndroidManifest.xml || true
@@ -54,6 +62,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p android/app/src/main/res/xml
+
           cat > android/app/src/main/res/xml/file_paths.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <paths>
@@ -61,15 +70,20 @@ jobs:
               <external-path path="." name="external_storage_root" />
           </paths>
           EOF
+
           python3 - <<'PY'
           from pathlib import Path
-          p=Path("android/app/src/main/AndroidManifest.xml")
-          s=p.read_text()
-          if "REQUEST_INSTALL_PACKAGES" not in s:
-              s=s.replace("    <application", "    <uses-permission android:name=\"android.permission.REQUEST_INSTALL_PACKAGES\" />\n    <application", 1)
-          provider='''        <provider
+
+          p = Path("android/app/src/main/AndroidManifest.xml")
+          s = p.read_text()
+
+          permission = '    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />\n'
+          if "android.permission.REQUEST_INSTALL_PACKAGES" not in s:
+              s = s.replace("    <application", permission + "    <application", 1)
+
+          provider = '''        <provider
               android:name="androidx.core.content.FileProvider"
-              android:authorities="\${applicationId}.fileProvider"
+              android:authorities="${applicationId}.fileProvider"
               android:exported="false"
               android:grantUriPermissions="true">
               <meta-data
@@ -77,8 +91,10 @@ jobs:
                   android:resource="@xml/file_paths" />
           </provider>
           '''
+
           if "android.support.FILE_PROVIDER_PATHS" not in s:
-              s=s.replace("    </application>", provider+"    </application>", 1)
+              s = s.replace("    </application>", provider + "    </application>", 1)
+
           p.write_text(s)
           PY
 
@@ -91,16 +107,18 @@ jobs:
       - name: Build release APK
         shell: bash
         env:
-          GOOGLE_CLIENT_ID_SECRET: \${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_SERVER_CLIENT_ID_SECRET: \${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+          GOOGLE_CLIENT_ID_SECRET: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_SERVER_CLIENT_ID_SECRET: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
           DEFAULT_WEB_CLIENT_ID="884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com"
-          CLIENT_ID="\${GOOGLE_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
-          SERVER_CLIENT_ID="\${GOOGLE_SERVER_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
-          if [ -z "$SERVER_CLIENT_ID" ]; then
-            echo "::error::GOOGLE_SERVER_CLIENT_ID kosong. Google Sign-In Android membutuhkan serverClientId."
+          CLIENT_ID="${GOOGLE_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
+          SERVER_CLIENT_ID="${GOOGLE_SERVER_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
+
+          if [ -z "$CLIENT_ID" ] || [ -z "$SERVER_CLIENT_ID" ]; then
+            echo "::error::Google client ID tidak boleh kosong."
             exit 1
           fi
+
           flutter build apk --release --target-platform android-arm64 \
             --dart-define="GOOGLE_CLIENT_ID=$CLIENT_ID" \
             --dart-define="GOOGLE_SERVER_CLIENT_ID=$SERVER_CLIENT_ID"
@@ -109,18 +127,20 @@ jobs:
         shell: bash
         run: |
           APK="build/app/outputs/flutter-apk/app-release.apk"
-          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)
+          APKSIGNER="$(find "$ANDROID_HOME/build-tools" -maxdepth 2 -type f -name apksigner | sort -V | tail -n 1)"
+
           if [ -z "$APKSIGNER" ]; then
             echo "::error::Android apksigner tidak ditemukan."
             exit 1
           fi
+
           "$APKSIGNER" verify --verbose --print-certs "$APK"
 
       - name: Prepare direct APK
         shell: bash
         run: |
-          VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
-          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/Nexora-\${VERSION}.apk"
+          VERSION="$(awk '/^version:/{print $2}' pubspec.yaml)"
+          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/Nexora-${VERSION}.apk"
 
       - name: Upload direct APK artifact
         uses: actions/upload-artifact@v4
@@ -132,15 +152,16 @@ jobs:
 
       - name: Publish direct APK release
         env:
-          GH_TOKEN: \${{ github.token }}
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
-          VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
-          RELEASE_VERSION="\${VERSION%%+*}"
-          TAG="v\${RELEASE_VERSION}"
-          FILE="build/app/outputs/flutter-apk/Nexora-\${VERSION}.apk"
+          VERSION="$(awk '/^version:/{print $2}' pubspec.yaml)"
+          RELEASE_VERSION="${VERSION%%+*}"
+          TAG="v${RELEASE_VERSION}"
+          FILE="build/app/outputs/flutter-apk/Nexora-${VERSION}.apk"
+
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$FILE" --clobber
           else
-            gh release create "$TAG" "$FILE" --title "Nexora v\${RELEASE_VERSION}" --notes "Nexora Android release APK. Download the .apk asset directly; no ZIP extraction is required."
+            gh release create "$TAG" "$FILE"               --title "Nexora v${RELEASE_VERSION}"               --notes "Nexora Android release APK. Download the .apk asset directly; no ZIP extraction is required."
           fi
