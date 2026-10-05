@@ -38,24 +38,12 @@ jobs:
               android:height="108dp"
               android:viewportWidth="108"
               android:viewportHeight="108">
-              <path
-                  android:fillColor="#0B1020"
-                  android:pathData="M24,4H84C97.255,4 104,10.745 104,24V84C104,97.255 97.255,104 84,104H24C10.745,104 4,97.255 4,84V24C4,10.745 10.745,4 24,4Z" />
-              <path
-                  android:fillColor="#4C1D95"
-                  android:pathData="M54,13L89,33V73L54,95L19,73V33Z" />
-              <path
-                  android:fillColor="#312E81"
-                  android:pathData="M54,21L81,37V69L54,87L27,69V37Z" />
-              <path
-                  android:fillColor="#F8FAFC"
-                  android:pathData="M28,78V30H40L68,61V30H80V78H68L40,47V78Z" />
-              <path
-                  android:fillColor="#A78BFA"
-                  android:pathData="M49,52L54,47L59,52L54,57Z" />
-              <path
-                  android:fillColor="#67E8F9"
-                  android:pathData="M76,19L78,24L83,26L78,28L76,33L74,28L69,26L74,24Z" />
+              <path android:fillColor="#0B1020" android:pathData="M24,4H84C97.255,4 104,10.745 104,24V84C104,97.255 97.255,104 84,104H24C10.745,104 4,97.255 4,84V24C4,10.745 10.745,4 24,4Z" />
+              <path android:fillColor="#4C1D95" android:pathData="M54,13L89,33V73L54,95L19,73V33Z" />
+              <path android:fillColor="#312E81" android:pathData="M54,21L81,37V69L54,87L27,69V37Z" />
+              <path android:fillColor="#F8FAFC" android:pathData="M28,78V30H40L68,61V30H80V78H68L40,47V78Z" />
+              <path android:fillColor="#A78BFA" android:pathData="M49,52L54,47L59,52L54,57Z" />
+              <path android:fillColor="#67E8F9" android:pathData="M76,19L78,24L83,26L78,28L76,33L74,28L69,26L74,24Z" />
           </vector>
           EOF
           sed -i 's#android:icon="@mipmap/ic_launcher"#android:icon="@drawable/ic_nexora"#' android/app/src/main/AndroidManifest.xml
@@ -94,65 +82,6 @@ jobs:
           p.write_text(s)
           PY
 
-      - name: Configure stable release signing
-        shell: bash
-        env:
-          NEXORA_KEYSTORE_BASE64: ${{ secrets.NEXORA_KEYSTORE_BASE64 }}
-          NEXORA_KEYSTORE_PASSWORD: ${{ secrets.NEXORA_KEYSTORE_PASSWORD }}
-          NEXORA_KEY_ALIAS: ${{ secrets.NEXORA_KEY_ALIAS }}
-          NEXORA_KEY_PASSWORD: ${{ secrets.NEXORA_KEY_PASSWORD }}
-        run: |
-          if [ -z "$NEXORA_KEYSTORE_BASE64" ]; then
-            echo "::warning::NEXORA_KEYSTORE_BASE64 belum diset; APK masih memakai signing default CI."
-            exit 0
-          fi
-          echo "$NEXORA_KEYSTORE_BASE64" | base64 --decode > android/app/nexora-release.jks
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("android/app/build.gradle")
-          k = Path("android/app/build.gradle.kts")
-          if p.exists():
-              s = p.read_text()
-              s = s.replace("android {", """android {
-    signingConfigs {
-        nexoraRelease {
-            keyAlias System.getenv("NEXORA_KEY_ALIAS")
-            keyPassword System.getenv("NEXORA_KEY_PASSWORD")
-            storePassword System.getenv("NEXORA_KEYSTORE_PASSWORD")
-            storeFile file("nexora-release.jks")
-        }
-    }""", 1)
-              s = s.replace("buildTypes {", """buildTypes {
-        release {
-            signingConfig signingConfigs.nexoraRelease
-        }""", 1)
-              p.write_text(s)
-          elif k.exists():
-              s = k.read_text()
-              s = s.replace("android {", """android {
-    signingConfigs {
-        create("nexoraRelease") {
-            keyAlias = System.getenv("NEXORA_KEY_ALIAS")
-            keyPassword = System.getenv("NEXORA_KEY_PASSWORD")
-            storePassword = System.getenv("NEXORA_KEYSTORE_PASSWORD")
-            storeFile = file("nexora-release.jks")
-        }
-    }""", 1)
-              s = s.replace("buildTypes {", """buildTypes {
-        getByName("release") {
-            signingConfig = signingConfigs.getByName("nexoraRelease")
-        }""", 1)
-              k.write_text(s)
-          else:
-              raise SystemExit("build.gradle(.kts) tidak ditemukan")
-          PY
-          cat > android/key.properties <<EOF
-          storePassword=$NEXORA_KEYSTORE_PASSWORD
-          keyPassword=$NEXORA_KEY_PASSWORD
-          keyAlias=$NEXORA_KEY_ALIAS
-          storeFile=nexora-release.jks
-          EOF
-
       - name: Get packages
         run: flutter pub get
 
@@ -162,19 +91,16 @@ jobs:
       - name: Build release APK
         shell: bash
         env:
-          GOOGLE_CLIENT_ID_SECRET: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_SERVER_CLIENT_ID_SECRET: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+          GOOGLE_CLIENT_ID_SECRET: \${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_SERVER_CLIENT_ID_SECRET: \${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
         run: |
           DEFAULT_WEB_CLIENT_ID="884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com"
-          CLIENT_ID="${GOOGLE_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
-          SERVER_CLIENT_ID="${GOOGLE_SERVER_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
-
+          CLIENT_ID="\${GOOGLE_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
+          SERVER_CLIENT_ID="\${GOOGLE_SERVER_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
           if [ -z "$SERVER_CLIENT_ID" ]; then
             echo "::error::GOOGLE_SERVER_CLIENT_ID kosong. Google Sign-In Android membutuhkan serverClientId."
             exit 1
           fi
-
-          echo "Building Nexora APK with Google Sign-In client configuration."
           flutter build apk --release --target-platform android-arm64 \
             --dart-define="GOOGLE_CLIENT_ID=$CLIENT_ID" \
             --dart-define="GOOGLE_SERVER_CLIENT_ID=$SERVER_CLIENT_ID"
@@ -194,29 +120,27 @@ jobs:
         shell: bash
         run: |
           VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
-          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/Nexora-${VERSION}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/Nexora-\${VERSION}.apk"
 
       - name: Upload direct APK artifact
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: Nexora-APK
           path: build/app/outputs/flutter-apk/Nexora-*.apk
           if-no-files-found: error
-          archive: false
           overwrite: true
 
       - name: Publish direct APK release
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: \${{ github.token }}
         shell: bash
         run: |
           VERSION=$(awk '/^version:/{print $2}' pubspec.yaml)
-          RELEASE_VERSION="${VERSION%%+*}"
-          TAG="v${RELEASE_VERSION}"
-          FILE="build/app/outputs/flutter-apk/Nexora-${VERSION}.apk"
-
+          RELEASE_VERSION="\${VERSION%%+*}"
+          TAG="v\${RELEASE_VERSION}"
+          FILE="build/app/outputs/flutter-apk/Nexora-\${VERSION}.apk"
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$FILE" --clobber
           else
-            gh release create "$TAG" "$FILE" --title "Nexora v${RELEASE_VERSION}" --notes "Nexora Android release APK. Download the .apk asset directly; no ZIP extraction is required."
+            gh release create "$TAG" "$FILE" --title "Nexora v\${RELEASE_VERSION}" --notes "Nexora Android release APK. Download the .apk asset directly; no ZIP extraction is required."
           fi
