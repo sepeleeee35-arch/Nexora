@@ -98,6 +98,66 @@ jobs:
           p.write_text(s)
           PY
 
+
+      - name: Configure permanent release signing
+        shell: bash
+        env:
+          NEXORA_KEYSTORE_BASE64: ${{ secrets.NEXORA_KEYSTORE_BASE64 }}
+          NEXORA_KEYSTORE_PASSWORD: ${{ secrets.NEXORA_KEYSTORE_PASSWORD }}
+          NEXORA_KEY_ALIAS: ${{ secrets.NEXORA_KEY_ALIAS }}
+          NEXORA_KEY_PASSWORD: ${{ secrets.NEXORA_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for name in NEXORA_KEYSTORE_BASE64 NEXORA_KEYSTORE_PASSWORD NEXORA_KEY_ALIAS NEXORA_KEY_PASSWORD; do
+            if [ -z "${!name:-}" ]; then
+              echo "::error::Missing GitHub Actions secret: $name"
+              exit 1
+            fi
+          done
+          mkdir -p android/app
+          printf '%s' "$NEXORA_KEYSTORE_BASE64" | base64 --decode > android/app/nexora-release.jks
+          test -s android/app/nexora-release.jks
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          Path("android/key.properties").write_text(
+              "storePassword=" + os.environ["NEXORA_KEYSTORE_PASSWORD"] + "\n"
+              "keyPassword=" + os.environ["NEXORA_KEY_PASSWORD"] + "\n"
+              "keyAlias=" + os.environ["NEXORA_KEY_ALIAS"] + "\n"
+              "storeFile=nexora-release.jks\n"
+          )
+          p = Path("android/app/build.gradle.kts")
+          s = p.read_text()
+          header = '''import java.io.FileInputStream
+          import java.util.Properties
+          val keystoreProperties = Properties()
+          val keystorePropertiesFile = rootProject.file("key.properties")
+          if (keystorePropertiesFile.exists()) {
+              keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+          }
+          '''
+          if "val keystoreProperties = Properties()" not in s:
+              s = header + s
+          signing = '''    signingConfigs {
+              create("release") {
+                  keyAlias = keystoreProperties.getProperty("keyAlias")
+                  keyPassword = keystoreProperties.getProperty("keyPassword")
+                  storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+                  storePassword = keystoreProperties.getProperty("storePassword")
+              }
+          }
+          '''
+          if 'create("release")' not in s:
+              s = s.replace("    buildTypes {", signing + "\n    buildTypes {", 1)
+          s = s.replace(
+              'signingConfig = signingConfigs.getByName("debug")',
+              'signingConfig = signingConfigs.getByName("release")',
+              1
+          )
+          p.write_text(s)
+          PY
+          chmod 600 android/key.properties android/app/nexora-release.jks
+
       - name: Get packages
         run: flutter pub get
 

@@ -113,6 +113,9 @@ class _NexoraAuthGateState extends State<NexoraAuthGate> {
       _error = '';
     });
     try {
+      // google_sign_in 7.x recommends signing out before a fresh authenticate()
+      // so Android does not reuse a stale authentication session.
+      await _google.signOut();
       final account = await _google.authenticate();
       if (!mounted) return;
       setState(() => _user = account);
