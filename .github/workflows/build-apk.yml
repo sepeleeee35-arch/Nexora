@@ -35,6 +35,34 @@ jobs:
       - name: Remove generated sample test
         run: rm -f test/widget_test.dart
 
+      - name: Set WebView Android minimum SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          sed -i 's/minSdk = flutter.minSdkVersion/minSdk = 24/' android/app/build.gradle.kts
+
+      - name: Bundle licensed Nexora Arcade games
+        shell: bash
+        run: |
+          set -euo pipefail
+          MASHUKUI_BASE="https://raw.githubusercontent.com/mashukui/web-games/main"
+          SKYMOON_BASE="https://raw.githubusercontent.com/skymoon173/mini-game-collection/main"
+          mkdir -p assets/games/mashukui assets/games/skymoon
+          for game in stack-tower paddle-duel breakout gem-match water-sort sokoban memory-match sudoku slide-puzzle lights-out air-hockey snake piano-tap block-drop connect-four tic-tac-toe; do
+            mkdir -p "assets/games/mashukui/$game"
+            curl -fL --retry 3 "$MASHUKUI_BASE/$game/index.html" -o "assets/games/mashukui/$game/index.html"
+          done
+          for game in neon-dodge neon-snake merge-cats merge-town cat-seesaw; do
+            mkdir -p "assets/games/skymoon/$game"
+            curl -fL --retry 3 "$SKYMOON_BASE/games/$game/index.html" -o "assets/games/skymoon/$game/index.html"
+            curl -fL --retry 3 "$SKYMOON_BASE/games/$game/style.css" -o "assets/games/skymoon/$game/style.css"
+            curl -fL --retry 3 "$SKYMOON_BASE/games/$game/game.js" -o "assets/games/skymoon/$game/game.js"
+          done
+          curl -fL --retry 3 "https://raw.githubusercontent.com/mashukui/web-games/main/LICENSE" -o assets/games/LICENSE-MIT-mashukui.txt
+          curl -fL --retry 3 "https://raw.githubusercontent.com/skymoon173/mini-game-collection/main/LICENSE" -o assets/games/LICENSE-MIT-skymoon173.txt
+          test "$(find assets/games/mashukui -name index.html | wc -l)" -eq 16
+          test "$(find assets/games/skymoon -name index.html | wc -l)" -eq 5
+
       - name: Set Nexora app icon
         shell: bash
         run: |

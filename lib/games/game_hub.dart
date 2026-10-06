@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'web_arcade.dart';
 
 String? nexoraActiveAccountId;
 
@@ -24,154 +25,10 @@ bool nexoraSoundEnabled = true;
 String nexoraControlMode = 'BUTTONS';
 int nexoraSelectedLevel = 1;
 
-class NexoraGameHub extends StatefulWidget {
+class NexoraGameHub extends StatelessWidget {
   const NexoraGameHub({super.key});
   @override
-  State<NexoraGameHub> createState() => _NexoraGameHubState();
-}
-
-class _NexoraGameHubState extends State<NexoraGameHub> {
-  String filter = 'ALL';
-  String query = '';
-
-  final games = const [
-    _GameInfo('2048', 'PUZZLE', 'Merge • chain • survive', Icons.grid_4x4_rounded, Color(0xFFF59E0B)),
-    _GameInfo('Tetris', 'ARCADE', 'Drop • rotate • clear', Icons.view_module_rounded, Color(0xFFA78BFA)),
-    _GameInfo('Flappy', 'ARCADE', 'Tap • dodge • score', Icons.flutter_dash_rounded, Color(0xFF22D3EE)),
-    _GameInfo('Breakout', 'ARCADE', 'Smash • combo • clear', Icons.sports_baseball_rounded, Color(0xFFEF4444)),
-    _GameInfo('Memory', 'PUZZLE', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
-    _GameInfo('Dino Run Ultra', 'ARCADE', 'Run • jump • survive', Icons.directions_run_rounded, Color(0xFF00FF88)),
-    _GameInfo('Watermelon Merge Pro', 'PUZZLE', 'Drop • merge • grow', Icons.local_florist_rounded, Color(0xFF22D3EE)),
-  ];
-
-  Widget openGame(String name) {
-    if (name == 'Flappy') return const _Flappy();
-    return _GameMenu(
-      game: name,
-      onStart: (level, control, haptic, sound) {
-        nexoraSelectedLevel = level;
-        nexoraControlMode = control;
-        nexoraHapticEnabled = haptic;
-        nexoraSoundEnabled = sound;
-        Widget game;
-        switch (name) {
-          case '2048': game = const _Twenty(); break;
-          case 'Tetris': game = const _Tetris(); break;
-          case 'Breakout': game = const _Breakout(); break;
-          case 'Memory': game = const _Memory(); break;
-          case 'Dino Run Ultra': game = const _DinoRunUltra(); break;
-          case 'Watermelon Merge Pro': game = const _WatermelonMergePro(); break;
-          default: game = const _Twenty();
-        }
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => game));
-      },
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final visible = games.where((g) {
-      final categoryOk = filter == 'ALL' || g.category == filter;
-      final queryOk = query.isEmpty || g.name.toLowerCase().contains(query.toLowerCase());
-      return categoryOk && queryOk;
-    }).toList();
-
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 100),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(30),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF24104F), Color(0xFF0B2037), Color(0xFF090D17)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                border: Border.all(color: Colors.white10),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    Container(
-                      width: 52, height: 52,
-                      decoration: BoxDecoration(color: purple.withOpacity(.18), borderRadius: BorderRadius.circular(17)),
-                      child: const Icon(Icons.sports_esports_rounded, color: purple, size: 28),
-                    ),
-                    const Spacer(),
-                    _Badge('ARCADE COLLECTION'),
-                  ]),
-                  const SizedBox(height: 20),
-                  const Text('NEXORA ARCADE', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900, letterSpacing: 2, color: Colors.white54)),
-                  const SizedBox(height: 4),
-                  const Text('Play. Beat. Repeat.', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, letterSpacing: -.8)),
-                  const SizedBox(height: 7),
-                  const Text('Seven mini-games • game-specific controls • touch-first gameplay.', style: TextStyle(color: Colors.white60, height: 1.35)),
-                  const SizedBox(height: 18),
-                  Row(children: const [
-                    _MiniStat('5', 'GAMES'),
-                    SizedBox(width: 8),
-                    _MiniStat('∞', 'REPLAY'),
-                    SizedBox(width: 8),
-                    _MiniStat('1', 'PLAYER'),
-                  ]),
-                ],
-              ),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              onChanged: (v) => setState(() => query = v),
-              style: const TextStyle(color: Colors.white),
-              decoration: InputDecoration(
-                prefixIcon: const Icon(Icons.search_rounded),
-                hintText: 'Search games',
-                filled: true,
-                fillColor: panel,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: BorderSide.none),
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              height: 40,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: ['ALL', 'ARCADE', 'PUZZLE'].map((x) => Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(x),
-                    selected: filter == x,
-                    onSelected: (_) => setState(() => filter = x),
-                  ),
-                )).toList(),
-              ),
-            ),
-            const SizedBox(height: 18),
-            Row(children: [
-              const Expanded(child: Text('Arcade library', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900))),
-              Text('${visible.length} games', style: const TextStyle(color: Colors.white38)),
-            ]),
-            const SizedBox(height: 10),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: visible.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2, crossAxisSpacing: 11, mainAxisSpacing: 11, childAspectRatio: .78,
-              ),
-              itemBuilder: (_, i) {
-                final game = visible[i];
-                return _GameCard(game, () => Navigator.push(context, MaterialPageRoute(builder: (_) => openGame(game.name))));
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => const NexoraWebArcade();
 }
 
 class _GameInfo {
