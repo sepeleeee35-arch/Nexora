@@ -1,4 +1,4 @@
-// ignore_for_file: deprecated_member_use, curly_braces_in_flow_control_structures, prefer_interpolation_to_compose_strings
+// ignore_for_file: deprecated_member_use, curly_braces_in_flow_control_structures, prefer_interpolation_to_compose_strings, unused_element
 import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
