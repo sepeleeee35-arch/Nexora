@@ -1,7 +1,7 @@
 name: nexora
 description: Nexora - original mobile hub app.
 publish_to: "none"
-version: 1.0.7
+version: 1.0.8
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -30,3 +30,6 @@ flutter:
   assets:
     - assets/music/
     - assets/games/
+
+dependency_overrides:
+  google_sign_in_android: 7.2.7
