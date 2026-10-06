@@ -28,7 +28,128 @@ int nexoraSelectedLevel = 1;
 class NexoraGameHub extends StatelessWidget {
   const NexoraGameHub({super.key});
   @override
-  Widget build(BuildContext context) => const NexoraWebArcade();
+  Widget build(BuildContext context) => const NexoraGameChooser();
+}
+
+class NexoraGameChooser extends StatelessWidget {
+  const NexoraGameChooser({super.key});
+
+  static const originals = <_GameInfo>[
+    _GameInfo('2048', 'ORIGINAL', 'Swipe • merge • survive', Icons.grid_4x4_rounded, Color(0xFFF59E0B)),
+    _GameInfo('Tetris', 'ORIGINAL', 'Drop • rotate • clear', Icons.view_module_rounded, Color(0xFFA78BFA)),
+    _GameInfo('Flappy', 'ORIGINAL', 'Tap • dodge • score', Icons.flutter_dash_rounded, Color(0xFF22D3EE)),
+    _GameInfo('Breakout', 'ORIGINAL', 'Smash • combo • clear', Icons.sports_baseball_rounded, Color(0xFFFF4D6D)),
+    _GameInfo('Memory', 'ORIGINAL', 'Flip • match • master', Icons.style_rounded, Color(0xFFEC4899)),
+    _GameInfo('Dino Run Ultra', 'ORIGINAL', 'Run • jump • survive', Icons.directions_run_rounded, Color(0xFF00FF88)),
+    _GameInfo('Watermelon Merge Pro', 'ORIGINAL', 'Drop • merge • grow', Icons.local_florist_rounded, Color(0xFF22D3EE)),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: bg,
+      body: SafeArea(
+        child: DefaultTabController(
+          length: 2,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+                child: Row(children: [
+                  const Icon(Icons.sports_esports_rounded, color: purple, size: 30),
+                  const SizedBox(width: 10),
+                  const Expanded(child: Text('NEXORA ARCADE', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900))),
+                  Text('26 GAMES', style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w900, color: Colors.white54)),
+                ]),
+              ),
+              const TabBar(
+                tabs: [Tab(text: 'NEXORA ORIGINALS'), Tab(text: 'ARCADE LIBRARY')],
+                indicatorSize: TabBarIndicatorSize.label,
+              ),
+              const SizedBox(height: 8),
+              Expanded(
+                child: TabBarView(children: [
+                  GridView.builder(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2, crossAxisSpacing: 11, mainAxisSpacing: 11, childAspectRatio: .77,
+                    ),
+                    itemCount: originals.length,
+                    itemBuilder: (_, i) {
+                      final game = originals[i];
+                      return _OriginalGameCard(game);
+                    },
+                  ),
+                  const NexoraWebArcade(),
+                ]),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _OriginalGameCard extends StatelessWidget {
+  final _GameInfo game;
+  const _OriginalGameCard(this.game);
+
+  @override
+  Widget build(BuildContext context) => Container(
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(24),
+      color: const Color(0xFF0A0E18),
+      border: Border.all(color: game.color.withOpacity(.28)),
+      boxShadow: [BoxShadow(color: game.color.withOpacity(.14), blurRadius: 22, offset: const Offset(0, 9))],
+    ),
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(24),
+      child: Column(children: [
+        Expanded(
+          flex: 7,
+          child: Stack(children: [
+            Positioned.fill(child: CustomPaint(painter: _GameCardArt(game.name, game.color))),
+            Positioned(left: 12, top: 12, child: _MiniBadge(game.category)),
+            Center(child: Icon(game.icon, color: game.color, size: 44)),
+          ]),
+        ),
+        Expanded(
+          flex: 5,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 8, 10, 9),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              Text(game.name, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
+              const Spacer(),
+              SizedBox(
+                width: double.infinity,
+                height: 36,
+                child: FilledButton.icon(
+                  onPressed: () => _open(context, game.name),
+                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
+                  label: const Text('PLAY', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                ),
+              ),
+            ]),
+          ),
+        ),
+      ]),
+    ),
+  );
+
+  void _open(BuildContext context, String name) {
+    final Widget page = switch (name) {
+      '2048' => const _Twenty(),
+      'Tetris' => const _Tetris(),
+      'Flappy' => const _Flappy(),
+      'Breakout' => const _Breakout(),
+      'Memory' => const _Memory(),
+      'Dino Run Ultra' => const _DinoRunUltra(),
+      'Watermelon Merge Pro' => const _WatermelonMergePro(),
+      _ => const _Memory(),
+    };
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page));
+  }
 }
 
 class _GameInfo {

@@ -45,23 +45,26 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          MASHUKUI_BASE="https://raw.githubusercontent.com/mashukui/web-games/main"
-          SKYMOON_BASE="https://raw.githubusercontent.com/skymoon173/mini-game-collection/main"
+          TMP_GAMES="$(mktemp -d)"
+          trap 'rm -rf "$TMP_GAMES"' EXIT
+          git clone --depth 1 --quiet https://github.com/mashukui/web-games.git "$TMP_GAMES/mashukui"
+          git clone --depth 1 --quiet https://github.com/skymoon173/mini-game-collection.git "$TMP_GAMES/skymoon"
           mkdir -p assets/games/mashukui assets/games/skymoon
           for game in stack-tower paddle-duel breakout gem-match water-sort sokoban memory-match sudoku slide-puzzle lights-out air-hockey snake piano-tap block-drop connect-four tic-tac-toe; do
-            mkdir -p "assets/games/mashukui/$game"
-            curl -fL --retry 3 "$MASHUKUI_BASE/$game/index.html" -o "assets/games/mashukui/$game/index.html"
+            test -d "$TMP_GAMES/mashukui/$game"
+            cp -R "$TMP_GAMES/mashukui/$game" "assets/games/mashukui/$game"
           done
+          # These games load the shared translator with ../i18n.js, so keep that dependency beside them.
+          cp "$TMP_GAMES/mashukui/i18n.js" assets/games/mashukui/i18n.js
           for game in merge-cats merge-town cat-seesaw; do
-            mkdir -p "assets/games/skymoon/$game"
-            curl -fL --retry 3 "$SKYMOON_BASE/games/$game/index.html" -o "assets/games/skymoon/$game/index.html"
-            curl -fL --retry 3 "$SKYMOON_BASE/games/$game/style.css" -o "assets/games/skymoon/$game/style.css"
-            curl -fL --retry 3 "$SKYMOON_BASE/games/$game/game.js" -o "assets/games/skymoon/$game/game.js"
+            test -d "$TMP_GAMES/skymoon/games/$game"
+            cp -R "$TMP_GAMES/skymoon/games/$game" "assets/games/skymoon/$game"
           done
-          curl -fL --retry 3 "https://raw.githubusercontent.com/mashukui/web-games/main/LICENSE" -o assets/games/LICENSE-MIT-mashukui.txt
-          curl -fL --retry 3 "https://raw.githubusercontent.com/skymoon173/mini-game-collection/main/LICENSE" -o assets/games/LICENSE-MIT-skymoon173.txt
+          cp "$TMP_GAMES/mashukui/LICENSE" assets/games/LICENSE-MIT-mashukui.txt
+          cp "$TMP_GAMES/skymoon/LICENSE" assets/games/LICENSE-MIT-skymoon173.txt
           test "$(find assets/games/mashukui -name index.html | wc -l)" -eq 16
           test "$(find assets/games/skymoon -name index.html | wc -l)" -eq 3
+          test -s assets/games/mashukui/i18n.js
 
       - name: Set Nexora app icon
         shell: bash
