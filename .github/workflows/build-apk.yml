@@ -115,8 +115,31 @@ jobs:
             fi
           done
           mkdir -p android/app
-          printf '%s' "$NEXORA_KEYSTORE_BASE64" | base64 --decode > android/app/nexora-release.jks
-          test -s android/app/nexora-release.jks
+
+          # GitHub secret values can contain line breaks/whitespace after copy-paste.
+          # Remove whitespace only; never print or expose the secret itself.
+          printf '%s' "$NEXORA_KEYSTORE_BASE64" | tr -d '[:space:]' > /tmp/nexora-keystore.b64
+
+          # Decode strictly and fail with a clear diagnostic if the secret is not valid Base64.
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+
+          encoded = Path("/tmp/nexora-keystore.b64").read_text()
+          try:
+              decoded = base64.b64decode(encoded, validate=True)
+          except Exception as exc:
+              raise SystemExit(f"Invalid NEXORA_KEYSTORE_BASE64 after whitespace cleanup: {exc}")
+
+          Path("android/app/nexora-release.jks").write_bytes(decoded)
+          if not Path("android/app/nexora-release.jks").stat().st_size:
+              raise SystemExit("Decoded keystore is empty")
+          PY
+
+          # Confirm the decoded file is actually a readable Java keystore.
+          keytool -list -keystore android/app/nexora-release.jks             -storepass "$NEXORA_KEYSTORE_PASSWORD"             -alias "$NEXORA_KEY_ALIAS" >/dev/null
+
+          rm -f /tmp/nexora-keystore.b64
           python3 - <<'PY'
           from pathlib import Path
           import os
