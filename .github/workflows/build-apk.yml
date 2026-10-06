@@ -202,7 +202,13 @@ jobs:
             exit 1
           fi
 
+          VERSION_NAME="$(awk '/^version:/{print $2}' pubspec.yaml)"
+          VERSION_NAME="${VERSION_NAME%%+*}"
+          BUILD_NUMBER="${GITHUB_RUN_NUMBER}"
+
           flutter build apk --release --target-platform android-arm64 \
+            --build-name="$VERSION_NAME" \
+            --build-number="$BUILD_NUMBER" \
             --dart-define="GOOGLE_CLIENT_ID=$CLIENT_ID" \
             --dart-define="GOOGLE_SERVER_CLIENT_ID=$SERVER_CLIENT_ID"
 
@@ -223,6 +229,7 @@ jobs:
         shell: bash
         run: |
           VERSION="$(awk '/^version:/{print $2}' pubspec.yaml)"
+          VERSION="${VERSION%%+*}"
           cp build/app/outputs/flutter-apk/app-release.apk "build/app/outputs/flutter-apk/Nexora-${VERSION}.apk"
 
       - name: Upload direct APK artifact
@@ -241,7 +248,7 @@ jobs:
           VERSION="$(awk '/^version:/{print $2}' pubspec.yaml)"
           RELEASE_VERSION="${VERSION%%+*}"
           TAG="v${RELEASE_VERSION}"
-          FILE="build/app/outputs/flutter-apk/Nexora-${VERSION}.apk"
+          FILE="build/app/outputs/flutter-apk/Nexora-${RELEASE_VERSION}.apk"
 
           if gh release view "$TAG" >/dev/null 2>&1; then
             gh release upload "$TAG" "$FILE" --clobber
