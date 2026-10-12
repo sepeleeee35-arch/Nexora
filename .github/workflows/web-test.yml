@@ -41,6 +41,29 @@ jobs:
               print('GOOGLE_CLIENT_ID is not configured; web Google login will remain unavailable.')
           PY
 
+      - name: Bundle arcade game assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP_GAMES="$(mktemp -d)"
+          trap 'rm -rf "$TMP_GAMES"' EXIT
+          git clone --depth 1 --quiet https://github.com/mashukui/web-games.git "$TMP_GAMES/mashukui"
+          git clone --depth 1 --quiet https://github.com/skymoon173/mini-game-collection.git "$TMP_GAMES/skymoon"
+          mkdir -p assets/games/mashukui assets/games/skymoon
+          for game in stack-tower paddle-duel breakout gem-match water-sort sokoban memory-match sudoku slide-puzzle lights-out air-hockey snake piano-tap block-drop connect-four tic-tac-toe; do
+            test -d "$TMP_GAMES/mashukui/$game"
+            cp -R "$TMP_GAMES/mashukui/$game" "assets/games/mashukui/$game"
+          done
+          cp "$TMP_GAMES/mashukui/i18n.js" assets/games/mashukui/i18n.js
+          for game in merge-cats merge-town cat-seesaw; do
+            test -d "$TMP_GAMES/skymoon/games/$game"
+            cp -R "$TMP_GAMES/skymoon/games/$game" "assets/games/skymoon/$game"
+          done
+          cp "$TMP_GAMES/mashukui/LICENSE" assets/games/LICENSE-MIT-mashukui.txt
+          cp "$TMP_GAMES/skymoon/LICENSE" assets/games/LICENSE-MIT-skymoon173.txt
+          test "$(find assets/games/mashukui -name index.html | wc -l)" -eq 16
+          test "$(find assets/games/skymoon -name index.html | wc -l)" -eq 3
+
       - name: Get packages
         run: flutter pub get
 

@@ -1,4 +1,5 @@
 // ignore_for_file: deprecated_member_use
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 
@@ -90,25 +91,59 @@ class _GameScreen extends StatefulWidget {
 }
 class _GameScreenState extends State<_GameScreen> {
   late final WebViewController controller;
+  Timer? _loadTimeout;
   int progress=0;
   String? error;
+
+  void _startLoadTimeout() {
+    _loadTimeout?.cancel();
+    _loadTimeout = Timer(const Duration(seconds: 20), () {
+      if (!mounted || progress >= 100 || error != null) return;
+      setState(() => error = 'Game terlalu lama dimuat. Periksa aset game lalu coba lagi.');
+    });
+  }
+
   @override void initState(){
     super.initState();
     controller=WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(const Color(0xFF05070D))
       ..setNavigationDelegate(NavigationDelegate(
-        onProgress:(v){if(mounted)setState(()=>progress=v);},
-        onPageFinished:(_){if(mounted)setState(()=>progress=100);},
-        onWebResourceError:(e){if(mounted)setState(()=>error='Game asset gagal dimuat: ${e.description}');},
+        onProgress:(v){
+          if (!mounted) return;
+          setState(()=>progress=v);
+          if (v >= 100) _loadTimeout?.cancel();
+        },
+        onPageFinished:(_){
+          _loadTimeout?.cancel();
+          if(mounted)setState(()=>progress=100);
+        },
+        onWebResourceError:(e){
+          // Ignore subresource errors when the main HTML document loaded correctly.
+          if (e.isForMainFrame == false || !mounted) return;
+          _loadTimeout?.cancel();
+          setState(()=>error='Game gagal dimuat: ${e.description}');
+        },
       ));
+    _startLoadTimeout();
     controller.loadFlutterAsset(widget.game.path).catchError((e){
+      _loadTimeout?.cancel();
       if(mounted)setState(()=>error='Game gagal dibuka: $e');
     });
   }
+
+  @override void dispose() {
+    _loadTimeout?.cancel();
+    super.dispose();
+  }
+
   @override Widget build(BuildContext context)=>Scaffold(
     backgroundColor:const Color(0xFF05070D),
-    appBar:AppBar(title:Text(widget.game.title,style:const TextStyle(fontWeight:FontWeight.w900)),actions:[IconButton(onPressed:()=>controller.reload(),icon:const Icon(Icons.refresh_rounded))]),
+    appBar:AppBar(title:Text(widget.game.title,style:const TextStyle(fontWeight:FontWeight.w900)),actions:[IconButton(onPressed:(){
+      setState((){progress=0;error=null;});
+      _startLoadTimeout();
+      controller.reload();
+    },icon:const Icon(Icons.refresh_rounded))]),
     body:Stack(children:[
       WebViewWidget(controller:controller),
       if(progress<100 && error==null)Align(alignment:Alignment.topCenter,child:LinearProgressIndicator(value:progress==0?null:progress/100,minHeight:2,color:widget.game.accent)),
@@ -116,7 +151,11 @@ class _GameScreenState extends State<_GameScreen> {
         Icon(Icons.error_outline_rounded,color:widget.game.accent,size:48),const SizedBox(height:12),
         const Text('GAME TIDAK DAPAT DIMUAT',style:TextStyle(fontWeight:FontWeight.w900)),const SizedBox(height:6),
         Text(error!,textAlign:TextAlign.center,style:const TextStyle(color:Colors.white54,fontSize:11)),const SizedBox(height:14),
-        FilledButton.icon(onPressed:(){setState(()=>error=null);controller.reload();},icon:const Icon(Icons.refresh_rounded),label:const Text('COBA LAGI')),
+        FilledButton.icon(onPressed:(){
+          setState((){progress=0;error=null;});
+          _startLoadTimeout();
+          controller.reload();
+        },icon:const Icon(Icons.refresh_rounded),label:const Text('COBA LAGI')),
       ]))),
     ]),
   );
