@@ -9,9 +9,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'google_auth_button.dart' if (dart.library.io) 'google_auth_button_stub.dart';
-import 'music/music_page.dart';
 import 'games/game_hub.dart';
-import 'music/music_service.dart';
 import 'tools/nexora_tools_page.dart';
 import 'update/nexora_update_service.dart';
 
@@ -254,7 +252,7 @@ class _NexoraShellState extends State<NexoraShell> {
   double cardBorderOpacity = 0.0;
   bool _updateDialogShown = false;
   bool _updateBusy = false;
-  static const names = ['Home','Games','Music','Tools','Market'];
+  static const names = ['Home','Games','Chat','Tools','Market'];
 
   @override
   void initState() {
@@ -425,7 +423,7 @@ class _NexoraShellState extends State<NexoraShell> {
       unawaited(GoogleSignIn.instance.signOut());
       return;
     }
-    if (value == 'Home' || value == 'Games' || value == 'Music' || value == 'Tools' || value == 'Market') {
+    if (value == 'Home' || value == 'Games' || value == 'Chat' || value == 'Tools' || value == 'Market') {
       final nextTab = names.indexOf(value);
       setState(() {
         tab = nextTab < 0 ? 0 : nextTab;
@@ -479,7 +477,7 @@ class _NexoraShellState extends State<NexoraShell> {
     } else {
       body = switch (tab) {
         1 => const NexoraGameHub(),
-        2 => const MusicPage(),
+        2 => const ChatPage(),
         3 => const NexoraToolsPage(),
         4 => MarketPage(coins: coins, cart: cart, buy: null),
         _ => HomePage(
@@ -571,7 +569,7 @@ class _NexoraShellState extends State<NexoraShell> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home_outlined), selectedIcon: Icon(Icons.home_rounded), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.sports_esports_outlined), selectedIcon: Icon(Icons.sports_esports_rounded), label: 'Games'),
-          NavigationDestination(icon: Icon(Icons.music_note_outlined), selectedIcon: Icon(Icons.music_note_rounded), label: 'Music'),
+          NavigationDestination(icon: Icon(Icons.chat_bubble_outline_rounded), selectedIcon: Icon(Icons.chat_rounded), label: 'Chat'),
           NavigationDestination(icon: Icon(Icons.build_outlined), selectedIcon: Icon(Icons.build_rounded), label: 'Tools'),
           NavigationDestination(icon: Icon(Icons.storefront_outlined), selectedIcon: Icon(Icons.storefront_rounded), label: 'Market'),
         ],
@@ -617,7 +615,7 @@ class NexoraDrawer extends StatelessWidget {
           const SizedBox(width: 13),
           const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text('NEXORA', style: TextStyle(fontSize: 20,fontWeight: FontWeight.w900,letterSpacing: 1.5)),
-            Text('Game • Music • Tools • Market'),
+            Text('Game • Chat • Tools • Market'),
           ]),
         ]),
       ),
@@ -631,7 +629,7 @@ class NexoraDrawer extends StatelessWidget {
       const _Header('MAIN'),
       _Item(Icons.home_rounded,'Home',()=>onSelect('Home')),
       _Item(Icons.sports_esports_rounded,'Games',()=>onSelect('Games')),
-      _Item(Icons.music_note_rounded,'Music',()=>onSelect('Music')),
+      _Item(Icons.chat_rounded,'Chat',()=>onSelect('Chat')), 
       _Item(Icons.build_rounded,'Tools',()=>onSelect('Tools')),
       _Item(Icons.storefront_rounded,'Marketplace',()=>onSelect('Market')),
       const _Header('ACCOUNT'),
@@ -917,7 +915,7 @@ class HomePage extends StatelessWidget {
           childAspectRatio: 1.55,
           children: [
             _Quick(Icons.sports_esports_rounded, 'Game Hub', 'Play now', () => openTab(1)),
-            _Quick(Icons.music_note_rounded, 'Music', 'Library', () => openTab(2)),
+            _Quick(Icons.chat_rounded, 'Chat', 'Messages', () => openTab(2)), 
             _Quick(Icons.build_rounded, 'Tools', 'Utilities', () => openTab(3)),
             _Quick(Icons.storefront_rounded, 'Market', 'Browse', () => openTab(4)),
           ],
@@ -983,7 +981,7 @@ class HomePage extends StatelessWidget {
         const SizedBox(height: 18),
         const _Title('Recent'),
         const _Recent(Icons.sports_esports_rounded, 'Tap Rush', 'Mini game tersedia sekarang'),
-        const _Recent(Icons.music_note_rounded, 'Nexora Music', 'Player dan library'),
+        const _Recent(Icons.chat_rounded, 'Nexora Chat', 'Pesan pribadi dan grup'),
         const _Recent(Icons.build_rounded, 'Nexora Tools', 'Media & utility tools'),
       ],
     );
@@ -1146,11 +1144,21 @@ class _Recent extends StatelessWidget {
 
 
 
-class MusicPage extends StatelessWidget {
-  const MusicPage({super.key});
+class ChatPage extends StatelessWidget {
+  const ChatPage({super.key});
   @override
-  Widget build(BuildContext context) => NexoraMusicPage(
-    service: NexoraMultiMusicService(),
+  Widget build(BuildContext context) => ListView(
+    padding: const EdgeInsets.all(20),
+    children: const [
+      SizedBox(height: 24),
+      Icon(Icons.chat_bubble_rounded, size: 64, color: Color(0xFF8B5CF6)),
+      SizedBox(height: 18),
+      Text('Nexora Chat', textAlign: TextAlign.center, style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+      SizedBox(height: 8),
+      Text('Tempat untuk terhubung dan mengobrol. Sistem pesan realtime sedang disiapkan.', textAlign: TextAlign.center, style: TextStyle(color: Colors.white70, height: 1.5)),
+      SizedBox(height: 22),
+      Card(child: ListTile(leading: Icon(Icons.construction_rounded), title: Text('Chat belum aktif'), subtitle: Text('Percakapan akan muncul setelah backend dan sinkronisasi Android-Web selesai dibuat.'))),
+    ],
   );
 }
 
@@ -1515,7 +1523,6 @@ class _ToolsState extends State<ToolsPage>{
       if(output.isNotEmpty)Padding(padding:const EdgeInsets.only(top:12),child:SelectableText(output)),
       if(input.isNotEmpty)Align(alignment:Alignment.centerLeft,child:Text('${input.length} karakter')),
     ])),
-    _ToolCard(icon:Icons.music_note_rounded,title:'Audio Lab',subtitle:'Status player audio Nexora.',child:const Text('Player musik sudah mendukung play, pause, seek, next, dan previous.')),
     _ToolCard(icon:Icons.video_file_rounded,title:'Video → Audio',subtitle:'Ekstrak audio dari video milikmu.',child:const Text('Engine konversi native FFmpeg akan dipasang pada APK; versi web tidak mengirim file pribadimu ke server. Gunakan hanya file yang kamu punya hak untuk ubah.')),
     _ToolCard(icon:Icons.calculate_rounded,title:'Quick Calculator',subtitle:'Hitung dua angka.',child:const _QuickCalc()),
   ]);
@@ -1529,7 +1536,7 @@ class SocialPage extends StatefulWidget {
 }
 class _SocialState extends State<SocialPage>{
   final liked=<int>{};
-  final posts=const [('Nexora Team','Selamat datang di Nexora V2!','Update'),('Raka','Baru selesai main Tap Rush. Ada yang mau adu skor?','Gaming'),('Mira','Playlist baru sudah siap untuk malam ini.','Music')];
+  final posts=const [('Nexora Team','Selamat datang di Nexora V2!','Update'),('Raka','Baru selesai main Tap Rush. Ada yang mau adu skor?','Gaming'),('Mira','Ada kabar baru dari komunitas Nexora.','Community')];
   @override Widget build(BuildContext context)=>ListView(padding:const EdgeInsets.all(16),children:[
     const Text('Community',style:TextStyle(fontSize:28,fontWeight:FontWeight.w900)),const Text('Feed sosial original Nexora.'),
     const SizedBox(height:15),
@@ -1695,7 +1702,6 @@ class _GoogleLoginState extends State<GoogleLoginPage>{
     const _Title('Account benefits'),
     const _Recent(Icons.cloud_sync_rounded,'Cloud profile','Profil dan progres siap disinkronkan.'),
     const _Recent(Icons.emoji_events_rounded,'Game progress','Skor dan pencapaian bisa dikaitkan ke akun.'),
-    const _Recent(Icons.library_music_rounded,'Music library','Library dan playlist tetap terkait akun.'),
   ]);
 }
 
