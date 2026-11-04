@@ -8,6 +8,8 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'chat/nexora_chat_page.dart';
 import 'google_auth_button.dart' if (dart.library.io) 'google_auth_button_stub.dart';
 import 'games/game_hub.dart';
 import 'tools/nexora_tools_page.dart';
@@ -477,7 +479,7 @@ class _NexoraShellState extends State<NexoraShell> {
     } else {
       body = switch (tab) {
         1 => const NexoraGameHub(),
-        2 => const ChatPage(),
+        2 => NexoraChatPage(account: widget.account),
         3 => const NexoraToolsPage(),
         4 => MarketPage(coins: coins, cart: cart, buy: null),
         _ => HomePage(
