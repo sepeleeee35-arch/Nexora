@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'chat/nexora_chat_page.dart';
 import 'google_auth_button.dart' if (dart.library.io) 'google_auth_button_stub.dart';
 import 'games/game_hub.dart';

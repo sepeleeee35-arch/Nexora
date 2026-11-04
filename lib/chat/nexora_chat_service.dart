@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -20,7 +19,7 @@ class NexoraChatService {
       return;
     }
     try {
-      await Supabase.initialize(url: url, anonKey: key);
+      await Supabase.initialize(url: url, publishableKey: key);
       _client = Supabase.instance.client;
       final idToken = account.authentication.idToken;
       if (idToken == null || idToken.isEmpty) {
@@ -47,7 +46,7 @@ class NexoraChatService {
     final me=c.auth.currentUser?.id;
     if(query.trim().length<2) return [];
     final rows=await c.from('profiles').select('id,email,display_name,avatar_url')
-      .ilike('email','%'+query.trim()+'%').neq('id',me ?? '').limit(20);
+      .ilike('email', '%${query.trim()}%').neq('id',me ?? '').limit(20);
     return List<Map<String,dynamic>>.from(rows);
   }
 
