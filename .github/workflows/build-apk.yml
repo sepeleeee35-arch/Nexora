@@ -226,13 +226,22 @@ jobs:
         env:
           GOOGLE_CLIENT_ID_SECRET: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_SERVER_CLIENT_ID_SECRET: ${{ secrets.GOOGLE_SERVER_CLIENT_ID }}
+          SUPABASE_URL_SECRET: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_PUBLISHABLE_KEY_SECRET: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
         run: |
           DEFAULT_WEB_CLIENT_ID="884139341759-mrna2bd2a81d1dpj2nofbondk75i8lno.apps.googleusercontent.com"
           CLIENT_ID="${GOOGLE_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
           SERVER_CLIENT_ID="${GOOGLE_SERVER_CLIENT_ID_SECRET:-$DEFAULT_WEB_CLIENT_ID}"
+          SUPABASE_URL_VALUE="$SUPABASE_URL_SECRET"
+          SUPABASE_KEY_VALUE="$SUPABASE_PUBLISHABLE_KEY_SECRET"
 
           if [ -z "$CLIENT_ID" ] || [ -z "$SERVER_CLIENT_ID" ]; then
             echo "::error::Google client ID tidak boleh kosong."
+            exit 1
+          fi
+
+          if [ -z "$SUPABASE_URL_VALUE" ] || [ -z "$SUPABASE_KEY_VALUE" ]; then
+            echo "::error::GitHub Actions Secrets SUPABASE_URL dan SUPABASE_PUBLISHABLE_KEY wajib diisi."
             exit 1
           fi
 
@@ -244,7 +253,9 @@ jobs:
             --build-name="$VERSION_NAME" \
             --build-number="$BUILD_NUMBER" \
             --dart-define="GOOGLE_CLIENT_ID=$CLIENT_ID" \
-            --dart-define="GOOGLE_SERVER_CLIENT_ID=$SERVER_CLIENT_ID"
+            --dart-define="GOOGLE_SERVER_CLIENT_ID=$SERVER_CLIENT_ID" \
+            --dart-define="SUPABASE_URL=$SUPABASE_URL_VALUE" \
+            --dart-define="SUPABASE_PUBLISHABLE_KEY=$SUPABASE_KEY_VALUE"
 
       - name: Verify APK signing certificate
         shell: bash
